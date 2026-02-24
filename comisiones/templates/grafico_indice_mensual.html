@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Índice Interanual por Mes (Base 2023 = 100)</h2>
+
+<form method="get" style="margin-bottom:20px;">
+
+    <strong>Seleccionar años:</strong><br><br>
+
+    {% for anio in anios_disponibles %}
+        <label style="margin-right:15px;">
+            <input type="checkbox"
+                   name="anio"
+                   value="{{ anio }}"
+                   {% if anio in anios_seleccionados %}checked{% endif %}>
+            {{ anio }}
+        </label>
+    {% endfor %}
+
+    <br><br>
+    <button type="submit">Actualizar</button>
+
+</form>
+
+{% if grafico %}
+    <img src="data:image/png;base64,{{ grafico }}" />
+{% else %}
+    <p>No hay datos disponibles.</p>
+{% endif %}
+
+{% endblock %}

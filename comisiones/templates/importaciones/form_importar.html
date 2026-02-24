@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>{{ titulo }}</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit"
+            style="padding:6px 14px;
+                   background:#2c78be;
+                   color:white;
+                   border:none;
+                   border-radius:5px;">
+        Importar
+    </button>
+</form>
+
+{% if resultado %}
+<hr>
+<h4>Resultado</h4>
+<ul>
+    <li>Insertadas: {{ resultado.insertadas }}</li>
+    <li>Actualizadas: {{ resultado.actualizadas }}</li>
+    <li>Omitidas: {{ resultado.omitidas }}</li>
+</ul>
+{% endif %}
+
+{% endblock %}

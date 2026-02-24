@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load l10n %}
+
+
+<h2>Resumen por Período</h2>
+
+<form method="get" style="margin-bottom:15px;">
+    Año: <input type="text" name="anio" value="{{ anio|default:'' }}">
+    <button type="submit">Filtrar</button>
+</form>
+
+<table border="1" cellpadding="6" 
+       style="border-collapse: collapse; width:100%; font-size:14px;">
+
+<tr style="background-color:#e9e9e9;">
+    <th>Periodo</th>
+    <th>Fact</th>
+    <th>Cred</th>
+    <th style="text-align:right;">Neto</th>
+    <th style="text-align:right;">No Grav</th>
+    <th style="text-align:right;">Exento</th>
+    <th style="text-align:right;">IVA</th>
+    <th style="text-align:right;">Total</th>
+    <th style="text-align:right;">Cobrado</th>
+</tr>
+
+{% for s in saldos %}
+<tr>
+    <td>{{ s.periodo_anio|unlocalize }}-{{ s.periodo_mes|stringformat:"02d" }}</td>
+    <td style="text-align:center;">{{ s.cant_facturas }}</td>
+    <td style="text-align:center;">{{ s.cant_creditos }}</td>
+
+    <td style="text-align:right;">${{ s.sum_neto|default:0|localize }}</td>
+    <td style="text-align:right;">${{ s.sum_no_gravado|default:0|localize }}</td>
+    <td style="text-align:right;">${{ s.sum_exento|default:0|localize }}</td>
+    <td style="text-align:right;">${{ s.sum_iva|default:0|localize }}</td>
+    <td style="text-align:right;">${{ s.sum_total|default:0|localize }}</td>
+    <td style="text-align:right;">${{ s.sum_cobrado|default:0|localize }}</td>
+</tr>
+{% endfor %}
+
+<tr style="font-weight:bold; background-color:#d9d9d9;">
+    <td>TOTAL GENERAL</td>
+    <td style="text-align:center;">{{ totales.total_facturas }}</td>
+    <td style="text-align:center;">{{ totales.total_creditos }}</td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_neto|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_no_gravado|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_exento|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_iva|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_total|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_cobrado|default:0|localize }}
+    </td>
+</tr>
+
+
+</table>
+{% endblock %}

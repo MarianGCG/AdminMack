@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Mack</title>
+
+
+    
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        .navbar {
+            background-color: #174a7c;
+            padding: 14px 25px;
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            opacity: 0.8;
+        }
+
+        .contenido {
+            padding: 25px 35px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropbtn {
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 14px 0;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%; /* se pega justo debajo */
+            left: 0;
+            background-color: white;
+            min-width: 220px;
+            box-shadow: 0px 6px 14px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+        .dropdown-content a {
+            color: #174a7c;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f2f6fa;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="navbar">
+
+    <a href="/comprobantes/">Comprobantes</a>
+    <a href="/saldos/">Saldos</a>
+    <a href="/graficos01/">Evolución USD</a>
+    <a href="/graficos02/">Top N Participación</a>
+    <a href="/grafico-indice-mensual/">Índice Interanual Mensual</a>
+
+<div class="dropdown">
+    <a href="#" class="dropbtn">Importaciones ▾</a>
+    <div class="dropdown-content">
+        <a href="{% url 'importar_dolar' %}">Cotizaciones dólar</a>
+        <a href="{% url 'aseguradoras' %}">Aseguradoras</a>
+		<a href="{% url 'importar_cobranzas' %}">Cobranzas</a>
+        <a href="{% url 'importar_comprobantes_arca' %}">Comprobantes ARCA</a>
+       
+    </div>
+</div>
+
+</div>
+
+
+
+<div class="contenido">
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+</html>

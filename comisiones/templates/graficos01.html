@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📊 Evolución Facturación en USD</h2>
+
+<style>
+    h2 {
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        background: #2c78be;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        margin-right: 8px;
+    }
+
+    .btn.activo {
+        background: #174a7c;
+    }
+
+    .filtros {
+        margin: 20px 0;
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .contenedor-grafico {
+        background-color: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .checkbox-anio {
+        margin-right: 12px;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Tipo período -->
+<div>
+    <a href="?tipo=anual&modo={{ modo }}" class="btn {% if tipo == 'anual' %}activo{% endif %}">
+        Anual
+    </a>
+
+    <a href="?tipo=trimestral&modo={{ modo }}" class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
+        Trimestral
+    </a>
+</div>
+
+<br>
+
+<!-- Tipo gráfico -->
+<div>
+    <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
+       class="btn {% if modo == 'lineas' %}activo{% endif %}">
+        Líneas
+    </a>
+
+    <a href="?tipo={{ tipo }}&modo=barras{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
+       class="btn {% if modo == 'barras' %}activo{% endif %}">
+        Barras
+    </a>
+</div>
+
+<div class="filtros">
+    <form method="get">
+        <input type="hidden" name="tipo" value="{{ tipo }}">
+        <input type="hidden" name="modo" value="{{ modo }}">
+
+        <strong>Seleccionar años:</strong><br><br>
+
+        {% for anio in anios_disponibles %}
+            <label class="checkbox-anio">
+                <input type="checkbox"
+                       name="anio"
+                       value="{{ anio|stringformat:'d' }}"
+                       {% if anio in anios_seleccionados %}checked{% endif %}>
+                {{ anio|stringformat:"d" }}
+            </label>
+        {% endfor %}
+
+        <button type="submit">Actualizar</button>
+    </form>
+</div>
+
+<div class="contenedor-grafico">
+    <canvas id="grafico" height="120"></canvas>
+</div>
+
+<script>
+const ctx = document.getElementById('grafico');
+
+const labels = {{ labels|safe }};
+const valoresUSD = {{ valores_usd|safe }};
+const valoresDolar = {{ valores_dolar|safe }};
+const tipo = "{{ tipo }}";
+const modo = "{{ modo }}";
+
+new Chart(ctx, {
+    type: modo === "barras" ? "bar" : "line",
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: "Facturación USD",
+                data: valoresUSD,
+                backgroundColor: "rgba(44,120,190,0.6)",
+                borderColor: "#2c78be",
+                borderWidth: 2,
+                tension: 0.25,
+                yAxisID: "y"
+            },
+            {
+                label: "Dólar Promedio",
+                data: valoresDolar,
+                type: "line",
+                borderColor: "orange",
+                borderWidth: 2,
+                borderDash: [6,6],
+                pointRadius: 4,
+                tension: 0.25,
+                yAxisID: "y1"
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            mode: "index",
+            intersect: false
+        },
+        scales: {
+            y: {
+                position: "left",
+                ticks: {
+                    callback: value => value.toLocaleString("es-AR")
+                }
+            },
+            y1: {
+                position: "right",
+                grid: { drawOnChartArea: false },
+                ticks: {
+                    callback: value => value.toLocaleString("es-AR")
+                }
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}

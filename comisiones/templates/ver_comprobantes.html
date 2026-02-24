@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load l10n %}
+
+{% block content %}
+
+<h2>Comprobantes</h2>
+
+<form method="get" style="margin-bottom:15px;">
+
+    <!-- 🔎 FILTROS -->
+    <div style="margin-bottom:8px;">
+        Año:
+        <input type="text" name="anio" value="{{ request.GET.anio|default:'' }}">
+
+        Mes:
+        <input type="text" name="mes" value="{{ request.GET.mes|default:'' }}">
+
+        Aseguradora:
+        <input type="text" name="aseguradora" value="{{ request.GET.aseguradora|default:'' }}">
+
+        Número:
+        <input type="text" name="numero" value="{{ request.GET.numero|default:'' }}">
+    </div>
+
+
+    <!-- 🔀 ORDEN -->
+    <div>
+        Ordenar por:
+        <select name="orden1">
+            <option value="">---</option>
+            <option value="aseguradora">Aseguradora</option>
+            <option value="periodo">Periodo</option>
+            <option value="numero">Número</option>
+            <option value="cobrado">Cobrado</option>
+        </select>
+
+        Luego por:
+        <select name="orden2">
+            <option value="">---</option>
+            <option value="aseguradora">Aseguradora</option>
+            <option value="periodo">Periodo</option>
+            <option value="numero">Número</option>
+            <option value="cobrado">Cobrado</option>
+        </select>
+
+        <button type="submit">Aplicar</button>
+    </div>
+
+
+</form>
+
+
+<table border="1" cellpadding="6" 
+       style="border-collapse: collapse; width:100%; font-size:14px;">
+
+<tr style="background-color:#e9e9e9;">
+    <th>Aseguradora</th>
+    <th>Periodo</th>
+    <th>Número</th>
+    <th style="text-align:right;">Neto</th>
+    <th style="text-align:right;">No Gravado</th>
+    <th style="text-align:right;">Exento</th>
+    <th style="text-align:right;">IVA</th>
+    <th style="text-align:right;">Total</th>
+    <th style="text-align:right;">Cobrado</th>
+</tr>
+
+{% for c in comprobantes %}
+<tr>
+    <td>{{ c.aseguradora.nombre }}</td>
+    <td>{{ c.periodo_anio|unlocalize }}-{{ c.periodo_mes|stringformat:"02d" }}</td>
+    <td>{{ c.numero_comprobante }}</td>
+
+    <td style="text-align:right;">${{ c.neto|default:0|localize }}</td>
+    <td style="text-align:right;">${{ c.no_gravado|default:0|localize }}</td>
+    <td style="text-align:right;">${{ c.exento|default:0|localize }}</td>
+    <td style="text-align:right;">${{ c.iva|default:0|localize }}</td>
+    <td style="text-align:right;">${{ c.total|default:0|localize }}</td>
+    <td style="text-align:right;">${{ c.cobrado|default:0|localize }}</td>
+
+</tr>
+{% endfor %}
+
+<tr style="font-weight:bold; background-color:#f0f0f0;">
+    <td colspan="3">TOTALES</td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_neto|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_no_gravado|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_exento|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_iva|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_total|default:0|localize }}
+    </td>
+
+    <td style="text-align:right;">
+        ${{ totales.sum_cobrado|default:0|localize }}
+    </td>
+</tr>
+
+</table>
+
+<p style="margin-top:10px;">
+    <strong>Cantidad de registros:</strong> {{ comprobantes|length }}
+</p>
+
+{% endblock %}
