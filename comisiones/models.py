@@ -68,12 +68,12 @@ class ComprobantesComisiones(models.Model):
         unique_together = (('aseguradora', 'tipo_comprobante', 'tipo_factura', 'numero_comprobante', 'periodo_anio', 'periodo_mes'),)
 
 class CotizacionesDolar(models.Model):
-    periodo_anio = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
+    periodo_anio = models.IntegerField()
     periodo_mes = models.IntegerField()
     valor = models.DecimalField(max_digits=12, decimal_places=4, blank=True, null=True)
 
     class Meta:
         db_table = 'cotizaciones_dolar'
         unique_together = (('periodo_anio', 'periodo_mes'),)
-
 
