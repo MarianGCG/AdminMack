@@ -1,6 +1,7 @@
 import pandas as pd
 from ..models import CotizacionesDolar
 
+from decimal import Decimal
 
 
 
@@ -32,8 +33,6 @@ def limpiar_importe(valor):
 
 
 
-
-
 def importar_cotizaciones_excel(archivo):
 
     df = pd.read_excel(archivo)
@@ -55,6 +54,11 @@ def importar_cotizaciones_excel(archivo):
 
         anio = int(anio)
         mes = int(mes)
+
+        if pd.isna(valor):
+            valor = None
+        else:
+            valor = Decimal(str(valor))
 
         obj, created = CotizacionesDolar.objects.update_or_create(
             periodo_anio=anio,
