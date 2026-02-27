@@ -687,6 +687,9 @@ def importar_aseguradoras_view(request):
         "titulo": "Importar Aseguradoras"
     })
 
+
+
+
 def grafico_indice_mensual(request):
 
     import io
@@ -713,16 +716,18 @@ def grafico_indice_mensual(request):
     else:
         anios_seleccionados = anios_disponibles.copy()
 
-    if not anios_seleccionados:
-        return render(request, "grafico_indice_mensual.html", {
-            "grafico": "",
-            "anios_disponibles": anios_disponibles,
-            "anios_seleccionados": []
-        })
+    # ===============================
+    # NUEVO: año base dinámico
+    # ===============================
+    anio_base = request.GET.get("anio_base")
+
+    if anio_base:
+        anio_base = int(anio_base)
+    else:
+        anio_base = anios_disponibles[0]
 
     # ===============================
-    # Query mensual en USD
-    # (promedio mensual dólar)
+    # Query
     # ===============================
     placeholders = ",".join(["%s"] * len(anios_seleccionados))
 
@@ -730,18 +735,15 @@ def grafico_indice_mensual(request):
         SELECT
             c.periodo_anio,
             c.periodo_mes,
-            SUM((c.neto + c.no_gravado + c.exento) / d.valor_promedio) AS total_usd
+            SUM((c.neto + c.no_gravado + c.exento) / d.valor_promedio)
         FROM comprobantes_comisiones c
         JOIN (
-            SELECT
-                periodo_anio,
-                periodo_mes,
-                AVG(valor) AS valor_promedio
+            SELECT periodo_anio, periodo_mes, AVG(valor) AS valor_promedio
             FROM cotizaciones_dolar
             GROUP BY periodo_anio, periodo_mes
         ) d
-          ON c.periodo_anio = d.periodo_anio
-         AND c.periodo_mes = d.periodo_mes
+        ON c.periodo_anio = d.periodo_anio
+        AND c.periodo_mes = d.periodo_mes
         WHERE c.periodo_anio IN ({placeholders})
         GROUP BY c.periodo_anio, c.periodo_mes
         ORDER BY c.periodo_anio, c.periodo_mes;
@@ -755,7 +757,8 @@ def grafico_indice_mensual(request):
         return render(request, "grafico_indice_mensual.html", {
             "grafico": "",
             "anios_disponibles": anios_disponibles,
-            "anios_seleccionados": anios_seleccionados
+            "anios_seleccionados": anios_seleccionados,
+            "anio_base": anio_base
         })
 
     # ===============================
@@ -775,15 +778,8 @@ def grafico_indice_mensual(request):
         for anio in anio_dict.keys()
     })
 
-    if 2023 not in anios:
-        return render(request, "grafico_indice_mensual.html", {
-            "grafico": "",
-            "anios_disponibles": anios_disponibles,
-            "anios_seleccionados": anios_seleccionados
-        })
-
     # ===============================
-    # Gráfico en USD reales
+    # Gráfico
     # ===============================
     fig, ax = plt.subplots(figsize=(14,6))
 
@@ -802,17 +798,12 @@ def grafico_indice_mensual(request):
 
         posiciones = x + (i - len(anios)/2)*ancho + ancho/2
 
-        ax.bar(
-            posiciones,
-            valores_usd,
-            width=ancho,
-            label=str(anio)
-        )
+        ax.bar(posiciones, valores_usd, width=ancho, label=str(anio))
 
-        # Texto USD + %
+        # TEXTO
         for pos, mes, valor in zip(posiciones, meses_ordenados, valores_usd):
 
-            base = data[mes].get(2023, 0)
+            base = data[mes].get(anio_base, 0)
 
             porcentaje = (valor / base) * 100 if base > 0 else 0
 
@@ -830,7 +821,8 @@ def grafico_indice_mensual(request):
     ax.set_xticklabels([meses_nombre[m-1] for m in meses_ordenados])
 
     ax.set_ylabel("Facturación en USD")
-    ax.set_title("Facturación Mensual en USD + % vs Base 2023")
+
+    ax.set_title(f"Facturación Mensual en USD + % vs Base {anio_base}")
 
     ax.legend(
         loc="upper center",
@@ -839,23 +831,8 @@ def grafico_indice_mensual(request):
         frameon=False
     )
 
-
-    # ===============================
-    # Líneas verticales por mes
-    # ===============================
-    for i in range(1, len(meses_ordenados)):
-        ax.axvline(
-            x=i - 0.5,
-            linestyle="--",
-            linewidth=0.8,
-            color="gray",
-            alpha=0.5
-        )
-
-    # Formato eje Y con separador miles
     formatter = FuncFormatter(lambda x, _: f"{x:,.0f}")
     ax.yaxis.set_major_formatter(formatter)
-
 
     plt.subplots_adjust(bottom=0.2)
     plt.tight_layout()
@@ -863,14 +840,12 @@ def grafico_indice_mensual(request):
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png")
     buffer.seek(0)
-    image_png = buffer.getvalue()
-    buffer.close()
-    plt.close()
 
-    grafico = base64.b64encode(image_png).decode("utf-8")
+    grafico = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
     return render(request, "grafico_indice_mensual.html", {
         "grafico": grafico,
         "anios_disponibles": anios_disponibles,
-        "anios_seleccionados": anios_seleccionados
+        "anios_seleccionados": anios_seleccionados,
+        "anio_base": anio_base
     })

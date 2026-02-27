@@ -1,32 +1,99 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<h2>Índice Interanual por Mes (Base 2023 = 100)</h2>
+<h2>Índice Interanual por Mes</h2>
 
-<form method="get" style="margin-bottom:20px;">
+<style>
 
-    <strong>Seleccionar años:</strong><br><br>
+.contenedor {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+}
 
-    {% for anio in anios_disponibles %}
-        <label style="margin-right:15px;">
-            <input type="checkbox"
-                   name="anio"
-                   value="{{ anio }}"
-                   {% if anio in anios_seleccionados %}checked{% endif %}>
-            {{ anio }}
-        </label>
-    {% endfor %}
+.filtros {
+    margin-bottom: 15px;
+}
 
-    <br><br>
-    <button type="submit">Actualizar</button>
+.checkbox-anio {
+    margin-right: 12px;
+}
+
+select {
+    padding: 4px;
+    font-size: 14px;
+}
+
+button {
+    padding: 6px 12px;
+    margin-top: 10px;
+}
+
+</style>
+
+
+<div class="contenedor">
+
+<form method="get">
+
+<div class="filtros">
+
+<strong>Seleccionar años:</strong><br><br>
+
+{% for anio in anios_disponibles %}
+
+<label class="checkbox-anio">
+
+<input type="checkbox"
+       name="anio"
+       value="{{ anio|stringformat:'d' }}"
+       {% if anio in anios_seleccionados %}checked{% endif %}>
+
+{{ anio|stringformat:"d" }}
+
+</label>
+
+{% endfor %}
+
+<br><br>
+
+<strong>Año base:</strong>
+
+<select name="anio_base" onchange="this.form.submit()">
+
+{% for anio in anios_disponibles %}
+
+<option value="{{ anio }}"
+{% if anio == anio_base %}selected{% endif %}>
+{{ anio }}
+</option>
+
+{% endfor %}
+
+</select>
+
+<br><br>
+
+<button type="submit">Actualizar</button>
+
+</div>
 
 </form>
 
+
 {% if grafico %}
-    <img src="data:image/png;base64,{{ grafico }}" />
+
+<img src="data:image/png;base64,{{ grafico }}"
+     style="width:100%; max-width:1200px;">
+
 {% else %}
-    <p>No hay datos disponibles.</p>
+
+<p>No hay datos disponibles.</p>
+
 {% endif %}
+
+
+</div>
 
 {% endblock %}
