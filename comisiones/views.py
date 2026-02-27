@@ -182,9 +182,36 @@ def ver_saldos(request):
         "anio": anio
     })
 
+# =====================================================
+# FUNCIÓN: tendencia lineal
+# =====================================================
+def calcular_tendencia_lineal(valores):
+
+    n = len(valores)
+
+    if n < 2:
+        return valores
+
+    x = list(range(n))
+
+    sum_x = sum(x)
+    sum_y = sum(valores)
+    sum_xy = sum(x[i] * valores[i] for i in range(n))
+    sum_x2 = sum(x[i] ** 2 for i in range(n))
+
+    denominador = (n * sum_x2 - sum_x ** 2)
+
+    if denominador == 0:
+        return valores
+
+    m = (n * sum_xy - sum_x * sum_y) / denominador
+    b = (sum_y - m * sum_x) / n
+
+    return [(m * i + b) for i in x]
+
 
 # =====================================================
-# 3️⃣ GRAFICOS 01 (ANUAL / TRIMESTRAL)
+# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
 def graficos01(request):
 
@@ -195,7 +222,23 @@ def graficos01(request):
     modo = request.GET.get("modo", "lineas")
 
     # ==========================================
-    # 1️⃣ AÑOS DISPONIBLES
+    # DETECTAR MOTOR BD
+    # ==========================================
+
+    motor = connection.vendor
+
+    if motor == "sqlite":
+
+        trimestre_expr_fact = "CAST(((c.periodo_mes - 1) / 3 + 1) AS INTEGER)"
+        trimestre_expr_dolar = "CAST(((periodo_mes - 1) / 3 + 1) AS INTEGER)"
+
+    else:  # postgresql
+
+        trimestre_expr_fact = "((c.periodo_mes - 1) / 3 + 1)::int"
+        trimestre_expr_dolar = "((periodo_mes - 1) / 3 + 1)::int"
+
+    # ==========================================
+    # AÑOS DISPONIBLES
     # ==========================================
 
     anios_disponibles = list(
@@ -208,31 +251,57 @@ def graficos01(request):
     anios_seleccionados = request.GET.getlist("anio")
 
     if not anios_seleccionados:
+
         anios_seleccionados = anios_disponibles
+
     else:
+
         anios_seleccionados = [
             int(str(a).replace(".", ""))
             for a in anios_seleccionados
         ]
 
-    # ==========================================
-    # 2️⃣ FILTRO POR AÑOS
-    # ==========================================
-
     placeholders = ",".join(["%s"] * len(anios_seleccionados))
+
     filtro_where = f"WHERE c.periodo_anio IN ({placeholders})"
 
     # ==========================================
-    # 3️⃣ QUERIES
+    # QUERIES
     # ==========================================
 
-    if tipo == "trimestral":
+    if tipo == "mensual":
+
+        query_facturacion = f"""
+            SELECT
+                c.periodo_anio,
+                c.periodo_mes,
+                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
+            FROM comprobantes_comisiones c
+            JOIN cotizaciones_dolar d
+              ON c.periodo_anio = d.periodo_anio
+             AND c.periodo_mes = d.periodo_mes
+            {filtro_where}
+            GROUP BY c.periodo_anio, c.periodo_mes
+            ORDER BY c.periodo_anio, c.periodo_mes;
+        """
+
+        query_dolar = f"""
+            SELECT
+                periodo_anio,
+                periodo_mes,
+                valor
+            FROM cotizaciones_dolar
+            WHERE periodo_anio IN ({placeholders})
+            ORDER BY periodo_anio, periodo_mes;
+        """
+
+    elif tipo == "trimestral":
 
         query_facturacion = f"""
             SELECT 
                 c.periodo_anio,
-                ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
-                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0)) AS total_usd
+                {trimestre_expr_fact} AS trimestre,
+                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
             FROM comprobantes_comisiones c
             JOIN cotizaciones_dolar d
               ON c.periodo_anio = d.periodo_anio
@@ -245,20 +314,20 @@ def graficos01(request):
         query_dolar = f"""
             SELECT
                 periodo_anio,
-                ((periodo_mes - 1) / 3 + 1)::int AS trimestre,
-                AVG(valor) AS dolar_promedio
+                {trimestre_expr_dolar} AS trimestre,
+                AVG(valor)
             FROM cotizaciones_dolar
             WHERE periodo_anio IN ({placeholders})
             GROUP BY periodo_anio, trimestre
             ORDER BY periodo_anio, trimestre;
         """
 
-    else:
+    else:  # anual
 
         query_facturacion = f"""
             SELECT
                 c.periodo_anio,
-                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0)) AS total_usd
+                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
             FROM comprobantes_comisiones c
             JOIN cotizaciones_dolar d
               ON c.periodo_anio = d.periodo_anio
@@ -271,7 +340,7 @@ def graficos01(request):
         query_dolar = f"""
             SELECT
                 periodo_anio,
-                AVG(valor) AS dolar_promedio
+                AVG(valor)
             FROM cotizaciones_dolar
             WHERE periodo_anio IN ({placeholders})
             GROUP BY periodo_anio
@@ -279,7 +348,7 @@ def graficos01(request):
         """
 
     # ==========================================
-    # 4️⃣ EJECUTAR
+    # EJECUTAR
     # ==========================================
 
     with connection.cursor() as cursor:
@@ -291,12 +360,31 @@ def graficos01(request):
         dolar = cursor.fetchall()
 
     # ==========================================
-    # 5️⃣ PROCESAR RESULTADOS
+    # PROCESAR
     # ==========================================
 
-    if tipo == "trimestral":
+    if tipo == "mensual":
+
+        labels = [f"{r[0]}-{r[1]:02d}" for r in facturacion]
+
+        valores_usd = [float(r[2] or 0) for r in facturacion]
+
+        dolar_dict = {
+            f"{r[0]}-{r[1]:02d}": float(r[2] or 0)
+            for r in dolar
+        }
+
+        valores_dolar = [
+            dolar_dict.get(label, 0)
+            for label in labels
+        ]
+
+        valores_usd_tendencia = []
+
+    elif tipo == "trimestral":
 
         labels = [f"{r[0]}-T{r[1]}" for r in facturacion]
+
         valores_usd = [float(r[2] or 0) for r in facturacion]
 
         dolar_dict = {
@@ -309,9 +397,12 @@ def graficos01(request):
             for label in labels
         ]
 
+        valores_usd_tendencia = calcular_tendencia_lineal(valores_usd)
+
     else:
 
         labels = [str(r[0]) for r in facturacion]
+
         valores_usd = [float(r[1] or 0) for r in facturacion]
 
         dolar_dict = {
@@ -324,19 +415,32 @@ def graficos01(request):
             for label in labels
         ]
 
+        valores_usd_tendencia = []
+
     # ==========================================
-    # 6️⃣ RENDER
+    # RENDER
     # ==========================================
 
     return render(request, "graficos01.html", {
+
         "labels": json.dumps(labels),
+
         "valores_usd": json.dumps(valores_usd),
+
         "valores_dolar": json.dumps(valores_dolar),
+
+        "valores_usd_tendencia": json.dumps(valores_usd_tendencia),
+
         "tipo": tipo,
+
         "modo": modo,
+
         "anios_disponibles": anios_disponibles,
+
         "anios_seleccionados": anios_seleccionados
+
     })
+
 
 
 from django.shortcuts import render

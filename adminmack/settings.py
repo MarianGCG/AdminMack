@@ -76,15 +76,17 @@ WSGI_APPLICATION = 'adminmack.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
-import os
+
 import dj_database_url
+import os
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
+        default='postgresql://postgres:@localhost:5432/MACKINLAY',
         conn_max_age=600
     )
 }
+
 
 
 

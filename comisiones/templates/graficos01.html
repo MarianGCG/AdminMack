@@ -4,9 +4,7 @@
 <h2>📊 Evolución Facturación en USD</h2>
 
 <style>
-    h2 {
-        margin-bottom: 20px;
-    }
+    h2 { margin-bottom: 20px; }
 
     .btn {
         padding: 8px 14px;
@@ -45,19 +43,29 @@
 
 <!-- Tipo período -->
 <div>
-    <a href="?tipo=anual&modo={{ modo }}" class="btn {% if tipo == 'anual' %}activo{% endif %}">
+
+    <a href="?tipo=mensual&modo={{ modo }}"
+       class="btn {% if tipo == 'mensual' %}activo{% endif %}">
+        Mensual
+    </a>
+
+    <a href="?tipo=trimestral&modo={{ modo }}"
+       class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
+        Trimestral
+    </a>
+
+    <a href="?tipo=anual&modo={{ modo }}"
+       class="btn {% if tipo == 'anual' %}activo{% endif %}">
         Anual
     </a>
 
-    <a href="?tipo=trimestral&modo={{ modo }}" class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
-        Trimestral
-    </a>
 </div>
 
 <br>
 
 <!-- Tipo gráfico -->
 <div>
+
     <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
        class="btn {% if modo == 'lineas' %}activo{% endif %}">
         Líneas
@@ -67,92 +75,343 @@
        class="btn {% if modo == 'barras' %}activo{% endif %}">
         Barras
     </a>
+
 </div>
 
 <div class="filtros">
-    <form method="get">
-        <input type="hidden" name="tipo" value="{{ tipo }}">
-        <input type="hidden" name="modo" value="{{ modo }}">
 
-        <strong>Seleccionar años:</strong><br><br>
+<form method="get">
 
-        {% for anio in anios_disponibles %}
-            <label class="checkbox-anio">
-                <input type="checkbox"
-                       name="anio"
-                       value="{{ anio|stringformat:'d' }}"
-                       {% if anio in anios_seleccionados %}checked{% endif %}>
-                {{ anio|stringformat:"d" }}
-            </label>
-        {% endfor %}
+<input type="hidden" name="tipo" value="{{ tipo }}">
+<input type="hidden" name="modo" value="{{ modo }}">
 
-        <button type="submit">Actualizar</button>
-    </form>
+<strong>Seleccionar años:</strong><br><br>
+
+{% for anio in anios_disponibles %}
+<label class="checkbox-anio">
+<input type="checkbox"
+       name="anio"
+       value="{{ anio|stringformat:'d' }}"
+       {% if anio in anios_seleccionados %}checked{% endif %}>
+{{ anio|stringformat:"d" }}
+</label>
+{% endfor %}
+
+<button type="submit">Actualizar</button>
+
+</form>
+
 </div>
 
 <div class="contenedor-grafico">
-    <canvas id="grafico" height="120"></canvas>
+<canvas id="grafico" height="120"></canvas>
 </div>
 
 <script>
-const ctx = document.getElementById('grafico');
 
 const labels = {{ labels|safe }};
 const valoresUSD = {{ valores_usd|safe }};
 const valoresDolar = {{ valores_dolar|safe }};
+const tendenciaUSD = {{ valores_usd_tendencia|safe }};
+
 const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
 
-new Chart(ctx, {
-    type: modo === "barras" ? "bar" : "line",
-    data: {
-        labels: labels,
-        datasets: [
-            {
-                label: "Facturación USD",
-                data: valoresUSD,
-                backgroundColor: "rgba(44,120,190,0.6)",
-                borderColor: "#2c78be",
-                borderWidth: 2,
-                tension: 0.25,
-                yAxisID: "y"
-            },
-            {
-                label: "Dólar Promedio",
-                data: valoresDolar,
-                type: "line",
-                borderColor: "orange",
-                borderWidth: 2,
-                borderDash: [6,6],
-                pointRadius: 4,
-                tension: 0.25,
-                yAxisID: "y1"
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        interaction: {
-            mode: "index",
-            intersect: false
-        },
-        scales: {
-            y: {
-                position: "left",
-                ticks: {
-                    callback: value => value.toLocaleString("es-AR")
-                }
-            },
-            y1: {
-                position: "right",
-                grid: { drawOnChartArea: false },
-                ticks: {
-                    callback: value => value.toLocaleString("es-AR")
-                }
-            }
-        }
+
+// ==========================
+// formatear etiquetas eje X
+// ==========================
+
+
+
+function formatearLabel(label, index) {
+
+    if (tipo === "mensual") {
+
+        const partes = label.split("-");
+        const anio = partes[0];
+        const mes = parseInt(partes[1]);
+
+        const nombresMes = [
+            "Ene","Feb","Mar","Abr","May","Jun",
+            "Jul","Ago","Sep","Oct","Nov","Dic"
+        ];
+
+        return nombresMes[mes - 1];
     }
+
+    if (tipo === "trimestral") {
+
+        const partes = label.split("-");
+        const anio = partes[0];
+        const trimestre = partes[1];
+
+        if (trimestre === "T1")
+            return anio + " " + trimestre;
+
+        return trimestre;
+    }
+
+    return label;
+}
+
+
+
+// ==========================
+// datasets
+// ==========================
+
+let datasets = [
+
+{
+label: "Facturación USD",
+data: valoresUSD,
+backgroundColor: "rgba(44,120,190,0.6)",
+borderColor: "#2c78be",
+borderWidth: 2,
+tension: 0.25,
+yAxisID: "y"
+},
+
+{
+label: "Dólar cierre de mes",
+data: valoresDolar,
+type: "line",
+borderColor: "orange",
+borderWidth: 2,
+borderDash: [6,6],
+pointRadius: 4,
+tension: 0.25,
+yAxisID: "y1"
+}
+
+];
+
+
+// tendencia trimestral
+
+if (tipo === "trimestral") {
+
+datasets.push({
+
+label: "Tendencia",
+
+data: tendenciaUSD,
+
+type: "line",
+
+borderColor: "#2ca02c",
+
+borderWidth: 3,
+
+borderDash: [10,5],
+
+pointRadius: 0,
+
+tension: 0,
+
+yAxisID: "y"
+
 });
+
+}
+
+
+// ==========================
+// grafico
+// ==========================
+
+new Chart(document.getElementById('grafico'), {
+
+type: modo === "barras" ? "bar" : "line",
+
+data: {
+labels: labels,
+datasets: datasets
+},
+
+options: {
+
+responsive: true,
+
+interaction: {
+mode: "index",
+intersect: false
+},
+
+plugins: {
+
+tooltip: {
+callbacks: {
+label: function(context) {
+
+let value = context.raw;
+
+return context.dataset.label +
+": " +
+value.toLocaleString("es-AR");
+
+}
+}
+}
+
+},
+
+scales: {
+
+x: {
+
+ticks: {
+
+callback: function(value, index) {
+return formatearLabel(labels[index], index);
+},
+padding: 10,   // 👈 baja los meses
+maxRotation: 0,
+autoSkip: false
+
+}
+
+},
+
+y: {
+
+position: "left",
+
+ticks: {
+
+callback: value =>
+value.toLocaleString("es-AR")
+
+}
+
+},
+
+y1: {
+
+position: "right",
+
+grid: { drawOnChartArea: false },
+
+ticks: {
+
+callback: value =>
+value.toLocaleString("es-AR")
+
+}
+
+}
+
+}
+
+},
+
+plugins: [
+
+{
+id: 'lineasPorAnio',
+
+afterDraw(chart) {
+
+const {ctx, chartArea, scales} = chart;
+const xScale = scales.x;
+
+ctx.save();
+
+ctx.strokeStyle = "#888";
+ctx.lineWidth = 1.5;
+
+labels.forEach((label, index) => {
+
+if (
+label.endsWith("-01") ||
+label.endsWith("-T1") ||
+label.match(/^\d{4}$/)
+) {
+
+const x = xScale.getPixelForValue(index);
+
+ctx.beginPath();
+ctx.moveTo(x, chartArea.top);
+ctx.lineTo(x, chartArea.bottom);
+ctx.stroke();
+
+}
+
+});
+
+ctx.restore();
+
+}
+},
+
+
+// 👇 ESTE ES EL NUEVO PLUGIN — AÑOS DEBAJO DE LOS MESES
+
+{
+id: 'etiquetasAnios',
+
+afterDraw(chart) {
+
+if (tipo !== "mensual") return;
+
+const {ctx, chartArea, scales} = chart;
+const xScale = scales.x;
+
+ctx.save();
+
+ctx.fillStyle = "#444";
+ctx.font = "bold 12px Arial";
+ctx.textAlign = "center";
+
+let anioActual = null;
+let inicioGrupo = null;
+
+labels.forEach((label, index) => {
+
+const anio = label.split("-")[0];
+
+if (anioActual === null) {
+
+anioActual = anio;
+inicioGrupo = index;
+
+}
+
+const siguiente = labels[index + 1];
+const anioSiguiente = siguiente ? siguiente.split("-")[0] : null;
+
+if (anio !== anioSiguiente) {
+
+const finGrupo = index;
+
+const xInicio = xScale.getPixelForValue(inicioGrupo);
+const xFin = xScale.getPixelForValue(finGrupo);
+
+const centro = (xInicio + xFin) / 2;
+
+ctx.fillText(
+anioActual,
+centro,
+chartArea.bottom + 12
+);
+
+anioActual = anioSiguiente;
+inicioGrupo = index + 1;
+
+}
+
+});
+
+ctx.restore();
+
+}
+}
+
+]
+
+});
+
 </script>
 
 {% endblock %}
