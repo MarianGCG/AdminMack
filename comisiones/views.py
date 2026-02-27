@@ -719,12 +719,13 @@ def grafico_indice_mensual(request):
     # ===============================
     # NUEVO: año base dinámico
     # ===============================
-    anio_base = request.GET.get("anio_base")
+    anio_base_raw = request.GET.get("anio_base")
 
-    if anio_base:
-        anio_base = int(anio_base)
+    if anio_base_raw:
+        anio_base = int(str(anio_base_raw).replace(".", ""))
     else:
         anio_base = anios_disponibles[0]
+
 
     # ===============================
     # Query
