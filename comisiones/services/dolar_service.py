@@ -30,13 +30,18 @@ def limpiar_importe(valor):
 
 
 
-
-
-
 def importar_cotizaciones_excel(archivo):
 
+    import pandas as pd
+    from decimal import Decimal
+
+    # 🔹 CLAVE PARA RENDER
+    archivo.seek(0)
+
     df = pd.read_excel(archivo)
-    df.columns = df.columns.str.strip().str.lower()
+
+    # limpiar nombres columnas
+    df.columns = df.columns.astype(str).str.strip().str.lower()
 
     insertadas = 0
     actualizadas = 0
@@ -52,8 +57,12 @@ def importar_cotizaciones_excel(archivo):
             omitidas += 1
             continue
 
-        anio = int(anio)
-        mes = int(mes)
+        try:
+            anio = int(anio)
+            mes = int(mes)
+        except:
+            omitidas += 1
+            continue
 
         if pd.isna(valor):
             valor = None
@@ -76,4 +85,3 @@ def importar_cotizaciones_excel(archivo):
         "actualizadas": actualizadas,
         "omitidas": omitidas
     }
-
