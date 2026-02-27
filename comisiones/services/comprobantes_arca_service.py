@@ -1,6 +1,8 @@
 import pandas as pd
 from datetime import datetime
 from ..models import Aseguradoras, ComprobantesComisiones
+from io import BytesIO
+
 
 def limpiar_cuit(valor):
     if pd.isna(valor):
@@ -34,54 +36,86 @@ def limpiar_importe(valor):
         return 0
 
 
-
+from io import BytesIO
+import pandas as pd
+from datetime import datetime
+from ..models import Aseguradoras, ComprobantesComisiones
 def importar_comprobantes_arca(archivo):
 
-    df = pd.read_excel(archivo, header=1)
-    df.columns = df.columns.str.strip()
+    import pandas as pd
 
+    # ================================
+    # LEER ARCHIVO (compatible local y Render)
+    # ================================
+    try:
+        archivo.seek(0)
+        df = pd.read_excel(archivo)
+    except Exception as e:
+        return {
+            "ooinsertados": 0,
+            "actualizados": 0,
+            "omitidos": 0,
+            "no_encontrados": 0,
+            "error": str(e)
+        }
+
+    # limpiar nombres columnas
+    df.columns = df.columns.astype(str).str.strip()
+
+    # ================================
+    # CONTADORES
+    # ================================
     insertados = 0
     actualizados = 0
-    no_encontrados = 0
     omitidos = 0
+    no_encontrados = 0
 
+    # ================================
+    # RECORRER FILAS
+    # ================================
     for _, row in df.iterrows():
 
         fecha = row.get("Fecha")
         tipo_texto = str(row.get("Tipo", "")).strip()
         numero = str(row.get("Número Desde", "")).replace(".0", "").strip()
         cuit = limpiar_cuit(row.get("Nro. Doc. Receptor"))
-        print("Fecha leída:", fecha)
 
+        # validar datos mínimos
         if pd.isna(fecha) or not numero or not cuit:
             omitidos += 1
             continue
 
-        #fecha = pd.to_datetime(fecha).date()
-        fecha = pd.to_datetime(fecha, dayfirst=True).date()
-        print("Fecha fecha =  pd.to_datetime(fecha, dayfirst=True).date()", fecha)
-        # 🔹 PERIODO = MES ANTERIOR
+        # ================================
+        # FECHA
+        # ================================
+        try:
+            fecha = pd.to_datetime(fecha, dayfirst=True).date()
+        except:
+            omitidos += 1
+            continue
+
+        # ================================
+        # PERIODO = MES ANTERIOR
+        # ================================
         periodo_mes = fecha.month - 1
         periodo_anio = fecha.year
-
-        print("fecha.month:",fecha.month)
-        print("Periodo_mes:", periodo_mes)
 
         if periodo_mes == 0:
             periodo_mes = 12
             periodo_anio -= 1
 
- 
-
-
-        # 🔹 IMPORTES
+        # ================================
+        # IMPORTES
+        # ================================
         neto = limpiar_importe(row.get("Neto Gravado Total"))
         no_gravado = limpiar_importe(row.get("Neto No Gravado"))
         exento = limpiar_importe(row.get("Op. Exentas"))
         iva = limpiar_importe(row.get("Total IVA"))
         total = limpiar_importe(row.get("Imp. Total"))
 
-        # 🔹 TIPO COMPROBANTE
+        # ================================
+        # TIPO COMPROBANTE
+        # ================================
         if "nota de crédito" in tipo_texto.lower():
             tipo_comprobante = "NOTA_CREDITO"
             neto = -neto
@@ -92,24 +126,30 @@ def importar_comprobantes_arca(archivo):
         else:
             tipo_comprobante = "FACTURA"
 
-        # 🔹 TIPO FACTURA (A/B/C)
-        if tipo_texto.strip().endswith("A"):
+        # ================================
+        # TIPO FACTURA
+        # ================================
+        if tipo_texto.endswith("A"):
             tipo_factura = "A"
-        elif tipo_texto.strip().endswith("B"):
+        elif tipo_texto.endswith("B"):
             tipo_factura = "B"
-        elif tipo_texto.strip().endswith("C"):
+        elif tipo_texto.endswith("C"):
             tipo_factura = "C"
         else:
             tipo_factura = "A"
 
-        # 🔹 ASEGURADORA
+        # ================================
+        # BUSCAR ASEGURADORA
+        # ================================
         aseguradora = Aseguradoras.objects.filter(cuit=cuit).first()
 
         if not aseguradora:
             no_encontrados += 1
             continue
 
-        # 🔹 INSERT / UPDATE (SIN OMITIR)
+        # ================================
+        # INSERT / UPDATE
+        # ================================
         obj, created = ComprobantesComisiones.objects.update_or_create(
             aseguradora=aseguradora,
             tipo_comprobante=tipo_comprobante,
@@ -133,6 +173,9 @@ def importar_comprobantes_arca(archivo):
         else:
             actualizados += 1
 
+    # ================================
+    # RESULTADO
+    # ================================
     return {
         "insertados": insertados,
         "actualizados": actualizados,
