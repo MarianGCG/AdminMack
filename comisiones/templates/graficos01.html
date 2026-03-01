@@ -3,11 +3,15 @@
 {% block content %}
 
 <div class="titulo-grafico">
-Evolución Facturación en USD
+    Evolución Facturación en USD
 </div>
 
 
 <form method="get">
+
+<!-- ========================= -->
+<!-- BARRA SUPERIOR -->
+<!-- ========================= -->
 
 <div class="barra-opciones">
 
@@ -34,6 +38,7 @@ Anual
 
 <span style="border-left:1px solid #ccc;height:20px;"></span>
 
+
 <b>Modo:</b>
 
 <label>
@@ -51,6 +56,7 @@ Barras
 
 <span style="border-left:1px solid #ccc;height:20px;"></span>
 
+
 <label>
 <input type="checkbox"
 name="desglose"
@@ -59,12 +65,15 @@ value="1"
 Desglose aseguradoras
 </label>
 
+
 <button type="submit">Actualizar</button>
 
 </div>
 
 
-<!-- AÑOS EN LINEA APARTE -->
+<!-- ========================= -->
+<!-- AÑOS -->
+<!-- ========================= -->
 
 <div class="barra-opciones">
 
@@ -87,6 +96,10 @@ value="{{ anio }}"
 </form>
 
 
+<!-- ========================= -->
+<!-- GRAFICO -->
+<!-- ========================= -->
+
 <div style="height: calc(100vh - 170px);">
 
 <canvas id="grafico"></canvas>
@@ -96,36 +109,214 @@ value="{{ anio }}"
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
 <script>
 
 const labels = {{ labels|safe }};
 const datasets = {{ datasets|safe }};
+const tipo = "{{ tipo }}";
 
-new Chart(document.getElementById('grafico'),{
 
-type: "{{ modo }}" === "barras" ? "bar" : "line",
+// =============================
+// FORMATEAR LABELS
+// =============================
 
-data:{
+function formatearLabel(label,index)
+{
+
+    if(tipo==="mensual")
+    {
+        const [anio,mes]=label.split("-");
+
+        const nombres=[
+            "Ene","Feb","Mar","Abr","May","Jun",
+            "Jul","Ago","Sep","Oct","Nov","Dic"
+        ];
+
+        return nombres[parseInt(mes)-1];
+    }
+
+    if(tipo==="trimestral")
+    {
+        const [anio,t]=label.split("-");
+
+        if(t==="T1")
+            return anio+" "+t;
+
+        return t;
+    }
+
+    return label;
+}
+
+
+
+// =============================
+// PLUGIN LINEAS CAMBIO AÑO
+// =============================
+
+const lineasCambioAnio=
+{
+id:"lineasCambioAnio",
+
+afterDraw(chart)
+{
+
+const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
+
+ctx.save();
+
+ctx.strokeStyle="#999";
+ctx.lineWidth=1;
+ctx.setLineDash([5,5]);
+
+for(let i=1;i<labels.length;i++)
+{
+const anioActual=labels[i].split("-")[0];
+const anioAnterior=labels[i-1].split("-")[0];
+
+if(anioActual!==anioAnterior)
+{
+const xPos=(x.getPixelForValue(i)+x.getPixelForValue(i-1))/2;
+
+ctx.beginPath();
+ctx.moveTo(xPos,top);
+ctx.lineTo(xPos,bottom);
+ctx.stroke();
+}
+}
+
+ctx.restore();
+
+}
+};
+
+
+
+// =============================
+// PLUGIN AÑOS DEBAJO
+// =============================
+
+const etiquetasAnios=
+{
+id:"etiquetasAnios",
+
+afterDraw(chart)
+{
+
+if(tipo!=="mensual") return;
+
+const {ctx,chartArea,scales:{x}}=chart;
+
+ctx.save();
+
+ctx.font="bold 12px Arial";
+ctx.fillStyle="#444";
+ctx.textAlign="center";
+
+let anioActual=null;
+let inicio=0;
+
+for(let i=0;i<labels.length;i++)
+{
+
+const anio=labels[i].split("-")[0];
+const siguiente=labels[i+1]?.split("-")[0];
+
+if(anioActual===null)
+{
+anioActual=anio;
+inicio=i;
+}
+
+if(anio!==siguiente)
+{
+
+const xInicio=x.getPixelForValue(inicio);
+const xFin=x.getPixelForValue(i);
+
+const centro=(xInicio+xFin)/2;
+
+ctx.fillText(anioActual,centro,chartArea.bottom+15);
+
+anioActual=siguiente;
+inicio=i+1;
+
+}
+
+}
+
+ctx.restore();
+
+}
+};
+
+
+
+// =============================
+// CREAR GRAFICO
+// =============================
+
+new Chart(document.getElementById("grafico"),
+{
+
+type:"{{ modo }}"==="barras"?"bar":"line",
+
+data:
+{
 labels:labels,
 datasets:datasets
 },
 
-options:{
+options:
+{
 
 responsive:true,
 maintainAspectRatio:false,
 
-interaction:{
-mode:'index',
+interaction:
+{
+mode:"index",
 intersect:false
 },
 
-scales:{
-x:{},
-y:{}
+plugins:
+{
+legend:
+{
+display:true
+}
+},
+
+scales:
+{
+
+x:
+{
+ticks:
+{
+callback:function(value,index)
+{
+return formatearLabel(labels[index],index);
+},
+maxRotation:0,
+autoSkip:false
+}
+},
+
+y:
+{
+ticks:
+{
+callback:value=>value.toLocaleString("es-AR")
+}
 }
 
 }
+
+},
+
+plugins:[lineasCambioAnio,etiquetasAnios]
 
 });
 
