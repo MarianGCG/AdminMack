@@ -448,6 +448,7 @@ def graficos01(request):
 
 
 
+
 def graficos02(request):
 
     import io
@@ -458,6 +459,7 @@ def graficos02(request):
     from matplotlib.ticker import FuncFormatter
     from django.db import connection
 
+    from .services.parametros_service import get_parametro
 
     # ===============================
     # Parámetros seguros
@@ -473,27 +475,14 @@ def graficos02(request):
     except:
         tope = 100.0
 
-    # ===============================
-    # Años seleccionados
-    # ===============================
-
-    anios_raw = request.GET.getlist("anio")
-    anios_seleccionados = []
-
-    for a in anios_raw:
-        try:
-            anios_seleccionados.append(int(str(a).replace(".", "")))
-        except:
-            pass
 
     # ===============================
-    # QUERY (AGREGAMOS COLOR)
+    # QUERY
     # ===============================
 
     with connection.cursor() as cursor:
 
         cursor.execute("""
-
             SELECT
                 c.periodo_anio,
                 ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
@@ -519,10 +508,14 @@ def graficos02(request):
             ORDER BY
                 c.periodo_anio,
                 trimestre;
-
         """)
 
         rows = cursor.fetchall()
+
+
+    # ===============================
+    # Sin datos
+    # ===============================
 
     if not rows:
 
@@ -534,40 +527,70 @@ def graficos02(request):
             "anios_seleccionados": []
         })
 
+
     # ===============================
-    # Organizar datos
+    # Años disponibles
+    # ===============================
+
+    anios_disponibles = sorted(list({
+        row[0] for row in rows
+    }))
+
+
+    # ===============================
+    # Años seleccionados (GET o DEFAULT PARAMETRO)
+    # ===============================
+
+    anios_raw = request.GET.getlist("anio")
+
+    if anios_raw:
+
+        anios_seleccionados = []
+
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a).replace(".", "")))
+            except:
+                pass
+
+    else:
+
+        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
+
+        cantidad_default = min(cantidad_default, len(anios_disponibles))
+
+        anios_seleccionados = anios_disponibles[-cantidad_default:]
+
+
+    # ===============================
+    # Organizar datos (FILTRANDO AÑOS)
     # ===============================
 
     data = {}
     anio_por_periodo = {}
-    anios_disponibles = set()
     color_map = {}
 
     for anio, trimestre, nombre, color, total in rows:
 
-        anios_disponibles.add(anio)
-
-        if anios_seleccionados and anio not in anios_seleccionados:
+        if anio not in anios_seleccionados:
             continue
 
         periodo = f"{anio}-T{trimestre}"
 
         if periodo not in data:
+
             data[periodo] = {}
             anio_por_periodo[periodo] = anio
 
         data[periodo][nombre] = float(total)
 
-        # GUARDAMOS COLOR DESDE DB
         color_map[nombre] = color
 
-    anios_disponibles = sorted(anios_disponibles)
 
-    if not anios_seleccionados:
-        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
-        cantidad_default = min(cantidad_default, len(anios_disponibles))
-        anios_seleccionados = anios_disponibles[-cantidad_default:]
-        
+    # ===============================
+    # Si no hay datos luego del filtro
+    # ===============================
+
     if not data:
 
         return render(request, "graficos02.html", {
@@ -578,13 +601,16 @@ def graficos02(request):
             "anios_seleccionados": anios_seleccionados
         })
 
+
     periodos = sorted(data.keys())
+
 
     # ===============================
     # GRÁFICO
     # ===============================
 
     fig, ax = plt.subplots(figsize=(14,6))
+
 
     for idx, periodo in enumerate(periodos):
 
@@ -636,6 +662,7 @@ def graficos02(request):
 
             bottom += valor
 
+
     # ===============================
     # Separadores de año
     # ===============================
@@ -651,6 +678,7 @@ def graficos02(request):
                 color="gray"
             )
 
+
     ax.set_xticks(range(len(periodos)))
     ax.set_xticklabels(periodos, rotation=45)
 
@@ -660,6 +688,11 @@ def graficos02(request):
     ax.yaxis.set_major_formatter(formatter)
 
     plt.tight_layout()
+
+
+    # ===============================
+    # Convertir a imagen
+    # ===============================
 
     buffer = io.BytesIO()
 
@@ -673,6 +706,11 @@ def graficos02(request):
 
     plt.close()
 
+
+    # ===============================
+    # Render
+    # ===============================
+
     return render(request, "graficos02.html", {
 
         "grafico": grafico,
@@ -683,6 +721,8 @@ def graficos02(request):
 
     })
 
+
+    
 
 def importar_aseguradoras_view(request):
 
@@ -709,8 +749,6 @@ def grafico_indice_mensual(request):
 
     import io
     import base64
-    import matplotlib
-    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
 
