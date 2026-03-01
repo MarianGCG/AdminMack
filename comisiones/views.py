@@ -745,6 +745,199 @@ def importar_aseguradoras_view(request):
 
 
 
+def grafico_indice_mensual(request):
+
+    import io
+    import base64
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
+
+
+
+    # ===============================
+    # Años disponibles
+    # ===============================
+    anios_disponibles = list(
+        ComprobantesComisiones.objects
+        .values_list("periodo_anio", flat=True)
+        .distinct()
+        .order_by("periodo_anio")
+    )
+
+    from .services.parametros_service import get_parametro
+
+    anios_raw = request.GET.getlist("anio")
+
+    if anios_raw:
+
+        anios_seleccionados = []
+
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a).replace(".", "")))
+            except:
+                pass
+
+    else:
+
+        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
+
+        anios_seleccionados = anios_disponibles[-cantidad_default:]
+        
+        
+
+
+        
+    # ===============================
+    # Año base dinámico desde parámetros
+    # ===============================
+    from .services.parametros_service import get_parametro
+
+    anio_base_raw = request.GET.get("anio_base")
+
+    if anio_base_raw:
+
+        anio_base = int(str(anio_base_raw).replace(".", ""))
+
+    else:
+
+        anio_base_param = get_parametro("ANIO_BASE_INDICE")
+
+        if anio_base_param is not None:
+
+            anio_base = int(anio_base_param)
+
+        else:
+
+            anio_base = anios_disponibles[0]
+                
+
+    # ===============================
+    # Query
+    # ===============================
+    placeholders = ",".join(["%s"] * len(anios_seleccionados))
+
+    query = f"""
+        SELECT
+            c.periodo_anio,
+            c.periodo_mes,
+            SUM((c.neto + c.no_gravado + c.exento) / d.valor_promedio)
+        FROM comprobantes_comisiones c
+        JOIN (
+            SELECT periodo_anio, periodo_mes, AVG(valor) AS valor_promedio
+            FROM cotizaciones_dolar
+            GROUP BY periodo_anio, periodo_mes
+        ) d
+        ON c.periodo_anio = d.periodo_anio
+        AND c.periodo_mes = d.periodo_mes
+        WHERE c.periodo_anio IN ({placeholders})
+        GROUP BY c.periodo_anio, c.periodo_mes
+        ORDER BY c.periodo_anio, c.periodo_mes;
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, anios_seleccionados)
+        rows = cursor.fetchall()
+
+    if not rows:
+        return render(request, "grafico_indice_mensual.html", {
+            "grafico": "",
+            "anios_disponibles": anios_disponibles,
+            "anios_seleccionados": anios_seleccionados,
+            "anio_base": anio_base
+        })
+
+    # ===============================
+    # Organizar datos
+    # ===============================
+    data = {}
+
+    for anio, mes, total in rows:
+        if mes not in data:
+            data[mes] = {}
+        data[mes][anio] = float(total or 0)
+
+    meses_ordenados = sorted(data.keys())
+
+    anios = sorted({
+        anio for anio_dict in data.values()
+        for anio in anio_dict.keys()
+    })
+
+    # ===============================
+    # Gráfico
+    # ===============================
+    fig, ax = plt.subplots(figsize=(14,6))
+
+    x = np.arange(len(meses_ordenados))
+    ancho = 0.25
+
+    meses_nombre = ["Ene","Feb","Mar","Abr","May","Jun",
+                    "Jul","Ago","Sep","Oct","Nov","Dic"]
+
+    for i, anio in enumerate(anios):
+
+        valores_usd = [
+            data[mes].get(anio, 0)
+            for mes in meses_ordenados
+        ]
+
+        posiciones = x + (i - len(anios)/2)*ancho + ancho/2
+
+        ax.bar(posiciones, valores_usd, width=ancho, label=str(anio))
+
+        # TEXTO
+        for pos, mes, valor in zip(posiciones, meses_ordenados, valores_usd):
+
+            base = data[mes].get(anio_base, 0)
+
+            porcentaje = (valor / base) * 100 if base > 0 else 0
+
+            if valor > 0:
+                ax.text(
+                    pos,
+                    valor * 1.02,
+                    f"USD {valor:,.0f}\n{porcentaje:.0f}%",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8
+                )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([meses_nombre[m-1] for m in meses_ordenados])
+
+    ax.set_ylabel("Facturación en USD")
+
+    ax.set_title(f"Facturación Mensual en USD + % vs Base {anio_base}")
+
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        ncol=len(anios),
+        frameon=False
+    )
+
+    formatter = FuncFormatter(lambda x, _: f"{x:,.0f}")
+    ax.yaxis.set_major_formatter(formatter)
+
+    plt.subplots_adjust(bottom=0.2)
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png")
+    buffer.seek(0)
+
+    grafico = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return render(request, "grafico_indice_mensual.html", {
+        "grafico": grafico,
+        "anios_disponibles": anios_disponibles,
+        "anios_seleccionados": anios_seleccionados,
+        "anio_base": anio_base
+    })
+
+
+
 
 def parametros_view(request):
 
@@ -1067,350 +1260,5 @@ def graficos22(request):
 
         "anios_disponibles": anios_disponibles,
         "anios_seleccionados": anios_seleccionados
-
-    })
-
-
-
-
-
-def graficos01(request):
-
-    import json
-    from django.db import connection
-    from django.shortcuts import render
-    from .services.parametros_service import get_parametro
-
-    tipo = request.GET.get("tipo", "mensual")
-    modo = request.GET.get("modo", "lineas")
-    desglose = request.GET.get("desglose") == "1"
-
-    # ==========================
-    # obtener datos base
-    # ==========================
-
-    with connection.cursor() as cursor:
-
-        if tipo == "mensual":
-
-            cursor.execute("""
-                SELECT
-                    periodo_anio,
-                    periodo_mes,
-                    a.nombre,
-                    COALESCE(a.color,'#2c78be'),
-                    SUM((neto+no_gravado+exento)/d.valor)
-                FROM comprobantes_comisiones c
-                JOIN aseguradoras a ON a.id=c.aseguradora_id
-                JOIN cotizaciones_dolar d
-                  ON d.periodo_anio=c.periodo_anio
-                 AND d.periodo_mes=c.periodo_mes
-                GROUP BY periodo_anio,periodo_mes,a.nombre,a.color
-                ORDER BY periodo_anio,periodo_mes
-            """)
-
-        elif tipo == "trimestral":
-
-            cursor.execute("""
-                SELECT
-                    periodo_anio,
-                    ((periodo_mes-1)/3+1)::int,
-                    a.nombre,
-                    COALESCE(a.color,'#2c78be'),
-                    SUM((neto+no_gravado+exento)/d.valor)
-                FROM comprobantes_comisiones c
-                JOIN aseguradoras a ON a.id=c.aseguradora_id
-                JOIN cotizaciones_dolar d
-                  ON d.periodo_anio=c.periodo_anio
-                 AND d.periodo_mes=c.periodo_mes
-                GROUP BY periodo_anio,2,a.nombre,a.color
-                ORDER BY periodo_anio,2
-            """)
-
-        else:  # anual
-
-            cursor.execute("""
-                SELECT
-                    periodo_anio,
-                    1,
-                    a.nombre,
-                    COALESCE(a.color,'#2c78be'),
-                    SUM((neto+no_gravado+exento)/d.valor)
-                FROM comprobantes_comisiones c
-                JOIN aseguradoras a ON a.id=c.aseguradora_id
-                JOIN cotizaciones_dolar d
-                  ON d.periodo_anio=c.periodo_anio
-                 AND d.periodo_mes=c.periodo_mes
-                GROUP BY periodo_anio,a.nombre,a.color
-                ORDER BY periodo_anio
-            """)
-
-        rows = cursor.fetchall()
-
-    if not rows:
-
-        return render(request,"graficos01.html",{
-            "labels":"[]",
-            "datasets":"[]",
-            "tipo":tipo,
-            "modo":modo,
-            "desglose":desglose,
-            "anios_disponibles":[],
-            "anios_seleccionados":[]
-        })
-
-    # ==========================
-    # años
-    # ==========================
-
-    anios_disponibles = sorted({r[0] for r in rows})
-
-    anios_raw = request.GET.getlist("anio")
-
-    if anios_raw:
-
-        anios_seleccionados = [int(a) for a in anios_raw]
-
-    else:
-
-        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT",4))
-        anios_seleccionados = anios_disponibles[-cant:]
-
-    # ==========================
-    # organizar
-    # ==========================
-
-    data = {}
-    colores = {}
-
-    for anio,periodo,aseg,color,total in rows:
-
-        if anio not in anios_seleccionados:
-            continue
-
-        if tipo=="mensual":
-            label=f"{anio}-{periodo:02d}"
-        elif tipo=="trimestral":
-            label=f"{anio}-T{periodo}"
-        else:
-            label=str(anio)
-
-        if label not in data:
-            data[label]={}
-
-        data[label][aseg]=float(total)
-        colores[aseg]=color
-
-    labels = sorted(data.keys())
-
-    # ==========================
-    # datasets
-    # ==========================
-
-    datasets=[]
-
-    if desglose:
-
-        for aseg,color in colores.items():
-
-            valores=[]
-
-            for label in labels:
-                valores.append(data[label].get(aseg,0))
-
-            datasets.append({
-                "label":aseg,
-                "data":valores,
-                "borderColor":color,
-                "backgroundColor":color,
-                "tension":0.25
-            })
-
-    else:
-
-        valores=[]
-
-        for label in labels:
-            valores.append(sum(data[label].values()))
-
-        datasets.append({
-            "label":"Facturación USD",
-            "data":valores,
-            "borderColor":"#2c78be",
-            "backgroundColor":"#2c78be",
-            "tension":0.25
-        })
-
-    return render(request,"graficos01.html",{
-
-        "labels":json.dumps(labels),
-        "datasets":json.dumps(datasets),
-
-        "tipo":tipo,
-        "modo":modo,
-        "desglose":desglose,
-
-        "anios_disponibles":anios_disponibles,
-        "anios_seleccionados":anios_seleccionados
-
-    })
-# =====================================================
-# GRAFICO INDICE INTERANUAL MENSUAL
-# =====================================================
-
-def grafico_indice_mensual(request):
-
-    import io
-    import base64
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    from django.db import connection
-    from .services.parametros_service import get_parametro
-
-    # ===============================
-    # obtener años disponibles
-    # ===============================
-
-    with connection.cursor() as cursor:
-
-        cursor.execute("""
-            SELECT DISTINCT periodo_anio
-            FROM comprobantes_comisiones
-            ORDER BY periodo_anio
-        """)
-
-        anios_disponibles = [row[0] for row in cursor.fetchall()]
-
-    # ===============================
-    # años seleccionados
-    # ===============================
-
-    anios_raw = request.GET.getlist("anio")
-
-    if anios_raw:
-
-        anios_seleccionados = [int(a) for a in anios_raw]
-
-    else:
-
-        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
-        anios_seleccionados = anios_disponibles[-cant:]
-
-
-    # ===============================
-    # año base
-    # ===============================
-
-    anio_base = request.GET.get("anio_base")
-
-    if anio_base:
-        anio_base = int(anio_base)
-    else:
-        anio_base = anios_seleccionados[0] if anios_seleccionados else None
-
-
-    # ===============================
-    # obtener datos
-    # ===============================
-
-    placeholders = ",".join(["%s"] * len(anios_seleccionados))
-
-    with connection.cursor() as cursor:
-
-        cursor.execute(f"""
-            SELECT
-                periodo_anio,
-                periodo_mes,
-                SUM(neto+no_gravado+exento)
-            FROM comprobantes_comisiones
-            WHERE periodo_anio IN ({placeholders})
-            GROUP BY periodo_anio, periodo_mes
-            ORDER BY periodo_anio, periodo_mes
-        """, anios_seleccionados)
-
-        rows = cursor.fetchall()
-
-
-    if not rows:
-
-        return render(request, "grafico_indice_mensual.html", {
-            "grafico": None,
-            "anios_disponibles": anios_disponibles,
-            "anios_seleccionados": anios_seleccionados,
-            "anio_base": anio_base
-        })
-
-
-    # ===============================
-    # organizar datos
-    # ===============================
-
-    data = {}
-
-    for anio, mes, valor in rows:
-
-        if anio not in data:
-            data[anio] = {}
-
-        data[anio][mes] = float(valor)
-
-
-    # ===============================
-    # calcular indice
-    # ===============================
-
-    fig, ax = plt.subplots(figsize=(14,6))
-
-    for anio in anios_seleccionados:
-
-        if anio not in data:
-            continue
-
-        valores = []
-
-        for mes in range(1,13):
-
-            base = data.get(anio_base, {}).get(mes, 0)
-            actual = data.get(anio, {}).get(mes, 0)
-
-            if base > 0:
-                indice = actual / base * 100
-            else:
-                indice = 0
-
-            valores.append(indice)
-
-        ax.plot(range(1,13), valores, label=str(anio))
-
-
-    ax.legend()
-    ax.set_title("Indice interanual mensual")
-    ax.set_xlabel("Mes")
-    ax.set_ylabel("Indice")
-
-    plt.tight_layout()
-
-    buffer = io.BytesIO()
-
-    plt.savefig(buffer, format="png")
-
-    buffer.seek(0)
-
-    grafico = base64.b64encode(buffer.getvalue()).decode()
-
-    buffer.close()
-    plt.close()
-
-
-    return render(request, "grafico_indice_mensual.html", {
-
-        "grafico": grafico,
-
-        "anios_disponibles": anios_disponibles,
-
-        "anios_seleccionados": anios_seleccionados,
-
-        "anio_base": anio_base
 
     })
