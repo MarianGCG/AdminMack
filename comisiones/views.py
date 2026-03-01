@@ -722,7 +722,7 @@ def graficos02(request):
     })
 
 
-    
+
 
 def importar_aseguradoras_view(request):
 
@@ -1050,3 +1050,215 @@ def parametro_eliminar_view(request, id):
     parametro.delete()
 
     return redirect("parametros")
+
+
+
+
+
+
+
+def graficos22(request):
+
+    import json
+    from django.db import connection
+    from django.shortcuts import render
+
+    # ===============================
+    # Parámetros seguros
+    # ===============================
+
+    try:
+        top_n = int(request.GET.get("top") or 5)
+    except:
+        top_n = 5
+
+    try:
+        tope = float(request.GET.get("tope") or 100)
+    except:
+        tope = 100.0
+
+
+    # ===============================
+    # QUERY
+    # ===============================
+
+    with connection.cursor() as cursor:
+
+        cursor.execute("""
+            SELECT
+                c.periodo_anio,
+                ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
+                a.nombre,
+                COALESCE(a.color, '#3366cc') AS color,
+                SUM((c.neto + c.no_gravado + c.exento) / d.valor) AS total_usd
+
+            FROM comprobantes_comisiones c
+
+            JOIN aseguradoras a ON a.id = c.aseguradora_id
+
+            JOIN cotizaciones_dolar d
+              ON c.periodo_anio = d.periodo_anio
+             AND c.periodo_mes = d.periodo_mes
+
+            GROUP BY
+                c.periodo_anio,
+                trimestre,
+                a.nombre,
+                a.color
+
+            ORDER BY
+                c.periodo_anio,
+                trimestre;
+        """)
+
+        rows = cursor.fetchall()
+
+
+    if not rows:
+
+        return render(request, "graficos22.html", {
+            "labels": "[]",
+            "datasets": "[]",
+            "totales": "[]",
+            "top_n": top_n,
+            "tope": tope,
+            "anios_disponibles": [],
+            "anios_seleccionados": []
+        })
+
+
+    # ===============================
+    # Años disponibles
+    # ===============================
+
+    anios_disponibles = sorted(list({row[0] for row in rows}))
+
+
+    # ===============================
+    # Años seleccionados
+    # default = últimos 4 años
+    # ===============================
+
+    anios_raw = request.GET.getlist("anio")
+
+    if anios_raw:
+
+        anios_seleccionados = []
+
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a)))
+            except:
+                pass
+
+    else:
+
+        anios_seleccionados = anios_disponibles[-4:]
+
+
+    # ===============================
+    # Organizar datos
+    # ===============================
+
+    data = {}
+    color_map = {}
+
+    for anio, trimestre, nombre, color, total in rows:
+
+        if anio not in anios_seleccionados:
+            continue
+
+        periodo = f"{anio}-T{trimestre}"
+
+        if periodo not in data:
+            data[periodo] = {}
+
+        data[periodo][nombre] = float(total)
+        color_map[nombre] = color
+
+
+    periodos = sorted(data.keys())
+
+
+    # ===============================
+    # Totales reales
+    # ===============================
+
+    totales_periodo = []
+
+    for periodo in periodos:
+        totales_periodo.append(sum(data.get(periodo, {}).values()))
+
+
+    # ===============================
+    # Datasets por posición
+    # ===============================
+
+    datasets = []
+
+    for pos in range(top_n):
+
+        datasets.append({
+            "label": f"pos{pos}",
+            "data": [],
+            "backgroundColor": [],
+            "labels": [],
+            "stack": "stack1"
+        })
+
+
+    for periodo in periodos:
+
+        trimestre_data = data.get(periodo, {})
+        total_trimestre = sum(trimestre_data.values())
+
+        participaciones = []
+
+        for aseg, valor in trimestre_data.items():
+
+            pct = (valor / total_trimestre) * 100 if total_trimestre else 0
+
+            if pct <= tope:
+                participaciones.append((aseg, valor, pct))
+
+        participaciones.sort(key=lambda x: x[1], reverse=True)
+
+        seleccionadas = participaciones[:top_n]
+
+
+        for pos in range(top_n):
+
+            if pos < len(seleccionadas):
+
+                aseg, valor, pct = seleccionadas[pos]
+
+                datasets[pos]["data"].append(valor)
+                datasets[pos]["backgroundColor"].append(
+                    color_map.get(aseg, "#3366cc")
+                )
+                datasets[pos]["labels"].append(aseg)
+
+            else:
+
+                datasets[pos]["data"].append(0)
+                datasets[pos]["backgroundColor"].append("rgba(0,0,0,0)")
+                datasets[pos]["labels"].append("")
+
+
+    # ===============================
+    # Render FINAL
+    # ===============================
+
+    return render(request, "graficos22.html", {
+
+        "labels": json.dumps(periodos),
+        "datasets": json.dumps(datasets),
+        "totales": json.dumps(totales_periodo),
+
+        "top_n": top_n,
+        "tope": tope,
+
+        "anios_disponibles": anios_disponibles,
+        "anios_seleccionados": anios_seleccionados
+
+    })
