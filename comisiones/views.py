@@ -11,17 +11,15 @@ from .services.parametros_service import get_parametro
 from django.db.models.functions import Cast
 from django.db.models import IntegerField
 
-import matplotlib
-matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt
+
 import numpy as np
 from django.http import HttpResponse
 from io import BytesIO
 
 from .models import ParametroSistema
 
-from matplotlib.ticker import FuncFormatter
+
 import io
 import base64
 
@@ -255,7 +253,7 @@ def graficos01(request):
     )
 
     anios_seleccionados = request.GET.getlist("anio")
-    
+
     anios_raw = request.GET.getlist("anio")
     if anios_raw:
         anios_seleccionados = []
@@ -454,9 +452,12 @@ def graficos02(request):
 
     import io
     import base64
+    import matplotlib
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
     from django.db import connection
+
 
     # ===============================
     # Parámetros seguros
@@ -708,7 +709,12 @@ def grafico_indice_mensual(request):
 
     import io
     import base64
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
+
+
 
     # ===============================
     # Años disponibles
