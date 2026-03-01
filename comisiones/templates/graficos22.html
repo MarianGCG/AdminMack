@@ -6,57 +6,120 @@
     Facturación trimestral en USD
 </div>
 
-<form method="get"
-      style="margin:0 0 6px 0;
-             display:flex;
-             align-items:center;
-             gap:14px;
-             flex-wrap:wrap;
-             font-size:14px;">
 
-    <span><b>Top:</b></span>
-    <input type="number"
-           name="top"
-           min="1"
-           value="{{ top_n }}"
-           style="width:55px;">
+<style>
 
-    <span><b>Tope %:</b></span>
-    <input type="number"
-           step="0.1"
-           min="0"
-           max="100"
-           name="tope"
-           value="{{ tope|unlocalize }}"
-           style="width:65px;">
+.barra-controles {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:6px;
+    font-size:14px;
+}
 
-    <span><b>Años:</b></span>
+.grupo {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding-right:14px;
+    border-right:1px solid #ddd;
+}
 
-    {% for anio in anios_disponibles %}
-        <label>
-            <input type="checkbox"
-                   name="anio"
-                   value="{{ anio|unlocalize }}"
-                   {% if anio in anios_seleccionados %}checked{% endif %}>
-            {{ anio|unlocalize }}
-        </label>
-    {% endfor %}
+.grupo:last-child {
+    border-right:none;
+}
 
-    <button type="submit"
-            style="padding:3px 10px;
-                   background:#2c78be;
-                   color:white;
-                   border:none;
-                   border-radius:4px;">
-        Actualizar
-    </button>
+.contenedor-grafico {
+    height: calc(100vh - 140px);
+    width:100%;
+}
+
+</style>
+
+
+
+<form method="get" class="barra-controles">
+
+
+    <div class="grupo">
+
+        <b>Top:</b>
+
+        <input type="number"
+               name="top"
+               min="1"
+               value="{{ top_n }}"
+               style="width:55px;">
+
+    </div>
+
+
+    <div class="grupo">
+
+        <b>Tope %:</b>
+
+        <input type="number"
+               step="0.1"
+               min="0"
+               max="100"
+               name="tope"
+               value="{{ tope|unlocalize }}"
+               style="width:65px;">
+
+    </div>
+
+
+
+    <div class="grupo">
+
+        <b>Años:</b>
+
+        {% for anio in anios_disponibles %}
+
+            <label>
+
+                <input type="checkbox"
+                       name="anio"
+                       value="{{ anio|unlocalize }}"
+                       {% if anio in anios_seleccionados %}checked{% endif %}>
+
+                {{ anio|unlocalize }}
+
+            </label>
+
+        {% endfor %}
+
+    </div>
+
+
+
+    <div class="grupo">
+
+        <button type="submit"
+                style="padding:3px 10px;
+                       background:#2c78be;
+                       color:white;
+                       border:none;
+                       border-radius:4px;
+                       cursor:pointer;">
+
+            Actualizar
+
+        </button>
+
+    </div>
+
 
 </form>
 
 
-<div style="height: calc(100vh - 140px); width: 100%;">
+
+
+<div class="contenedor-grafico">
     <canvas id="graficos22"></canvas>
 </div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -64,9 +127,6 @@
 
 <script>
 
-// ===============================
-// Plugin líneas cambio de año
-// ===============================
 
 const lineasCambioAnio = {
 
@@ -89,15 +149,18 @@ const lineasCambioAnio = {
 
                 const xActual = x.getPixelForValue(i);
                 const xAnterior = x.getPixelForValue(i-1);
+
                 const xPos = (xActual + xAnterior) / 2;
 
                 ctx.beginPath();
                 ctx.moveTo(xPos, top);
                 ctx.lineTo(xPos, bottom);
+
                 ctx.lineWidth = 1.5;
                 ctx.strokeStyle = '#888';
                 ctx.setLineDash([6,6]);
                 ctx.stroke();
+
             }
         }
 
@@ -106,25 +169,16 @@ const lineasCambioAnio = {
 };
 
 
-// ===============================
-// Registrar plugins
-// ===============================
 
 Chart.register(ChartDataLabels, lineasCambioAnio);
 
 
-// ===============================
-// Datos desde Django
-// ===============================
 
 const labels = {{ labels|safe }};
 const datasets = {{ datasets|safe }};
 const totales = {{ totales|safe }};
 
 
-// ===============================
-// Crear gráfico
-// ===============================
 
 new Chart(document.getElementById('graficos22'), {
 
@@ -158,10 +212,6 @@ new Chart(document.getElementById('graficos22'), {
                     size:11
                 },
 
-                textAlign: 'center',
-                anchor: 'center',
-                align: 'center',
-
                 formatter: function(value, context) {
 
                     if (!value) return "";
@@ -175,13 +225,13 @@ new Chart(document.getElementById('graficos22'), {
                     const pct =
                         Math.round(value / total * 100);
 
-                    // FORMATO EN UNA SOLA LINEA
                     return pct + "% " + nombre;
                 }
             }
         }
     }
 });
+
 
 </script>
 

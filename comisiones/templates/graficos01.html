@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load l10n %}
 {% block content %}
 
 <div class="titulo-grafico">
@@ -8,73 +7,48 @@
 
 <style>
 
-.barra-opciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 6px;
+.barra-controles {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:6px;
+    font-size:14px;
+}
+
+.grupo {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding-right:12px;
+    border-right:1px solid #ddd;
+}
+
+.grupo:last-child {
+    border-right:none;
 }
 
 .btn {
-    padding: 3px 10px;
-    background: #2c78be;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 14px;
+    padding:3px 10px;
+    background:#e6eef7;
+    color:#174a7c;
+    text-decoration:none;
+    border-radius:4px;
+    font-weight:bold;
 }
 
 .btn.activo {
-    background: #174a7c;
-}
-
-.btn:hover {
-    background: #1f5d96;
-}
-
-.contenedor-grafico {
-    background-color: white;
-    padding: 12px 14px 14px 14px;
-    border-radius: 8px;
-    box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-}
-
-/* controles en una línea */
-.fila-controles {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-bottom: 8px;
-    font-size: 14px;
+    background:#2c78be;
+    color:white;
 }
 
 .checkbox-anio {
-    margin-right: 8px;
+    margin-right:8px;
 }
 
-button {
-    padding: 3px 10px;
-    font-size: 14px;
-    cursor: pointer;
-    background: #2c78be;
-    color: white;
-    border: none;
-    border-radius: 4px;
-}
-
-button:hover {
-    background: #1f5d96;
-}
-
-/* gráfico grande */
-.area-grafico {
-    height: calc(100vh - 210px);
-}
-
-.area-grafico canvas {
-    width: 100% !important;
-    height: 100% !important;
+.contenedor-grafico {
+    height: calc(100vh - 140px);
+    width:100%;
 }
 
 </style>
@@ -82,81 +56,99 @@ button:hover {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-<!-- Tipo período -->
-<div class="barra-opciones">
-
-    <a href="?tipo=mensual&modo={{ modo }}"
-       class="btn {% if tipo == 'mensual' %}activo{% endif %}">
-        Mensual
-    </a>
-
-    <a href="?tipo=trimestral&modo={{ modo }}"
-       class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
-        Trimestral
-    </a>
-
-    <a href="?tipo=anual&modo={{ modo }}"
-       class="btn {% if tipo == 'anual' %}activo{% endif %}">
-        Anual
-    </a>
-
-</div>
-
-
-<!-- Tipo gráfico -->
-<div class="barra-opciones">
-
-    <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
-       class="btn {% if modo == 'lineas' %}activo{% endif %}">
-        Líneas
-    </a>
-
-    <a href="?tipo={{ tipo }}&modo=barras{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
-       class="btn {% if modo == 'barras' %}activo{% endif %}">
-        Barras
-    </a>
-
-</div>
-
-
-<div class="contenedor-grafico">
-
 <form method="get">
 
 <input type="hidden" name="tipo" value="{{ tipo }}">
 <input type="hidden" name="modo" value="{{ modo }}">
 
-<div class="fila-controles">
+<div class="barra-controles">
 
-<strong>Años:</strong>
 
-{% for anio in anios_disponibles %}
+    <!-- PERIODO -->
+    <div class="grupo">
 
-<label class="checkbox-anio">
+        <strong>Periodo:</strong>
 
-<input type="checkbox"
-       name="anio"
-       value="{{ anio|unlocalize }}"
-       {% if anio in anios_seleccionados %}checked{% endif %}>
+        <a href="?tipo=mensual&modo={{ modo }}"
+           class="btn {% if tipo == 'mensual' %}activo{% endif %}">
+            Mensual
+        </a>
 
-{{ anio|unlocalize }}
+        <a href="?tipo=trimestral&modo={{ modo }}"
+           class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
+            Trimestral
+        </a>
 
-</label>
+        <a href="?tipo=anual&modo={{ modo }}"
+           class="btn {% if tipo == 'anual' %}activo{% endif %}">
+            Anual
+        </a>
 
-{% endfor %}
+    </div>
 
-<button type="submit">Actualizar</button>
+
+    <!-- TIPO GRAFICO -->
+    <div class="grupo">
+
+        <strong>Gráfico:</strong>
+
+        <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
+           class="btn {% if modo == 'lineas' %}activo{% endif %}">
+            Líneas
+        </a>
+
+        <a href="?tipo={{ tipo }}&modo=barras{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
+           class="btn {% if modo == 'barras' %}activo{% endif %}">
+            Barras
+        </a>
+
+    </div>
+
+
+    <!-- AÑOS -->
+    <div class="grupo">
+
+        <strong>Años:</strong>
+
+        {% for anio in anios_disponibles %}
+        <label class="checkbox-anio">
+
+            <input type="checkbox"
+                   name="anio"
+                   value="{{ anio|stringformat:'d' }}"
+                   {% if anio in anios_seleccionados %}checked{% endif %}>
+
+            {{ anio|stringformat:"d" }}
+
+        </label>
+        {% endfor %}
+
+    </div>
+
+
+    <!-- BOTON -->
+    <div class="grupo">
+        <button type="submit"
+                style="padding:3px 10px;
+                       background:#2c78be;
+                       color:white;
+                       border:none;
+                       border-radius:4px;">
+            Actualizar
+        </button>
+    </div>
+
 
 </div>
 
 </form>
 
 
-<div class="area-grafico">
-<canvas id="grafico"></canvas>
+
+<div class="contenedor-grafico">
+    <canvas id="grafico"></canvas>
 </div>
 
-</div>
 
 
 <script>
@@ -169,155 +161,118 @@ const tendenciaUSD = {{ valores_usd_tendencia|safe }};
 const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
 
-
-// ==========================
-// formatear etiquetas eje X
-// ==========================
-
 function formatearLabel(label) {
 
     if (tipo === "mensual") {
 
         const mes = parseInt(label.split("-")[1]);
 
-        const nombresMes = [
+        const nombres = [
             "Ene","Feb","Mar","Abr","May","Jun",
             "Jul","Ago","Sep","Oct","Nov","Dic"
         ];
 
-        return nombresMes[mes - 1];
+        return nombres[mes-1];
     }
 
     if (tipo === "trimestral") {
 
         const partes = label.split("-");
         const anio = partes[0];
-        const trimestre = partes[1];
+        const trim = partes[1];
 
-        if (trimestre === "T1")
-            return anio + " " + trimestre;
+        if (trim === "T1")
+            return anio + " " + trim;
 
-        return trimestre;
+        return trim;
     }
 
     return label;
 }
 
 
-// ==========================
-// datasets
-// ==========================
-
 let datasets = [
 
 {
-label: "Facturación USD",
-data: valoresUSD,
-backgroundColor: "rgba(44,120,190,0.6)",
-borderColor: "#2c78be",
-borderWidth: 2,
-tension: 0.25,
-yAxisID: "y"
+label:"Facturación USD",
+data:valoresUSD,
+backgroundColor:"rgba(44,120,190,0.6)",
+borderColor:"#2c78be",
+borderWidth:2,
+tension:0.25,
+yAxisID:"y"
 },
 
 {
-label: "Dólar cierre de mes",
-data: valoresDolar,
-type: "line",
-borderColor: "orange",
-borderWidth: 2,
-borderDash: [6,6],
-pointRadius: 3,
-tension: 0.25,
-yAxisID: "y1"
+label:"Dólar",
+data:valoresDolar,
+type:"line",
+borderColor:"orange",
+borderDash:[6,6],
+yAxisID:"y1"
 }
 
 ];
+
 
 if (tipo === "trimestral") {
 
 datasets.push({
 
-label: "Tendencia",
-data: tendenciaUSD,
-type: "line",
-borderColor: "#2ca02c",
-borderWidth: 3,
-borderDash: [10,5],
-pointRadius: 0,
-tension: 0,
-yAxisID: "y"
+label:"Tendencia",
+data:tendenciaUSD,
+type:"line",
+borderColor:"#2ca02c",
+borderWidth:3,
+borderDash:[10,5],
+pointRadius:0
 
 });
 
 }
 
 
-// ==========================
-// gráfico
-// ==========================
-
 new Chart(document.getElementById('grafico'), {
 
 type: modo === "barras" ? "bar" : "line",
 
-data: {
-labels: labels,
-datasets: datasets
+data:{
+labels:labels,
+datasets:datasets
 },
 
-options: {
+options:{
 
-responsive: true,
-maintainAspectRatio: false,
+maintainAspectRatio:false,
+responsive:true,
 
-interaction: {
-mode: "index",
-intersect: false
+interaction:{
+mode:"index",
+intersect:false
 },
 
-plugins: {
+scales:{
 
-tooltip: {
-callbacks: {
-label: function(context) {
-
-let value = context.raw;
-
-return context.dataset.label +
-": " +
-value.toLocaleString("es-AR");
-
-}
-}
-}
-
-},
-
-scales: {
-
-x: {
-ticks: {
-callback: (value, index) =>
-formatearLabel(labels[index]),
-maxRotation: 0
+x:{
+ticks:{
+callback:(v,i)=>formatearLabel(labels[i]),
+maxRotation:0,
+autoSkip:false
 }
 },
 
-y: {
-position: "left",
-ticks: {
-callback: value =>
-value.toLocaleString("es-AR")
+y:{
+position:"left",
+ticks:{
+callback:v=>v.toLocaleString("es-AR")
 }
 },
 
-y1: {
-position: "right",
-grid: { drawOnChartArea: false },
-ticks: {
-callback: value =>
-value.toLocaleString("es-AR")
+y1:{
+position:"right",
+grid:{drawOnChartArea:false},
+ticks:{
+callback:v=>v.toLocaleString("es-AR")
 }
 }
 

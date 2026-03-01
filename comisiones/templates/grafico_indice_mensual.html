@@ -8,14 +8,7 @@
 
 <style>
 
-.contenedor-grafico {
-    background: white;
-    padding: 12px 14px 14px 14px;
-    border-radius: 8px;
-    box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-}
-
-/* controles en una sola línea */
+/* controles arriba, fuera del gráfico */
 .fila-controles {
     display: flex;
     align-items: center;
@@ -54,9 +47,9 @@ button:hover {
     background: #1f5d96;
 }
 
-/* gráfico grande */
+/* área del gráfico sola */
 .area-grafico {
-    height: calc(100vh - 170px);
+    height: calc(100vh - 150px);
 }
 
 .area-grafico img {
@@ -68,7 +61,7 @@ button:hover {
 </style>
 
 
-<div class="contenedor-grafico">
+<!-- CONTROLES ARRIBA (FUERA DEL GRAFICO) -->
 
 <form method="get">
 
@@ -79,17 +72,13 @@ button:hover {
         <strong>Años:</strong>
 
         {% for anio in anios_disponibles %}
-
         <label class="checkbox-anio">
-
-        <input type="checkbox"
-               name="anio"
-               value="{{ anio|unlocalize }}"
-               {% if anio in anios_seleccionados %}checked{% endif %}>
-
-        {{ anio|unlocalize }}
+            <input type="checkbox"
+                   name="anio"
+                   value="{{ anio|unlocalize }}"
+                   {% if anio in anios_seleccionados %}checked{% endif %}>
+            {{ anio|unlocalize }}
         </label>
-
         {% endfor %}
     </div>
 
@@ -125,12 +114,13 @@ button:hover {
 </form>
 
 
+
+<!-- GRAFICO SOLO -->
+
 {% if grafico %}
 
 <div class="area-grafico">
-
-<img src="data:image/png;base64,{{ grafico }}">
-
+    <img src="data:image/png;base64,{{ grafico }}">
 </div>
 
 {% else %}
@@ -139,6 +129,5 @@ button:hover {
 
 {% endif %}
 
-</div>
 
 {% endblock %}
