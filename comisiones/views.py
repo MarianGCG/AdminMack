@@ -219,234 +219,209 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 def graficos01(request):
 
-    from django.db import connection
     import json
+    from django.db import connection
+    from django.shortcuts import render
+    from .services.parametros_service import get_parametro
 
-    tipo = request.GET.get("tipo", "anual")
+    tipo = request.GET.get("tipo", "mensual")
     modo = request.GET.get("modo", "lineas")
+    desglose = request.GET.get("desglose") == "1"
 
-    # ==========================================
-    # DETECTAR MOTOR BD
-    # ==========================================
-
-    motor = connection.vendor
-
-    if motor == "sqlite":
-
-        trimestre_expr_fact = "CAST(((c.periodo_mes - 1) / 3 + 1) AS INTEGER)"
-        trimestre_expr_dolar = "CAST(((periodo_mes - 1) / 3 + 1) AS INTEGER)"
-
-    else:  # postgresql
-
-        trimestre_expr_fact = "((c.periodo_mes - 1) / 3 + 1)::int"
-        trimestre_expr_dolar = "((periodo_mes - 1) / 3 + 1)::int"
-
-    # ==========================================
-    # AÑOS DISPONIBLES
-    # ==========================================
-
-    anios_disponibles = list(
-        ComprobantesComisiones.objects
-        .values_list("periodo_anio", flat=True)
-        .distinct()
-        .order_by("periodo_anio")
-    )
-
-    anios_seleccionados = request.GET.getlist("anio")
-
-    anios_raw = request.GET.getlist("anio")
-    if anios_raw:
-        anios_seleccionados = []
-        for a in anios_raw:
-            try:
-                anios_seleccionados.append(int(str(a).replace(".", "")))
-            except:
-                pass
-    else:
-        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
-        cantidad_default = min(cantidad_default, len(anios_disponibles))
-        anios_seleccionados = anios_disponibles[-cantidad_default:]
-
-    placeholders = ",".join(["%s"] * len(anios_seleccionados))
-    filtro_where = f"WHERE c.periodo_anio IN ({placeholders})"
-
-    # ==========================================
-    # QUERIES
-    # ==========================================
-
-    if tipo == "mensual":
-
-        query_facturacion = f"""
-            SELECT
-                c.periodo_anio,
-                c.periodo_mes,
-                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
-            FROM comprobantes_comisiones c
-            JOIN cotizaciones_dolar d
-              ON c.periodo_anio = d.periodo_anio
-             AND c.periodo_mes = d.periodo_mes
-            {filtro_where}
-            GROUP BY c.periodo_anio, c.periodo_mes
-            ORDER BY c.periodo_anio, c.periodo_mes;
-        """
-
-        query_dolar = f"""
-            SELECT
-                periodo_anio,
-                periodo_mes,
-                valor
-            FROM cotizaciones_dolar
-            WHERE periodo_anio IN ({placeholders})
-            ORDER BY periodo_anio, periodo_mes;
-        """
-
-    elif tipo == "trimestral":
-
-        query_facturacion = f"""
-            SELECT 
-                c.periodo_anio,
-                {trimestre_expr_fact} AS trimestre,
-                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
-            FROM comprobantes_comisiones c
-            JOIN cotizaciones_dolar d
-              ON c.periodo_anio = d.periodo_anio
-             AND c.periodo_mes = d.periodo_mes
-            {filtro_where}
-            GROUP BY c.periodo_anio, trimestre
-            ORDER BY c.periodo_anio, trimestre;
-        """
-
-        query_dolar = f"""
-            SELECT
-                periodo_anio,
-                {trimestre_expr_dolar} AS trimestre,
-                AVG(valor)
-            FROM cotizaciones_dolar
-            WHERE periodo_anio IN ({placeholders})
-            GROUP BY periodo_anio, trimestre
-            ORDER BY periodo_anio, trimestre;
-        """
-
-    else:  # anual
-
-        query_facturacion = f"""
-            SELECT
-                c.periodo_anio,
-                SUM((c.neto + c.no_gravado + c.exento) / NULLIF(d.valor,0))
-            FROM comprobantes_comisiones c
-            JOIN cotizaciones_dolar d
-              ON c.periodo_anio = d.periodo_anio
-             AND c.periodo_mes = d.periodo_mes
-            {filtro_where}
-            GROUP BY c.periodo_anio
-            ORDER BY c.periodo_anio;
-        """
-
-        query_dolar = f"""
-            SELECT
-                periodo_anio,
-                AVG(valor)
-            FROM cotizaciones_dolar
-            WHERE periodo_anio IN ({placeholders})
-            GROUP BY periodo_anio
-            ORDER BY periodo_anio;
-        """
-
-    # ==========================================
-    # EJECUTAR
-    # ==========================================
+    # ==========================
+    # QUERY BASE
+    # ==========================
 
     with connection.cursor() as cursor:
 
-        cursor.execute(query_facturacion, anios_seleccionados)
-        facturacion = cursor.fetchall()
+        if tipo == "mensual":
 
-        cursor.execute(query_dolar, anios_seleccionados)
-        dolar = cursor.fetchall()
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    c.periodo_mes,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+                GROUP BY c.periodo_anio,c.periodo_mes,a.nombre,a.color
+                ORDER BY c.periodo_anio,c.periodo_mes
+            """)
 
-    # ==========================================
-    # PROCESAR
-    # ==========================================
+        elif tipo == "trimestral":
 
-    if tipo == "mensual":
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1)::int,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+                GROUP BY c.periodo_anio,2,a.nombre,a.color
+                ORDER BY c.periodo_anio,2
+            """)
 
-        labels = [f"{r[0]}-{r[1]:02d}" for r in facturacion]
+        else:  # anual
 
-        valores_usd = [float(r[2] or 0) for r in facturacion]
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    1,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+                GROUP BY c.periodo_anio,a.nombre,a.color
+                ORDER BY c.periodo_anio
+            """)
 
-        dolar_dict = {
-            f"{r[0]}-{r[1]:02d}": float(r[2] or 0)
-            for r in dolar
-        }
+        rows = cursor.fetchall()
 
-        valores_dolar = [
-            dolar_dict.get(label, 0)
-            for label in labels
-        ]
+    # ==========================
+    # SIN DATOS
+    # ==========================
 
-        valores_usd_tendencia = []
+    if not rows:
 
-    elif tipo == "trimestral":
+        return render(request,"graficos01.html",{
+            "labels":"[]",
+            "datasets":"[]",
+            "tipo":tipo,
+            "modo":modo,
+            "desglose":desglose,
+            "anios_disponibles":[],
+            "anios_seleccionados":[]
+        })
 
-        labels = [f"{r[0]}-T{r[1]}" for r in facturacion]
+    # ==========================
+    # AÑOS DISPONIBLES
+    # ==========================
 
-        valores_usd = [float(r[2] or 0) for r in facturacion]
+    anios_disponibles = sorted({r[0] for r in rows})
 
-        dolar_dict = {
-            f"{r[0]}-T{r[1]}": float(r[2] or 0)
-            for r in dolar
-        }
+    # ==========================
+    # AÑOS SELECCIONADOS
+    # ==========================
 
-        valores_dolar = [
-            dolar_dict.get(label, 0)
-            for label in labels
-        ]
+    anios_raw = request.GET.getlist("anio")
 
-        valores_usd_tendencia = calcular_tendencia_lineal(valores_usd)
+    if anios_raw:
+
+        anios_seleccionados = []
+
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a)))
+            except:
+                pass
 
     else:
 
-        labels = [str(r[0]) for r in facturacion]
+        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT",4))
+        cant = min(cant, len(anios_disponibles))
+        anios_seleccionados = anios_disponibles[-cant:]
 
-        valores_usd = [float(r[1] or 0) for r in facturacion]
+    # ==========================
+    # ORGANIZAR DATA
+    # ==========================
 
-        dolar_dict = {
-            str(r[0]): float(r[1] or 0)
-            for r in dolar
-        }
+    data = {}
+    colores = {}
 
-        valores_dolar = [
-            dolar_dict.get(label, 0)
-            for label in labels
-        ]
+    for anio,periodo,aseg,color,total in rows:
 
-        valores_usd_tendencia = []
+        if anio not in anios_seleccionados:
+            continue
 
-    # ==========================================
-    # RENDER
-    # ==========================================
+        if tipo == "mensual":
+            label = f"{anio}-{periodo:02d}"
 
-    return render(request, "graficos01.html", {
+        elif tipo == "trimestral":
+            label = f"{anio}-T{periodo}"
+
+        else:
+            label = str(anio)
+
+        if label not in data:
+            data[label] = {}
+
+        data[label][aseg] = float(total or 0)
+        colores[aseg] = color
+
+    labels = sorted(data.keys())
+
+    # ==========================
+    # DATASETS
+    # ==========================
+
+    datasets = []
+
+    if desglose:
+
+        for aseg,color in colores.items():
+
+            valores = []
+
+            for label in labels:
+                valores.append(data[label].get(aseg,0))
+
+            datasets.append({
+                "label": aseg,
+                "data": valores,
+                "borderColor": color,
+                "backgroundColor": color,
+                "tension": 0.25,
+                "fill": False
+            })
+
+    else:
+
+        valores = []
+
+        for label in labels:
+            valores.append(sum(data[label].values()))
+
+        datasets.append({
+            "label": "Facturación USD",
+            "data": valores,
+            "borderColor": "#2c78be",
+            "backgroundColor": "#2c78be",
+            "tension": 0.25,
+            "fill": False
+        })
+
+    # ==========================
+    # RENDER FINAL
+    # ==========================
+
+    return render(request,"graficos01.html",{
 
         "labels": json.dumps(labels),
-
-        "valores_usd": json.dumps(valores_usd),
-
-        "valores_dolar": json.dumps(valores_dolar),
-
-        "valores_usd_tendencia": json.dumps(valores_usd_tendencia),
+        "datasets": json.dumps(datasets),
 
         "tipo": tipo,
-
         "modo": modo,
+        "desglose": desglose,
 
         "anios_disponibles": anios_disponibles,
-
         "anios_seleccionados": anios_seleccionados
 
     })
 
-
+    
 
 
 def graficos02(request):
