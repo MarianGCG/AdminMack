@@ -7,104 +7,159 @@
 </div>
 
 
-<form method="get">
+<style>
 
-<!-- ========================= -->
-<!-- BARRA SUPERIOR -->
-<!-- ========================= -->
+.barra-controles {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:6px;
+    font-size:13px;
+}
 
-<div class="barra-opciones">
+.grupo {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding-right:14px;
+    border-right:1px solid #ddd;
+}
 
-<b>Periodo:</b>
+.grupo:last-child {
+    border-right:none;
+}
 
-<label>
-<input type="radio" name="tipo" value="mensual"
-{% if tipo == "mensual" %}checked{% endif %}>
-Mensual
-</label>
+.contenedor-grafico {
+    height: calc(100vh - 140px);
+    width:100%;
+}
 
-<label>
-<input type="radio" name="tipo" value="trimestral"
-{% if tipo == "trimestral" %}checked{% endif %}>
-Trimestral
-</label>
-
-<label>
-<input type="radio" name="tipo" value="anual"
-{% if tipo == "anual" %}checked{% endif %}>
-Anual
-</label>
-
-
-<span style="border-left:1px solid #ccc;height:20px;"></span>
-
-
-<b>Modo:</b>
-
-<label>
-<input type="radio" name="modo" value="lineas"
-{% if modo == "lineas" %}checked{% endif %}>
-Líneas
-</label>
-
-<label>
-<input type="radio" name="modo" value="barras"
-{% if modo == "barras" %}checked{% endif %}>
-Barras
-</label>
+</style>
 
 
-<span style="border-left:1px solid #ccc;height:20px;"></span>
+
+<form method="get" class="barra-controles">
 
 
-<label>
-<input type="checkbox"
-name="desglose"
-value="1"
-{% if desglose %}checked{% endif %}>
-Desglose aseguradoras
-</label>
+    <!-- PERIODO -->
+    <div class="grupo">
+
+        <b>Periodo:</b>
+
+        <label>
+            <input type="radio" name="tipo" value="mensual"
+            {% if tipo == "mensual" %}checked{% endif %}>
+            Mensual
+        </label>
+
+        <label>
+            <input type="radio" name="tipo" value="trimestral"
+            {% if tipo == "trimestral" %}checked{% endif %}>
+            Trimestral
+        </label>
+
+        <label>
+            <input type="radio" name="tipo" value="anual"
+            {% if tipo == "anual" %}checked{% endif %}>
+            Anual
+        </label>
+
+    </div>
 
 
-<button type="submit">Actualizar</button>
 
-</div>
+    <!-- MODO -->
+    <div class="grupo">
+
+        <b>Modo:</b>
+
+        <label>
+            <input type="radio" name="modo" value="lineas"
+            {% if modo == "lineas" %}checked{% endif %}>
+            Líneas
+        </label>
+
+        <label>
+            <input type="radio" name="modo" value="barras"
+            {% if modo == "barras" %}checked{% endif %}>
+            Barras
+        </label>
+
+    </div>
 
 
-<!-- ========================= -->
-<!-- AÑOS -->
-<!-- ========================= -->
 
-<div class="barra-opciones">
+    <!-- DESGLOSE -->
+    <div class="grupo">
 
-<b>Años:</b>
+        <label>
+            <input type="checkbox"
+                   name="desglose"
+                   value="1"
+                   {% if desglose %}checked{% endif %}>
+            Desglose aseguradoras
+        </label>
 
-{% for anio in anios_disponibles %}
+    </div>
 
-<label>
-<input type="checkbox"
-name="anio"
-value="{{ anio }}"
-{% if anio in anios_seleccionados %}checked{% endif %}>
-{{ anio }}
-</label>
 
-{% endfor %}
 
-</div>
+    <!-- AÑOS -->
+    <div class="grupo">
+
+        <b>Años:</b>
+
+        {% for anio in anios_disponibles %}
+
+            <label>
+
+                <input type="checkbox"
+                       name="anio"
+                       value="{{ anio|unlocalize }}"
+                       {% if anio in anios_seleccionados %}checked{% endif %}>
+
+                {{ anio|unlocalize }}
+
+            </label>
+
+        {% endfor %}
+
+    </div>
+
+
+
+    <!-- BOTON -->
+    <div class="grupo">
+
+        <button type="submit"
+                style="
+                padding:3px 10px;
+                background:#2c78be;
+                color:white;
+                border:none;
+                border-radius:4px;
+                cursor:pointer;">
+
+            Actualizar
+
+        </button>
+
+    </div>
+
 
 </form>
 
 
-<!-- ========================= -->
-<!-- GRAFICO -->
-<!-- ========================= -->
 
-<div style="height: calc(100vh - 170px);">
+<div class="contenedor-grafico">
 
-<canvas id="grafico"></canvas>
+    <canvas id="grafico"></canvas>
 
 </div>
+
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -118,12 +173,14 @@ const modo = "{{ modo }}";
 let chart = null;
 
 
+
 // =============================
 // FORMATEAR LABELS
 // =============================
 
 function formatearLabel(label,index)
 {
+
     if(tipo==="mensual")
     {
         const [anio,mes]=label.split("-");
@@ -146,8 +203,9 @@ function formatearLabel(label,index)
 }
 
 
+
 // =============================
-// PLUGIN LINEAS CAMBIO AÑO
+// LINEAS CAMBIO AÑO
 // =============================
 
 const lineasCambioAnio =
@@ -160,9 +218,9 @@ const lineasCambioAnio =
 
         ctx.save();
 
-        ctx.strokeStyle="#999";
+        ctx.strokeStyle="#888";
         ctx.lineWidth=1;
-        ctx.setLineDash([5,5]);
+        ctx.setLineDash([6,6]);
 
         for(let i=1;i<labels.length;i++)
         {
@@ -187,82 +245,111 @@ const lineasCambioAnio =
 Chart.register(lineasCambioAnio);
 
 
+
 // =============================
-// CREAR GRAFICO (ROBUSTO)
+// CREAR GRAFICO
 // =============================
 
 function crearGrafico()
 {
-    const ctx = document.getElementById("grafico");
 
     if(chart)
         chart.destroy();
 
-    chart = new Chart(ctx,
-    {
-
-        type: modo==="barras" ? "bar" : "line",
-
-        data:
-        {
-            labels: labels,
-            datasets: datasets
-        },
-
-        options:
+    chart = new Chart(
+        document.getElementById("grafico"),
         {
 
-            responsive:true,
-            maintainAspectRatio:false,
+            type: modo==="barras" ? "bar" : "line",
 
-            interaction:
+            data:
             {
-                mode:"index",
-                intersect:false
+                labels: labels,
+                datasets: datasets
             },
 
-            plugins:
-            {
-                legend:
-                {
-                    display:true
-                }
-            },
-
-            scales:
+            options:
             {
 
-                x:
+                responsive:true,
+                maintainAspectRatio:false,
+
+                layout:
                 {
-                    ticks:
+                    padding:
                     {
-                        callback:(value,index)=>
-                            formatearLabel(labels[index],index),
-
-                        maxRotation:0,
-                        autoSkip:false
+                        top:10
                     }
                 },
 
-                y:
+                interaction:
                 {
-                    ticks:
+                    mode:"index",
+                    intersect:false
+                },
+
+                plugins:
+                {
+                    legend:
                     {
-                        callback:value=>
-                            value.toLocaleString("es-AR")
+                        display:true,
+                        labels:
+                        {
+                            font:
+                            {
+                                size:11
+                            }
+                        }
                     }
+                },
+
+                scales:
+                {
+
+                    x:
+                    {
+                        ticks:
+                        {
+                            font:
+                            {
+                                size:11
+                            },
+
+                            callback:(value,index)=>
+                                formatearLabel(labels[index]),
+
+                            maxRotation:0,
+                            autoSkip:false
+                        }
+                    },
+
+                    y:
+                    {
+                        ticks:
+                        {
+                            font:
+                            {
+                                size:11
+                            },
+
+                            callback:value=>
+                                value.toLocaleString("es-AR")
+                        }
+                    }
+
                 }
 
             }
 
         }
+    );
 
-    });
 }
 
 
 crearGrafico();
 
 </script>
+
 
 {% endblock %}
