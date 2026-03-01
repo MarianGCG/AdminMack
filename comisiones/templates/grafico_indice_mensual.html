@@ -64,8 +64,7 @@ button {
                value="{{ anio }}"
                {% if anio in anios_seleccionados %}checked{% endif %}>
 
-        {{ anio }}
-
+        {{ anio|stringformat:"d" }}
         </label>
 
         {% endfor %}
@@ -81,10 +80,12 @@ button {
 
         {% for anio in anios_disponibles %}
 
-        <option value="{{ anio }}"
+
+        <option value="{{ anio|stringformat:'d' }}"
         {% if anio == anio_base %}selected{% endif %}>
-        {{ anio }}
+        {{ anio|stringformat:"d" }}
         </option>
+
 
         {% endfor %}
 

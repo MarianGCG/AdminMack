@@ -96,19 +96,26 @@ def aseguradoras_view(request):
     )
 
 
-
-
-
 # ================================
 # ACTIVAR ASEGURADORA
 # ================================
+
+
 def activar_aseguradora(request, id):
 
-    obj = Aseguradoras.objects.get(id=id)
-    obj.activa = True
-    obj.save()
+    aseguradora = Aseguradoras.objects.get(id=id)
+
+    # guardar color si viene
+    color = request.POST.get("color")
+    if color:
+        aseguradora.color = color
+
+    aseguradora.activa = True
+    aseguradora.save()
 
     return redirect("aseguradoras")
+
+
 
 
 # ================================

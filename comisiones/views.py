@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Sum, Count, Q, DecimalField, Value
 from django.db.models.functions import Coalesce, Cast
 
@@ -6,10 +6,10 @@ from django.db import connection
 from .models import ComprobantesComisiones
 import json
 from .services.aseguradoras_service import importar_aseguradoras_excel
+from .services.parametros_service import get_parametro
 
 from django.db.models.functions import Cast
 from django.db.models import IntegerField
-
 
 import matplotlib
 matplotlib.use("Agg")
@@ -18,6 +18,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from django.http import HttpResponse
 from io import BytesIO
+
+from .models import ParametroSistema
+
+from matplotlib.ticker import FuncFormatter
+import io
+import base64
 
 
 
@@ -249,20 +255,21 @@ def graficos01(request):
     )
 
     anios_seleccionados = request.GET.getlist("anio")
-
-    if not anios_seleccionados:
-
-        anios_seleccionados = anios_disponibles
-
+    
+    anios_raw = request.GET.getlist("anio")
+    if anios_raw:
+        anios_seleccionados = []
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a).replace(".", "")))
+            except:
+                pass
     else:
-
-        anios_seleccionados = [
-            int(str(a).replace(".", ""))
-            for a in anios_seleccionados
-        ]
+        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
+        cantidad_default = min(cantidad_default, len(anios_disponibles))
+        anios_seleccionados = anios_disponibles[-cantidad_default:]
 
     placeholders = ",".join(["%s"] * len(anios_seleccionados))
-
     filtro_where = f"WHERE c.periodo_anio IN ({placeholders})"
 
     # ==========================================
@@ -443,21 +450,18 @@ def graficos01(request):
 
 
 
-from django.shortcuts import render
-from django.db import connection
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
-import io
-import base64
-
-
 def graficos02(request):
+
+    import io
+    import base64
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
+    from django.db import connection
 
     # ===============================
     # Parámetros seguros
     # ===============================
+
     try:
         top_n = int(request.GET.get("top") or 5)
     except:
@@ -466,32 +470,12 @@ def graficos02(request):
     try:
         tope = float(request.GET.get("tope") or 100)
     except:
-        tope = 100
-
-# ===============================
-# Parámetros seguros DEFINITIVOS
-# ===============================
-
-# Top N
-    top_raw = request.GET.get("top")
-    try:
-        top_n = int(top_raw) if top_raw else 5
-    except:
-        top_n = 5
-
-# Participación Tope
-    tope_raw = request.GET.get("tope")
-
-    try:
-        tope = float(tope_raw) if tope_raw not in [None, ""] else 100.0
-    except:
         tope = 100.0
 
-
-
-
-
+    # ===============================
     # Años seleccionados
+    # ===============================
+
     anios_raw = request.GET.getlist("anio")
     anios_seleccionados = []
 
@@ -502,26 +486,45 @@ def graficos02(request):
             pass
 
     # ===============================
-    # Query
+    # QUERY (AGREGAMOS COLOR)
     # ===============================
+
     with connection.cursor() as cursor:
+
         cursor.execute("""
+
             SELECT
                 c.periodo_anio,
                 ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
                 a.nombre,
+                COALESCE(a.color, '#3366cc') AS color,
                 SUM((c.neto + c.no_gravado + c.exento) / d.valor) AS total_usd
+
             FROM comprobantes_comisiones c
-            JOIN aseguradoras a ON a.id = c.aseguradora_id
+
+            JOIN aseguradoras a
+                ON a.id = c.aseguradora_id
+
             JOIN cotizaciones_dolar d
-              ON c.periodo_anio = d.periodo_anio
-             AND c.periodo_mes = d.periodo_mes
-            GROUP BY c.periodo_anio, trimestre, a.nombre
-            ORDER BY c.periodo_anio, trimestre;
+                ON c.periodo_anio = d.periodo_anio
+                AND c.periodo_mes = d.periodo_mes
+
+            GROUP BY
+                c.periodo_anio,
+                trimestre,
+                a.nombre,
+                a.color
+
+            ORDER BY
+                c.periodo_anio,
+                trimestre;
+
         """)
+
         rows = cursor.fetchall()
 
     if not rows:
+
         return render(request, "graficos02.html", {
             "grafico": "",
             "top_n": top_n,
@@ -533,11 +536,13 @@ def graficos02(request):
     # ===============================
     # Organizar datos
     # ===============================
+
     data = {}
     anio_por_periodo = {}
     anios_disponibles = set()
+    color_map = {}
 
-    for anio, trimestre, nombre, total in rows:
+    for anio, trimestre, nombre, color, total in rows:
 
         anios_disponibles.add(anio)
 
@@ -552,14 +557,18 @@ def graficos02(request):
 
         data[periodo][nombre] = float(total)
 
+        # GUARDAMOS COLOR DESDE DB
+        color_map[nombre] = color
+
     anios_disponibles = sorted(anios_disponibles)
 
-# Si no seleccionó años, seleccionar todos por defecto
     if not anios_seleccionados:
-        anios_seleccionados = anios_disponibles.copy()
-
-
+        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
+        cantidad_default = min(cantidad_default, len(anios_disponibles))
+        anios_seleccionados = anios_disponibles[-cantidad_default:]
+        
     if not data:
+
         return render(request, "graficos02.html", {
             "grafico": "",
             "top_n": top_n,
@@ -571,29 +580,23 @@ def graficos02(request):
     periodos = sorted(data.keys())
 
     # ===============================
-    # Gráfico
+    # GRÁFICO
     # ===============================
+
     fig, ax = plt.subplots(figsize=(14,6))
-
-    palette = [
-        "tab:blue","tab:orange","tab:green","tab:red",
-        "tab:purple","tab:brown","tab:pink","tab:gray",
-        "gold","teal","navy","coral"
-    ]
-
-    color_map = {}
 
     for idx, periodo in enumerate(periodos):
 
         trimestre_data = data[periodo]
+
         total_trimestre = sum(trimestre_data.values())
 
         participaciones = []
 
         for aseg, valor in trimestre_data.items():
+
             pct = (valor / total_trimestre) * 100 if total_trimestre > 0 else 0
 
-            # FILTRO TOPE antes del Top N
             if pct <= tope:
                 participaciones.append((aseg, valor, pct))
 
@@ -605,19 +608,17 @@ def graficos02(request):
 
         for aseg, valor, pct in seleccionadas:
 
-            nombre_formateado = aseg.title()
-
-            if nombre_formateado not in color_map:
-                color_map[nombre_formateado] = palette[len(color_map) % len(palette)]
+            color = color_map.get(aseg, "#3366cc")
 
             ax.bar(
                 idx,
                 valor,
                 bottom=bottom,
-                color=color_map[nombre_formateado]
+                color=color
             )
 
-            texto = nombre_formateado
+            texto = aseg.title()
+
             if pct >= 0:
                 texto += f"\n{pct:.0f}%"
 
@@ -634,10 +635,20 @@ def graficos02(request):
 
             bottom += valor
 
-    # Separadores año
+    # ===============================
+    # Separadores de año
+    # ===============================
+
     for i in range(1, len(periodos)):
+
         if anio_por_periodo[periodos[i]] != anio_por_periodo[periodos[i-1]]:
-            ax.axvline(x=i-0.5, linestyle="--", linewidth=1)
+
+            ax.axvline(
+                x=i-0.5,
+                linestyle="--",
+                linewidth=1,
+                color="gray"
+            )
 
     ax.set_xticks(range(len(periodos)))
     ax.set_xticklabels(periodos, rotation=45)
@@ -650,23 +661,26 @@ def graficos02(request):
     plt.tight_layout()
 
     buffer = io.BytesIO()
+
     plt.savefig(buffer, format='png')
+
     buffer.seek(0)
-    image_png = buffer.getvalue()
+
+    grafico = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
     buffer.close()
+
     plt.close()
 
-    grafico = base64.b64encode(image_png).decode('utf-8')
-
     return render(request, "graficos02.html", {
+
         "grafico": grafico,
         "top_n": top_n,
         "tope": tope,
         "anios_disponibles": anios_disponibles,
         "anios_seleccionados": anios_seleccionados
+
     })
-
-
 
 
 def importar_aseguradoras_view(request):
@@ -706,26 +720,53 @@ def grafico_indice_mensual(request):
         .order_by("periodo_anio")
     )
 
+    from .services.parametros_service import get_parametro
+
     anios_raw = request.GET.getlist("anio")
 
     if anios_raw:
-        anios_seleccionados = [
-            int(str(a).replace(".", ""))
-            for a in anios_raw
-        ]
-    else:
-        anios_seleccionados = anios_disponibles.copy()
 
+        anios_seleccionados = []
+
+        for a in anios_raw:
+            try:
+                anios_seleccionados.append(int(str(a).replace(".", "")))
+            except:
+                pass
+
+    else:
+
+        cantidad_default = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 5))
+
+        anios_seleccionados = anios_disponibles[-cantidad_default:]
+        
+        
+
+
+        
     # ===============================
-    # NUEVO: año base dinámico
+    # Año base dinámico desde parámetros
     # ===============================
+    from .services.parametros_service import get_parametro
+
     anio_base_raw = request.GET.get("anio_base")
 
     if anio_base_raw:
-        anio_base = int(str(anio_base_raw).replace(".", ""))
-    else:
-        anio_base = anios_disponibles[0]
 
+        anio_base = int(str(anio_base_raw).replace(".", ""))
+
+    else:
+
+        anio_base_param = get_parametro("ANIO_BASE_INDICE")
+
+        if anio_base_param is not None:
+
+            anio_base = int(anio_base_param)
+
+        else:
+
+            anio_base = anios_disponibles[0]
+                
 
     # ===============================
     # Query
@@ -850,3 +891,118 @@ def grafico_indice_mensual(request):
         "anios_seleccionados": anios_seleccionados,
         "anio_base": anio_base
     })
+
+
+
+
+def parametros_view(request):
+
+    parametros = ParametroSistema.objects.all().order_by("codigo")
+
+    return render(
+        request,
+        "parametros.html",
+        {
+            "parametros": parametros
+        }
+    )
+
+
+def parametro_nuevo(request):
+
+    if request.method == "POST":
+
+        codigo = request.POST.get("codigo").strip().upper()
+        valor = request.POST.get("valor")
+        descripcion = request.POST.get("descripcion")
+
+        ParametroSistema.objects.update_or_create(
+            codigo=codigo,
+            defaults={
+                "valor": valor,
+                "descripcion": descripcion
+            }
+        )
+
+        return redirect("parametros")
+
+    return render(request, "parametro_nuevo.html")
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import ParametroSistema
+
+
+# ============================
+# LISTAR
+# ============================
+
+def parametros_view(request):
+
+    parametros = ParametroSistema.objects.all().order_by("codigo")
+
+    return render(request, "parametros.html", {
+        "parametros": parametros
+    })
+
+
+# ============================
+# NUEVO
+# ============================
+
+def parametro_nuevo_view(request):
+
+    if request.method == "POST":
+
+        codigo = request.POST.get("codigo").strip()
+        valor = request.POST.get("valor").strip()
+        descripcion = request.POST.get("descripcion").strip()
+
+        ParametroSistema.objects.create(
+            codigo=codigo,
+            valor=valor,
+            descripcion=descripcion
+        )
+
+        return redirect("parametros")
+
+    return render(request, "parametro_form.html", {
+        "modo": "nuevo"
+    })
+
+
+# ============================
+# EDITAR
+# ============================
+
+def parametro_editar_view(request, id):
+
+    parametro = get_object_or_404(ParametroSistema, id=id)
+
+    if request.method == "POST":
+
+        parametro.valor = request.POST.get("valor").strip()
+        parametro.descripcion = request.POST.get("descripcion").strip()
+
+        parametro.save()
+
+        return redirect("parametros")
+
+    return render(request, "parametro_form.html", {
+        "modo": "editar",
+        "parametro": parametro
+    })
+
+
+# ============================
+# ELIMINAR
+# ============================
+
+def parametro_eliminar_view(request, id):
+
+    parametro = get_object_or_404(ParametroSistema, id=id)
+
+    parametro.delete()
+
+    return redirect("parametros")

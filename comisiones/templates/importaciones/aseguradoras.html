@@ -82,6 +82,7 @@
             <th>Email</th>
             <th>Código</th>
             <th>Estado</th>
+            <th>Color</th>
             <th>Acción</th>
         </tr>
     </thead>
@@ -98,26 +99,56 @@
             <td style="text-align:center;">{{ a.codigo_interno }}</td>
 
             <td style="text-align:center;">
-                {% if a.activa %}
+                {% if a.activa %}  
                     <span style="color:green; font-weight:bold;">Activa</span>
                 {% else %}
                     <span style="color:red; font-weight:bold;">Inactiva</span>
                 {% endif %}
             </td>
 
-            <td style="text-align:center;">
-                {% if a.activa %}
-                    <a href="{% url 'eliminar_aseguradora' a.id %}"
-                       style="padding:6px 10px; background:#c0392b; color:white; border-radius:6px; text-decoration:none;">
-                        Desactivar
-                    </a>
-                {% else %}
-                    <a href="{% url 'activar_aseguradora' a.id %}"
-                       style="padding:6px 10px; background:#27ae60; color:white; border-radius:6px; text-decoration:none;">
-                        Activar
-                    </a>
-                {% endif %}
-            </td>
+        <!-- COLUMNA COLOR -->
+        <td style="text-align:center;">
+
+            <form method="post"
+                action="{% url 'activar_aseguradora' a.id %}"
+                style="margin:0;">
+
+                {% csrf_token %}
+
+                <input type="color"
+                    name="color"
+                    value="{{ a.color|default:'#3366cc' }}"
+                    onchange="this.form.submit()"
+                    style="width:40px;height:28px;border:none;cursor:pointer;">
+
+            </form>
+
+        </td>
+
+
+        <!-- COLUMNA ACCION -->
+        <td style="text-align:center;">
+
+            {% if a.activa %}
+                <a href="{% url 'eliminar_aseguradora' a.id %}"
+                style="padding:6px 10px; background:#c0392b; color:white; border-radius:6px; text-decoration:none;">
+                    Desactivar
+                </a>
+            {% else %}
+                <a href="{% url 'activar_aseguradora' a.id %}"
+                style="padding:6px 10px; background:#27ae60; color:white; border-radius:6px; text-decoration:none;">
+                    Activar
+                </a>
+            {% endif %}
+
+        </td>
+
+
+
+
+
+
+
 
         </tr>
         {% empty %}

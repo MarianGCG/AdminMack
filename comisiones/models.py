@@ -9,6 +9,7 @@ from django.db import models
 
 
 class Aseguradoras(models.Model):
+
     nombre = models.TextField()
     cuit = models.CharField(max_length=13, blank=True, null=True)
     tipo_factura = models.CharField(max_length=1, blank=True, null=True)
@@ -17,12 +18,18 @@ class Aseguradoras(models.Model):
     codigo_interno = models.CharField(max_length=20, blank=True, null=True)
     razon_social_afip = models.TextField(blank=True, null=True)
 
+    # NUEVO CAMPO COLOR
+    color = models.CharField(
+        max_length=7,
+        default="#3366cc"
+    )
+
     def __str__(self):
         return self.nombre
 
     class Meta:
         db_table = 'aseguradoras'
-
+        
 
 
 class CobranzasComisiones(models.Model):
@@ -77,3 +84,30 @@ class CotizacionesDolar(models.Model):
         db_table = 'cotizaciones_dolar'
         unique_together = (('periodo_anio', 'periodo_mes'),)
 
+class ParametroSistema(models.Model):
+
+    codigo = models.CharField(
+        max_length=50,
+        unique=True
+    )
+
+    valor = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    descripcion = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return f"{self.codigo} = {self.valor}"
+
+    class Meta:
+        db_table = "parametros_sistema"
+        verbose_name = "Parametro del sistema"
+        verbose_name_plural = "Parametros del sistema"
+        
