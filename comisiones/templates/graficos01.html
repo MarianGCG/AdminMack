@@ -106,15 +106,16 @@ value="{{ anio }}"
 
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 
 <script>
 
 const labels = {{ labels|safe }};
 const datasets = {{ datasets|safe }};
 const tipo = "{{ tipo }}";
+const modo = "{{ modo }}";
+
+let chart = null;
 
 
 // =============================
@@ -123,7 +124,6 @@ const tipo = "{{ tipo }}";
 
 function formatearLabel(label,index)
 {
-
     if(tipo==="mensual")
     {
         const [anio,mes]=label.split("-");
@@ -139,10 +139,6 @@ function formatearLabel(label,index)
     if(tipo==="trimestral")
     {
         const [anio,t]=label.split("-");
-
-        if(t==="T1")
-            return anio+" "+t;
-
         return t;
     }
 
@@ -150,177 +146,123 @@ function formatearLabel(label,index)
 }
 
 
-
 // =============================
 // PLUGIN LINEAS CAMBIO AÑO
 // =============================
 
-const lineasCambioAnio=
+const lineasCambioAnio =
 {
-id:"lineasCambioAnio",
+    id:"lineasCambioAnio",
 
-afterDraw(chart)
-{
+    afterDraw(chart)
+    {
+        const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
 
-const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
+        ctx.save();
 
-ctx.save();
+        ctx.strokeStyle="#999";
+        ctx.lineWidth=1;
+        ctx.setLineDash([5,5]);
 
-ctx.strokeStyle="#999";
-ctx.lineWidth=1;
-ctx.setLineDash([5,5]);
+        for(let i=1;i<labels.length;i++)
+        {
+            const anioActual=labels[i].split("-")[0];
+            const anioAnterior=labels[i-1].split("-")[0];
 
-for(let i=1;i<labels.length;i++)
-{
-const anioActual=labels[i].split("-")[0];
-const anioAnterior=labels[i-1].split("-")[0];
+            if(anioActual!==anioAnterior)
+            {
+                const xPos=(x.getPixelForValue(i)+x.getPixelForValue(i-1))/2;
 
-if(anioActual!==anioAnterior)
-{
-const xPos=(x.getPixelForValue(i)+x.getPixelForValue(i-1))/2;
+                ctx.beginPath();
+                ctx.moveTo(xPos,top);
+                ctx.lineTo(xPos,bottom);
+                ctx.stroke();
+            }
+        }
 
-ctx.beginPath();
-ctx.moveTo(xPos,top);
-ctx.lineTo(xPos,bottom);
-ctx.stroke();
-}
-}
-
-ctx.restore();
-
-}
+        ctx.restore();
+    }
 };
 
+Chart.register(lineasCambioAnio);
 
 
 // =============================
-// PLUGIN AÑOS DEBAJO
+// CREAR GRAFICO (ROBUSTO)
 // =============================
 
-const etiquetasAnios=
+function crearGrafico()
 {
-id:"etiquetasAnios",
+    const ctx = document.getElementById("grafico");
 
-afterDraw(chart)
-{
+    if(chart)
+        chart.destroy();
 
-if(tipo!=="mensual") return;
+    chart = new Chart(ctx,
+    {
 
-const {ctx,chartArea,scales:{x}}=chart;
+        type: modo==="barras" ? "bar" : "line",
 
-ctx.save();
+        data:
+        {
+            labels: labels,
+            datasets: datasets
+        },
 
-ctx.font="bold 12px Arial";
-ctx.fillStyle="#444";
-ctx.textAlign="center";
+        options:
+        {
 
-let anioActual=null;
-let inicio=0;
+            responsive:true,
+            maintainAspectRatio:false,
 
-for(let i=0;i<labels.length;i++)
-{
+            interaction:
+            {
+                mode:"index",
+                intersect:false
+            },
 
-const anio=labels[i].split("-")[0];
-const siguiente=labels[i+1]?.split("-")[0];
+            plugins:
+            {
+                legend:
+                {
+                    display:true
+                }
+            },
 
-if(anioActual===null)
-{
-anioActual=anio;
-inicio=i;
+            scales:
+            {
+
+                x:
+                {
+                    ticks:
+                    {
+                        callback:(value,index)=>
+                            formatearLabel(labels[index],index),
+
+                        maxRotation:0,
+                        autoSkip:false
+                    }
+                },
+
+                y:
+                {
+                    ticks:
+                    {
+                        callback:value=>
+                            value.toLocaleString("es-AR")
+                    }
+                }
+
+            }
+
+        }
+
+    });
 }
 
-if(anio!==siguiente)
-{
 
-const xInicio=x.getPixelForValue(inicio);
-const xFin=x.getPixelForValue(i);
-
-const centro=(xInicio+xFin)/2;
-
-ctx.fillText(anioActual,centro,chartArea.bottom+15);
-
-anioActual=siguiente;
-inicio=i+1;
-
-}
-
-}
-
-ctx.restore();
-
-}
-};
-
-
-
-// =============================
-// CREAR GRAFICO
-// =============================
-
-new Chart(document.getElementById("grafico"),
-{
-
-type:"{{ modo }}"==="barras"?"bar":"line",
-
-data:
-{
-labels:labels,
-datasets:datasets
-},
-
-options:
-{
-
-responsive:true,
-maintainAspectRatio:false,
-
-interaction:
-{
-mode:"index",
-intersect:false
-},
-
-plugins:
-{
-legend:
-{
-display:true
-}
-},
-
-scales:
-{
-
-x:
-{
-ticks:
-{
-callback:function(value,index)
-{
-return formatearLabel(labels[index],index);
-},
-maxRotation:0,
-autoSkip:false
-}
-},
-
-y:
-{
-ticks:
-{
-callback:value=>value.toLocaleString("es-AR")
-}
-}
-
-}
-
-},
-
-plugins:[lineasCambioAnio,etiquetasAnios]
-
-});
+crearGrafico();
 
 </script>
-
 
 {% endblock %}
