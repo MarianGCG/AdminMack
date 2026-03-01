@@ -1,240 +1,109 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block content %}
 
 <div class="titulo-grafico">
-    Evolución Facturación en USD
+Evolución Facturación en USD
 </div>
-
-<style>
-
-.barra-controles {
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:14px;
-    margin-bottom:6px;
-    font-size:14px;
-}
-
-.grupo {
-    display:flex;
-    align-items:center;
-    gap:6px;
-    padding-right:12px;
-    border-right:1px solid #ddd;
-}
-
-.grupo:last-child {
-    border-right:none;
-}
-
-.btn {
-    padding:3px 10px;
-    background:#e6eef7;
-    color:#174a7c;
-    text-decoration:none;
-    border-radius:4px;
-    font-weight:bold;
-}
-
-.btn.activo {
-    background:#2c78be;
-    color:white;
-}
-
-.checkbox-anio {
-    margin-right:8px;
-}
-
-.contenedor-grafico {
-    height: calc(100vh - 140px);
-    width:100%;
-}
-
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 <form method="get">
 
-<input type="hidden" name="tipo" value="{{ tipo }}">
-<input type="hidden" name="modo" value="{{ modo }}">
+<div class="barra-opciones">
 
-<div class="barra-controles">
+<b>Periodo:</b>
 
+<label>
+<input type="radio" name="tipo" value="mensual"
+{% if tipo == "mensual" %}checked{% endif %}>
+Mensual
+</label>
 
-    <!-- PERIODO -->
-    <div class="grupo">
+<label>
+<input type="radio" name="tipo" value="trimestral"
+{% if tipo == "trimestral" %}checked{% endif %}>
+Trimestral
+</label>
 
-        <strong>Periodo:</strong>
-
-        <a href="?tipo=mensual&modo={{ modo }}"
-           class="btn {% if tipo == 'mensual' %}activo{% endif %}">
-            Mensual
-        </a>
-
-        <a href="?tipo=trimestral&modo={{ modo }}"
-           class="btn {% if tipo == 'trimestral' %}activo{% endif %}">
-            Trimestral
-        </a>
-
-        <a href="?tipo=anual&modo={{ modo }}"
-           class="btn {% if tipo == 'anual' %}activo{% endif %}">
-            Anual
-        </a>
-
-    </div>
+<label>
+<input type="radio" name="tipo" value="anual"
+{% if tipo == "anual" %}checked{% endif %}>
+Anual
+</label>
 
 
-    <!-- TIPO GRAFICO -->
-    <div class="grupo">
+<span style="border-left:1px solid #ccc;height:20px;"></span>
 
-        <strong>Gráfico:</strong>
+<b>Modo:</b>
 
-        <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
-           class="btn {% if modo == 'lineas' %}activo{% endif %}">
-            Líneas
-        </a>
+<label>
+<input type="radio" name="modo" value="lineas"
+{% if modo == "lineas" %}checked{% endif %}>
+Líneas
+</label>
 
-        <a href="?tipo={{ tipo }}&modo=barras{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
-           class="btn {% if modo == 'barras' %}activo{% endif %}">
-            Barras
-        </a>
-
-    </div>
-
-
-    <!-- AÑOS -->
-    <div class="grupo">
-
-        <strong>Años:</strong>
-
-        {% for anio in anios_disponibles %}
-        <label class="checkbox-anio">
-
-            <input type="checkbox"
-                   name="anio"
-                   value="{{ anio|stringformat:'d' }}"
-                   {% if anio in anios_seleccionados %}checked{% endif %}>
-
-            {{ anio|stringformat:"d" }}
-
-        </label>
-        {% endfor %}
-
-    </div>
+<label>
+<input type="radio" name="modo" value="barras"
+{% if modo == "barras" %}checked{% endif %}>
+Barras
+</label>
 
 
-    <!-- BOTON -->
-    <div class="grupo">
-        <button type="submit"
-                style="padding:3px 10px;
-                       background:#2c78be;
-                       color:white;
-                       border:none;
-                       border-radius:4px;">
-            Actualizar
-        </button>
-    </div>
+<span style="border-left:1px solid #ccc;height:20px;"></span>
 
+<label>
+<input type="checkbox"
+name="desglose"
+value="1"
+{% if desglose %}checked{% endif %}>
+Desglose aseguradoras
+</label>
+
+<button type="submit">Actualizar</button>
+
+</div>
+
+
+<!-- AÑOS EN LINEA APARTE -->
+
+<div class="barra-opciones">
+
+<b>Años:</b>
+
+{% for anio in anios_disponibles %}
+
+<label>
+<input type="checkbox"
+name="anio"
+value="{{ anio }}"
+{% if anio in anios_seleccionados %}checked{% endif %}>
+{{ anio }}
+</label>
+
+{% endfor %}
 
 </div>
 
 </form>
 
 
+<div style="height: calc(100vh - 170px);">
 
-<div class="contenedor-grafico">
-    <canvas id="grafico"></canvas>
+<canvas id="grafico"></canvas>
+
 </div>
 
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 
 const labels = {{ labels|safe }};
-const valoresUSD = {{ valores_usd|safe }};
-const valoresDolar = {{ valores_dolar|safe }};
-const tendenciaUSD = {{ valores_usd_tendencia|safe }};
+const datasets = {{ datasets|safe }};
 
-const tipo = "{{ tipo }}";
-const modo = "{{ modo }}";
+new Chart(document.getElementById('grafico'),{
 
-function formatearLabel(label) {
-
-    if (tipo === "mensual") {
-
-        const mes = parseInt(label.split("-")[1]);
-
-        const nombres = [
-            "Ene","Feb","Mar","Abr","May","Jun",
-            "Jul","Ago","Sep","Oct","Nov","Dic"
-        ];
-
-        return nombres[mes-1];
-    }
-
-    if (tipo === "trimestral") {
-
-        const partes = label.split("-");
-        const anio = partes[0];
-        const trim = partes[1];
-
-        if (trim === "T1")
-            return anio + " " + trim;
-
-        return trim;
-    }
-
-    return label;
-}
-
-
-let datasets = [
-
-{
-label:"Facturación USD",
-data:valoresUSD,
-backgroundColor:"rgba(44,120,190,0.6)",
-borderColor:"#2c78be",
-borderWidth:2,
-tension:0.25,
-yAxisID:"y"
-},
-
-{
-label:"Dólar",
-data:valoresDolar,
-type:"line",
-borderColor:"orange",
-borderDash:[6,6],
-yAxisID:"y1"
-}
-
-];
-
-
-if (tipo === "trimestral") {
-
-datasets.push({
-
-label:"Tendencia",
-data:tendenciaUSD,
-type:"line",
-borderColor:"#2ca02c",
-borderWidth:3,
-borderDash:[10,5],
-pointRadius:0
-
-});
-
-}
-
-
-new Chart(document.getElementById('grafico'), {
-
-type: modo === "barras" ? "bar" : "line",
+type: "{{ modo }}" === "barras" ? "bar" : "line",
 
 data:{
 labels:labels,
@@ -243,39 +112,17 @@ datasets:datasets
 
 options:{
 
-maintainAspectRatio:false,
 responsive:true,
+maintainAspectRatio:false,
 
 interaction:{
-mode:"index",
+mode:'index',
 intersect:false
 },
 
 scales:{
-
-x:{
-ticks:{
-callback:(v,i)=>formatearLabel(labels[i]),
-maxRotation:0,
-autoSkip:false
-}
-},
-
-y:{
-position:"left",
-ticks:{
-callback:v=>v.toLocaleString("es-AR")
-}
-},
-
-y1:{
-position:"right",
-grid:{drawOnChartArea:false},
-ticks:{
-callback:v=>v.toLocaleString("es-AR")
-}
-}
-
+x:{},
+y:{}
 }
 
 }
@@ -283,5 +130,6 @@ callback:v=>v.toLocaleString("es-AR")
 });
 
 </script>
+
 
 {% endblock %}
