@@ -1,48 +1,89 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block content %}
 
-<h2>📊 Evolución Facturación en USD</h2>
+<div class="titulo-grafico">
+    Evolución Facturación en USD
+</div>
 
 <style>
-    h2 { margin-bottom: 20px; }
 
-    .btn {
-        padding: 8px 14px;
-        background: #2c78be;
-        color: white;
-        text-decoration: none;
-        border-radius: 6px;
-        margin-right: 8px;
-    }
+.barra-opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
 
-    .btn.activo {
-        background: #174a7c;
-    }
+.btn {
+    padding: 3px 10px;
+    background: #2c78be;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
 
-    .filtros {
-        margin: 20px 0;
-        background: white;
-        padding: 15px;
-        border-radius: 6px;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-    }
+.btn.activo {
+    background: #174a7c;
+}
 
-    .contenedor-grafico {
-        background-color: white;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
-    }
+.btn:hover {
+    background: #1f5d96;
+}
 
-    .checkbox-anio {
-        margin-right: 12px;
-    }
+.contenedor-grafico {
+    background-color: white;
+    padding: 12px 14px 14px 14px;
+    border-radius: 8px;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+}
+
+/* controles en una línea */
+.fila-controles {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.checkbox-anio {
+    margin-right: 8px;
+}
+
+button {
+    padding: 3px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    background: #2c78be;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+button:hover {
+    background: #1f5d96;
+}
+
+/* gráfico grande */
+.area-grafico {
+    height: calc(100vh - 210px);
+}
+
+.area-grafico canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
 <!-- Tipo período -->
-<div>
+<div class="barra-opciones">
 
     <a href="?tipo=mensual&modo={{ modo }}"
        class="btn {% if tipo == 'mensual' %}activo{% endif %}">
@@ -61,10 +102,9 @@
 
 </div>
 
-<br>
 
 <!-- Tipo gráfico -->
-<div>
+<div class="barra-opciones">
 
     <a href="?tipo={{ tipo }}&modo=lineas{% for a in anios_seleccionados %}&anio={{ a }}{% endfor %}"
        class="btn {% if modo == 'lineas' %}activo{% endif %}">
@@ -78,34 +118,46 @@
 
 </div>
 
-<div class="filtros">
+
+<div class="contenedor-grafico">
 
 <form method="get">
 
 <input type="hidden" name="tipo" value="{{ tipo }}">
 <input type="hidden" name="modo" value="{{ modo }}">
 
-<strong>Seleccionar años:</strong><br><br>
+<div class="fila-controles">
+
+<strong>Años:</strong>
 
 {% for anio in anios_disponibles %}
+
 <label class="checkbox-anio">
+
 <input type="checkbox"
        name="anio"
-       value="{{ anio|stringformat:'d' }}"
+       value="{{ anio|unlocalize }}"
        {% if anio in anios_seleccionados %}checked{% endif %}>
-{{ anio|stringformat:"d" }}
+
+{{ anio|unlocalize }}
+
 </label>
+
 {% endfor %}
 
 <button type="submit">Actualizar</button>
 
+</div>
+
 </form>
 
+
+<div class="area-grafico">
+<canvas id="grafico"></canvas>
 </div>
 
-<div class="contenedor-grafico">
-<canvas id="grafico" height="120"></canvas>
 </div>
+
 
 <script>
 
@@ -122,15 +174,11 @@ const modo = "{{ modo }}";
 // formatear etiquetas eje X
 // ==========================
 
-
-
-function formatearLabel(label, index) {
+function formatearLabel(label) {
 
     if (tipo === "mensual") {
 
-        const partes = label.split("-");
-        const anio = partes[0];
-        const mes = parseInt(partes[1]);
+        const mes = parseInt(label.split("-")[1]);
 
         const nombresMes = [
             "Ene","Feb","Mar","Abr","May","Jun",
@@ -156,7 +204,6 @@ function formatearLabel(label, index) {
 }
 
 
-
 // ==========================
 // datasets
 // ==========================
@@ -180,36 +227,25 @@ type: "line",
 borderColor: "orange",
 borderWidth: 2,
 borderDash: [6,6],
-pointRadius: 4,
+pointRadius: 3,
 tension: 0.25,
 yAxisID: "y1"
 }
 
 ];
 
-
-// tendencia trimestral
-
 if (tipo === "trimestral") {
 
 datasets.push({
 
 label: "Tendencia",
-
 data: tendenciaUSD,
-
 type: "line",
-
 borderColor: "#2ca02c",
-
 borderWidth: 3,
-
 borderDash: [10,5],
-
 pointRadius: 0,
-
 tension: 0,
-
 yAxisID: "y"
 
 });
@@ -218,7 +254,7 @@ yAxisID: "y"
 
 
 // ==========================
-// grafico
+// gráfico
 // ==========================
 
 new Chart(document.getElementById('grafico'), {
@@ -233,6 +269,7 @@ datasets: datasets
 options: {
 
 responsive: true,
+maintainAspectRatio: false,
 
 interaction: {
 mode: "index",
@@ -260,155 +297,33 @@ value.toLocaleString("es-AR");
 scales: {
 
 x: {
-
 ticks: {
-
-callback: function(value, index) {
-return formatearLabel(labels[index], index);
-},
-padding: 10,   // 👈 baja los meses
-maxRotation: 0,
-autoSkip: false
-
+callback: (value, index) =>
+formatearLabel(labels[index]),
+maxRotation: 0
 }
-
 },
 
 y: {
-
 position: "left",
-
 ticks: {
-
 callback: value =>
 value.toLocaleString("es-AR")
-
 }
-
 },
 
 y1: {
-
 position: "right",
-
 grid: { drawOnChartArea: false },
-
 ticks: {
-
 callback: value =>
 value.toLocaleString("es-AR")
+}
+}
 
 }
 
 }
-
-}
-
-},
-
-plugins: [
-
-{
-id: 'lineasPorAnio',
-
-afterDraw(chart) {
-
-const {ctx, chartArea, scales} = chart;
-const xScale = scales.x;
-
-ctx.save();
-
-ctx.strokeStyle = "#888";
-ctx.lineWidth = 1.5;
-
-labels.forEach((label, index) => {
-
-if (
-label.endsWith("-01") ||
-label.endsWith("-T1") ||
-label.match(/^\d{4}$/)
-) {
-
-const x = xScale.getPixelForValue(index);
-
-ctx.beginPath();
-ctx.moveTo(x, chartArea.top);
-ctx.lineTo(x, chartArea.bottom);
-ctx.stroke();
-
-}
-
-});
-
-ctx.restore();
-
-}
-},
-
-
-// 👇 ESTE ES EL NUEVO PLUGIN — AÑOS DEBAJO DE LOS MESES
-
-{
-id: 'etiquetasAnios',
-
-afterDraw(chart) {
-
-if (tipo !== "mensual") return;
-
-const {ctx, chartArea, scales} = chart;
-const xScale = scales.x;
-
-ctx.save();
-
-ctx.fillStyle = "#444";
-ctx.font = "bold 12px Arial";
-ctx.textAlign = "center";
-
-let anioActual = null;
-let inicioGrupo = null;
-
-labels.forEach((label, index) => {
-
-const anio = label.split("-")[0];
-
-if (anioActual === null) {
-
-anioActual = anio;
-inicioGrupo = index;
-
-}
-
-const siguiente = labels[index + 1];
-const anioSiguiente = siguiente ? siguiente.split("-")[0] : null;
-
-if (anio !== anioSiguiente) {
-
-const finGrupo = index;
-
-const xInicio = xScale.getPixelForValue(inicioGrupo);
-const xFin = xScale.getPixelForValue(finGrupo);
-
-const centro = (xInicio + xFin) / 2;
-
-ctx.fillText(
-anioActual,
-centro,
-chartArea.bottom + 12
-);
-
-anioActual = anioSiguiente;
-inicioGrupo = index + 1;
-
-}
-
-});
-
-ctx.restore();
-
-}
-}
-
-]
 
 });
 

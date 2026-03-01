@@ -1,30 +1,34 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block content %}
 
-<h2>Índice Interanual por Mes</h2>
+<div class="titulo-grafico">
+    Índice Interanual por Mes
+</div>
 
 <style>
 
-.contenedor {
+.contenedor-grafico {
     background: white;
-    padding: 20px;
+    padding: 12px 14px 14px 14px;
     border-radius: 8px;
     box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
 }
 
-/* línea única de controles */
+/* controles en una sola línea */
 .fila-controles {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 15px;
+    gap: 14px;
+    margin-bottom: 8px;
+    font-size: 14px;
 }
 
 .grupo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
 .checkbox-anio {
@@ -32,20 +36,39 @@
 }
 
 select {
-    padding: 4px 6px;
+    padding: 3px 6px;
     font-size: 14px;
 }
 
 button {
-    padding: 6px 14px;
+    padding: 3px 10px;
     font-size: 14px;
     cursor: pointer;
+    background: #2c78be;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+button:hover {
+    background: #1f5d96;
+}
+
+/* gráfico grande */
+.area-grafico {
+    height: calc(100vh - 170px);
+}
+
+.area-grafico img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 </style>
 
 
-<div class="contenedor">
+<div class="contenedor-grafico">
 
 <form method="get">
 
@@ -61,10 +84,10 @@ button {
 
         <input type="checkbox"
                name="anio"
-               value="{{ anio }}"
+               value="{{ anio|unlocalize }}"
                {% if anio in anios_seleccionados %}checked{% endif %}>
 
-        {{ anio|stringformat:"d" }}
+        {{ anio|unlocalize }}
         </label>
 
         {% endfor %}
@@ -74,18 +97,16 @@ button {
     <!-- AÑO BASE -->
     <div class="grupo">
 
-        <strong>Año base:</strong>
+        <strong>Base:</strong>
 
         <select name="anio_base">
 
         {% for anio in anios_disponibles %}
 
-
-        <option value="{{ anio|stringformat:'d' }}"
+        <option value="{{ anio|unlocalize }}"
         {% if anio == anio_base %}selected{% endif %}>
-        {{ anio|stringformat:"d" }}
+        {{ anio|unlocalize }}
         </option>
-
 
         {% endfor %}
 
@@ -106,8 +127,11 @@ button {
 
 {% if grafico %}
 
-<img src="data:image/png;base64,{{ grafico }}"
-     style="width:100%; max-width:1200px;">
+<div class="area-grafico">
+
+<img src="data:image/png;base64,{{ grafico }}">
+
+</div>
 
 {% else %}
 

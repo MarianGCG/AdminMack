@@ -38,11 +38,37 @@
             opacity: 0.8;
         }
 
-        /* CONTENIDO MÁS ARRIBA Y MÁS ANCHO */
+        /* CONTENIDO NORMAL */
         .contenido {
             padding: 10px 20px 15px 20px;
-            max-width: 1600px;
+            max-width: 1800px;
             margin: 0 auto;
+        }
+
+        /* CONTENIDO FULL WIDTH (para gráficos grandes) */
+        .contenido.fullwidth {
+            max-width: 100%;
+        }
+
+        /* TITULOS DE GRAFICOS */
+        .titulo-grafico {
+            font-size: 22px;
+            font-weight: bold;
+            color: #174a7c;
+            margin-bottom: 10px;
+        }
+
+        /* BARRA DE OPCIONES */
+        .barra-opciones {
+            background-color: white;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         /* DROPDOWN */
