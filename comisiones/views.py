@@ -1254,3 +1254,163 @@ def graficos01(request):
         "anios_seleccionados":anios_seleccionados
 
     })
+# =====================================================
+# GRAFICO INDICE INTERANUAL MENSUAL
+# =====================================================
+
+def grafico_indice_mensual(request):
+
+    import io
+    import base64
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from django.db import connection
+    from .services.parametros_service import get_parametro
+
+    # ===============================
+    # obtener años disponibles
+    # ===============================
+
+    with connection.cursor() as cursor:
+
+        cursor.execute("""
+            SELECT DISTINCT periodo_anio
+            FROM comprobantes_comisiones
+            ORDER BY periodo_anio
+        """)
+
+        anios_disponibles = [row[0] for row in cursor.fetchall()]
+
+    # ===============================
+    # años seleccionados
+    # ===============================
+
+    anios_raw = request.GET.getlist("anio")
+
+    if anios_raw:
+
+        anios_seleccionados = [int(a) for a in anios_raw]
+
+    else:
+
+        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
+        anios_seleccionados = anios_disponibles[-cant:]
+
+
+    # ===============================
+    # año base
+    # ===============================
+
+    anio_base = request.GET.get("anio_base")
+
+    if anio_base:
+        anio_base = int(anio_base)
+    else:
+        anio_base = anios_seleccionados[0] if anios_seleccionados else None
+
+
+    # ===============================
+    # obtener datos
+    # ===============================
+
+    placeholders = ",".join(["%s"] * len(anios_seleccionados))
+
+    with connection.cursor() as cursor:
+
+        cursor.execute(f"""
+            SELECT
+                periodo_anio,
+                periodo_mes,
+                SUM(neto+no_gravado+exento)
+            FROM comprobantes_comisiones
+            WHERE periodo_anio IN ({placeholders})
+            GROUP BY periodo_anio, periodo_mes
+            ORDER BY periodo_anio, periodo_mes
+        """, anios_seleccionados)
+
+        rows = cursor.fetchall()
+
+
+    if not rows:
+
+        return render(request, "grafico_indice_mensual.html", {
+            "grafico": None,
+            "anios_disponibles": anios_disponibles,
+            "anios_seleccionados": anios_seleccionados,
+            "anio_base": anio_base
+        })
+
+
+    # ===============================
+    # organizar datos
+    # ===============================
+
+    data = {}
+
+    for anio, mes, valor in rows:
+
+        if anio not in data:
+            data[anio] = {}
+
+        data[anio][mes] = float(valor)
+
+
+    # ===============================
+    # calcular indice
+    # ===============================
+
+    fig, ax = plt.subplots(figsize=(14,6))
+
+    for anio in anios_seleccionados:
+
+        if anio not in data:
+            continue
+
+        valores = []
+
+        for mes in range(1,13):
+
+            base = data.get(anio_base, {}).get(mes, 0)
+            actual = data.get(anio, {}).get(mes, 0)
+
+            if base > 0:
+                indice = actual / base * 100
+            else:
+                indice = 0
+
+            valores.append(indice)
+
+        ax.plot(range(1,13), valores, label=str(anio))
+
+
+    ax.legend()
+    ax.set_title("Indice interanual mensual")
+    ax.set_xlabel("Mes")
+    ax.set_ylabel("Indice")
+
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+
+    plt.savefig(buffer, format="png")
+
+    buffer.seek(0)
+
+    grafico = base64.b64encode(buffer.getvalue()).decode()
+
+    buffer.close()
+    plt.close()
+
+
+    return render(request, "grafico_indice_mensual.html", {
+
+        "grafico": grafico,
+
+        "anios_disponibles": anios_disponibles,
+
+        "anios_seleccionados": anios_seleccionados,
+
+        "anio_base": anio_base
+
+    })
