@@ -217,6 +217,10 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
+# =====================================================
+# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
+# =====================================================
+
 def graficos01(request):
 
     import json
@@ -295,15 +299,14 @@ def graficos01(request):
     # ==========================
 
     if not rows:
-
-        return render(request,"graficos01.html",{
-            "labels":"[]",
-            "datasets":"[]",
-            "tipo":tipo,
-            "modo":modo,
-            "desglose":desglose,
-            "anios_disponibles":[],
-            "anios_seleccionados":[]
+        return render(request, "graficos01.html", {
+            "labels": "[]",
+            "datasets": "[]",
+            "tipo": tipo,
+            "modo": modo,
+            "desglose": desglose,
+            "anios_disponibles": [],
+            "anios_seleccionados": []
         })
 
     # ==========================
@@ -329,8 +332,7 @@ def graficos01(request):
                 pass
 
     else:
-
-        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT",4))
+        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
         cant = min(cant, len(anios_disponibles))
         anios_seleccionados = anios_disponibles[-cant:]
 
@@ -341,17 +343,15 @@ def graficos01(request):
     data = {}
     colores = {}
 
-    for anio,periodo,aseg,color,total in rows:
+    for anio, periodo, aseg, color, total in rows:
 
         if anio not in anios_seleccionados:
             continue
 
         if tipo == "mensual":
             label = f"{anio}-{periodo:02d}"
-
         elif tipo == "trimestral":
             label = f"{anio}-T{periodo}"
-
         else:
             label = str(anio)
 
@@ -371,12 +371,12 @@ def graficos01(request):
 
     if desglose:
 
-        for aseg,color in colores.items():
+        for aseg, color in colores.items():
 
             valores = []
 
             for label in labels:
-                valores.append(data[label].get(aseg,0))
+                valores.append(data[label].get(aseg, 0))
 
             datasets.append({
                 "label": aseg,
@@ -403,11 +403,31 @@ def graficos01(request):
             "fill": False
         })
 
+        # ==========================
+        # MEDIA TRIMESTRAL
+        # ==========================
+
+        if tipo == "trimestral" and valores:
+
+            promedio = sum(valores) / len(valores)
+
+            datasets.append({
+                "label": "Media trimestral",
+                "data": [promedio for _ in labels],
+                "borderColor": "#c0392b",
+                "backgroundColor": "#c0392b",
+                "borderDash": [6, 6],
+                "tension": 0,
+                "fill": False,
+                "type": "line",
+                "pointRadius": 0
+            })
+
     # ==========================
     # RENDER FINAL
     # ==========================
 
-    return render(request,"graficos01.html",{
+    return render(request, "graficos01.html", {
 
         "labels": json.dumps(labels),
         "datasets": json.dumps(datasets),
@@ -420,8 +440,6 @@ def graficos01(request):
         "anios_seleccionados": anios_seleccionados
 
     })
-
-    
 
 
 def graficos02(request):
