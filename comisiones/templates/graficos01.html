@@ -261,7 +261,6 @@ function crearGrafico()
 // =============================
 // LEYENDA AGRUPADA POR GRUPO
 // =============================
-
 function generarLeyendaAgrupada(chart)
 {
     const container = document.getElementById("legend-container");
@@ -284,15 +283,29 @@ function generarLeyendaAgrupada(chart)
         divGrupo.style.marginBottom = "6px";
 
         const titulo = document.createElement("strong");
-        titulo.innerText = grupo + " ";
+        titulo.innerText = grupo;
         titulo.style.cursor = "pointer";
-        titulo.style.marginRight = "10px";
+        titulo.style.marginRight = "12px";
+        titulo.dataset.grupo = grupo;
 
+        // CLICK EN GRUPO
         titulo.onclick = ()=>{
+
+            let ocultar = false;
+
+            // Detectar si al menos uno está visible
             grupos[grupo].forEach(item=>{
                 const meta = chart.getDatasetMeta(item.index);
-                meta.hidden = meta.hidden === null ? true : null;
+                if(meta.hidden !== true)
+                    ocultar = true;
             });
+
+            // Aplicar a todos
+            grupos[grupo].forEach(item=>{
+                const meta = chart.getDatasetMeta(item.index);
+                meta.hidden = ocultar ? true : null;
+            });
+
             chart.update();
             actualizarEstilos();
         };
@@ -303,15 +316,27 @@ function generarLeyendaAgrupada(chart)
 
             const span = document.createElement("span");
 
-            span.innerText = item.ds.label;
+            // 8 caracteres fijos
+            let nombre = item.ds.label;
+            if(nombre.length > 8)
+                nombre = nombre.substring(0,8);
+            nombre = nombre.padEnd(8," ");
+
+            span.innerText = nombre;
+
             span.style.display = "inline-block";
+            span.style.width = "90px";
+            span.style.textAlign = "center";
+            span.style.fontFamily = "monospace";
             span.style.marginRight = "6px";
             span.style.cursor = "pointer";
             span.style.color = "black";
             span.style.backgroundColor = item.ds.borderColor;
             span.style.borderRadius = "4px";
             span.style.padding = "2px 6px";
+
             span.dataset.index = item.index;
+            span.dataset.grupo = grupo;
 
             span.onclick = ()=>{
                 const meta = chart.getDatasetMeta(item.index);
@@ -328,9 +353,13 @@ function generarLeyendaAgrupada(chart)
 
     actualizarEstilos();
 
+
     function actualizarEstilos()
     {
+        const gruposEstado = {};
+
         container.querySelectorAll("span[data-index]").forEach(span=>{
+
             const meta = chart.getDatasetMeta(span.dataset.index);
 
             if(meta.hidden)
@@ -342,6 +371,33 @@ function generarLeyendaAgrupada(chart)
             {
                 span.style.textDecoration = "none";
                 span.style.opacity = "1";
+            }
+
+            const grupo = span.dataset.grupo;
+
+            if(!gruposEstado[grupo])
+                gruposEstado[grupo] = [];
+
+            gruposEstado[grupo].push(meta.hidden);
+        });
+
+        // Actualizar estado visual del grupo
+        container.querySelectorAll("strong[data-grupo]").forEach(titulo=>{
+
+            const grupo = titulo.dataset.grupo;
+            const estados = gruposEstado[grupo] || [];
+
+            const todosOcultos = estados.length > 0 && estados.every(e=>e===true);
+
+            if(todosOcultos)
+            {
+                titulo.style.textDecoration = "line-through";
+                titulo.style.opacity = "0.4";
+            }
+            else
+            {
+                titulo.style.textDecoration = "none";
+                titulo.style.opacity = "1";
             }
         });
     }
