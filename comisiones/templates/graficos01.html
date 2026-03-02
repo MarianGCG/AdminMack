@@ -87,8 +87,7 @@ const datasets = {{ datasets|safe }};
 const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
 const desglose = {{ desglose|yesno:"true,false" }};
-const gruposDeshabilitados = {{ grupos_deshabilitados|safe }};
-
+const gruposDeshabilitados = {{ grupos_deshabilitados|default:"[]"|safe }};
 let chart = null;
 
 
