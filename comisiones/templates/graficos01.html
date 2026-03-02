@@ -118,7 +118,7 @@ function formatearLabel(label)
 
 
 // =============================
-// LINEAS CAMBIO AÑO
+// PLUGIN LINEAS AÑO
 // =============================
 
 const lineasCambioAnio = {
@@ -151,7 +151,7 @@ const lineasCambioAnio = {
 
 
 // =============================
-// ETIQUETAS AÑO ABAJO
+// PLUGIN ETIQUETA AÑO ABAJO
 // =============================
 
 const etiquetasAnios = {
@@ -196,6 +196,46 @@ const etiquetasAnios = {
 };
 
 
+// =============================
+// PLUGIN MOSTRAR NOMBRE SOBRE LINEA (BLINDADO)
+// =============================
+
+const mostrarNombreSobreLinea = {
+    id: "mostrarNombreSobreLinea",
+
+    afterDatasetsDraw(chart)
+    {
+        if (!desglose) return;
+
+        const { ctx } = chart;
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+
+            if (!meta || meta.hidden || !meta.data || meta.data.length === 0) return;
+
+            const lastElement = meta.data[meta.data.length - 1];
+            if (!lastElement || lastElement.x === undefined) return;
+
+            ctx.save();
+            ctx.font = "bold 11px Arial";
+            ctx.fillStyle = "black";
+            ctx.textAlign = "left";
+
+            ctx.fillText(
+                dataset.label,
+                lastElement.x + 6,
+                lastElement.y
+            );
+
+            ctx.restore();
+        });
+    }
+};
+
+
+// 🔴 REGISTRAMOS TODO DESPUÉS DE DECLARAR
 Chart.register(
     lineasCambioAnio,
     etiquetasAnios,
@@ -221,7 +261,6 @@ function crearGrafico()
         },
 
         options: {
-
             responsive:true,
             maintainAspectRatio:false,
 
@@ -230,9 +269,7 @@ function crearGrafico()
                 : { mode:"index", intersect:false },
 
             plugins: {
-
                 tooltip: { enabled: !desglose },
-
                 legend: {
                     display: !desglose,
                     labels:{ font:{ size:11 } }
@@ -240,7 +277,6 @@ function crearGrafico()
             },
 
             scales: {
-
                 x: {
                     ticks:{
                         font:{ size:11 },
@@ -249,7 +285,6 @@ function crearGrafico()
                         autoSkip:false
                     }
                 },
-
                 y: {
                     ticks:{
                         font:{ size:11 },
@@ -268,6 +303,7 @@ function crearGrafico()
 // =============================
 // LEYENDA AGRUPADA
 // =============================
+
 function generarLeyendaAgrupada(chart)
 {
     const container=document.getElementById("legend-container");
@@ -284,7 +320,6 @@ function generarLeyendaAgrupada(chart)
     Object.keys(grupos).sort().forEach(grupo=>{
 
         const divGrupo=document.createElement("div");
-        divGrupo.style.marginBottom="6px";
 
         const titulo=document.createElement("strong");
         titulo.innerText=grupo+" ";
@@ -296,8 +331,8 @@ function generarLeyendaAgrupada(chart)
                 const meta=chart.getDatasetMeta(item.index);
                 meta.hidden = meta.hidden===null ? true : null;
             });
-            actualizarEstilos();
             chart.update();
+            actualizarEstilos();
         };
 
         divGrupo.appendChild(titulo);
@@ -305,33 +340,24 @@ function generarLeyendaAgrupada(chart)
         grupos[grupo].forEach(item=>{
 
             const span=document.createElement("span");
-
-            // Texto fijo 8 caracteres (rellena con espacios)
-            let nombre = item.ds.label;
-            nombre = nombre.padEnd(8," ").substring(0,8);
-
-            span.innerText = nombre;
-
+            span.innerText=item.ds.label;
             span.style.display="inline-block";
-            span.style.width="80px";
+            span.style.width="90px";
             span.style.marginRight="6px";
-            span.style.textAlign="center";
             span.style.cursor="pointer";
             span.style.color="black";
-            span.style.fontSize="12px";
+            span.style.backgroundColor=item.ds.borderColor;
             span.style.borderRadius="4px";
             span.style.padding="2px 4px";
-            span.style.backgroundColor=item.ds.borderColor;
 
             span.onclick=()=>{
                 const meta=chart.getDatasetMeta(item.index);
                 meta.hidden = meta.hidden===null ? true : null;
-                actualizarEstilos();
                 chart.update();
+                actualizarEstilos();
             };
 
             span.dataset.index=item.index;
-
             divGrupo.appendChild(span);
         });
 
@@ -340,64 +366,15 @@ function generarLeyendaAgrupada(chart)
 
     actualizarEstilos();
 
-
     function actualizarEstilos()
     {
         container.querySelectorAll("span[data-index]").forEach(span=>{
-
-            const index = span.dataset.index;
-            const meta = chart.getDatasetMeta(index);
-
-            if(meta.hidden===true)
-            {
-                span.style.textDecoration="line-through";
-                span.style.opacity="0.4";
-            }
-            else
-            {
-                span.style.textDecoration="none";
-                span.style.opacity="1";
-            }
+            const meta = chart.getDatasetMeta(span.dataset.index);
+            span.style.textDecoration = meta.hidden ? "line-through" : "none";
+            span.style.opacity = meta.hidden ? "0.4" : "1";
         });
     }
 }
-// =============================
-// MOSTRAR NOMBRE SOBRE LINEA
-// =============================
-
-const mostrarNombreSobreLinea = {
-    id: "mostrarNombreSobreLinea",
-
-    afterDatasetsDraw(chart)
-    {
-        if(!desglose) return;
-
-        const {ctx} = chart;
-
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-
-            const meta = chart.getDatasetMeta(datasetIndex);
-
-            if(meta.hidden) return;
-
-            const lastPoint = meta.data[meta.data.length - 1];
-            if(!lastPoint) return;
-
-            ctx.save();
-            ctx.font = "bold 11px Arial";
-            ctx.fillStyle = "black";
-            ctx.textAlign = "left";
-
-            ctx.fillText(
-                dataset.label,
-                lastPoint.x + 6,
-                lastPoint.y
-            );
-
-            ctx.restore();
-        });
-    }
-};
 
 crearGrafico();
 
