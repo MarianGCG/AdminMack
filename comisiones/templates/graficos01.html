@@ -238,33 +238,100 @@ const anioCentrado={
 // NOMBRE ASEGURADORA EN LINEAL
 // =============================
 
-const mostrarNombreLinea={
-    id:"mostrarNombreLinea",
+// =============================
+// NOMBRE ASEGURADORA EN LINEAL
+// =============================
+
+const mostrarNombreLinea = {
+    id: "mostrarNombreLinea",
     afterDatasetsDraw(chart){
 
         if(!desglose) return;
-        if(modo!=="lineas") return;
+        if(modo !== "lineas") return;
 
-        const {ctx}=chart;
+        const { ctx } = chart;
 
-        chart.data.datasets.forEach((ds,i)=>{
-            if(ds.hidden) return;
-            const meta=chart.getDatasetMeta(i);
-            if(!meta.data.length) return;
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
 
-            const punto=meta.data[0];
-            const nombre=ds.label.substring(0,8);
+            if(dataset.hidden) return;
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta || !meta.data || meta.data.length === 0) return;
+
+            // Elegimos punto 2 o 3 según cantidad
+            let indexCentro = 2;
+
+            if(meta.data.length < 3){
+                indexCentro = Math.floor(meta.data.length / 2);
+            }
+
+            const punto = meta.data[indexCentro];
+            if(!punto) return;
+
+            const nombre = dataset.label.substring(0,8);
 
             ctx.save();
-            ctx.font="bold 11px Arial";
-            ctx.fillStyle=ds.borderColor;
-            ctx.textAlign="right";
-            ctx.fillText(nombre,punto.x-8,punto.y);
+            ctx.font = "bold 11px Arial";
+            ctx.fillStyle = dataset.borderColor;
+            ctx.textAlign = "left";
+
+            ctx.fillText(
+                nombre,
+                punto.x + 6,
+                punto.y - 6
+            );
+
             ctx.restore();
         });
     }
 };
 
+
+// =============================
+// MOSTRAR VALORES
+// =============================
+
+const mostrarValores = {
+    id: "mostrarValores",
+    afterDatasetsDraw(chart){
+
+        const { ctx } = chart;
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+
+            if(dataset.hidden) return;
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta || !meta.data) return;
+
+            meta.data.forEach((element, index) => {
+
+                const value = dataset.data[index];
+                if (!value || value === 0) return;
+
+                ctx.save();
+                ctx.font = "bold 10px Arial";
+                ctx.fillStyle = dataset.borderColor;
+                ctx.textAlign = "center";
+
+                let yPos = element.y;
+
+                // En barras lo ponemos arriba
+                if(chart.config.type === "bar"){
+                    yPos = element.y - 8;
+                }
+
+                ctx.fillText(
+                    Math.round(value).toLocaleString("es-AR"),
+                    element.x,
+                    yPos - 5
+                );
+
+                ctx.restore();
+            });
+        });
+    }
+};
 
 // =============================
 // CREAR GRAFICO
@@ -301,7 +368,7 @@ function crearGrafico(){
             }
         },
 
-        plugins:[lineasCambioAnio,anioCentrado,mostrarNombreLinea]
+        plugins:[lineasCambioAnio,anioCentrado,mostrarNombreLinea,mostrarValores]
     });
 
     if(desglose)
