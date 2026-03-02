@@ -220,6 +220,9 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
+# =====================================================
+# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
+# =====================================================
 
 def graficos01(request):
 
@@ -258,20 +261,36 @@ def graficos01(request):
 
         elif tipo == "trimestral":
 
+            # PROMEDIO MENSUAL DEL TRIMESTRE
             cursor.execute("""
                 SELECT
                     c.periodo_anio,
                     ((c.periodo_mes-1)/3+1)::int,
                     a.nombre,
                     COALESCE(a.color,'#2c78be'),
+
                     SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                    /
+                    COUNT(DISTINCT c.periodo_mes)
+
                 FROM comprobantes_comisiones c
-                JOIN aseguradoras a ON a.id=c.aseguradora_id
+
+                JOIN aseguradoras a
+                    ON a.id = c.aseguradora_id
+
                 JOIN cotizaciones_dolar d
-                  ON d.periodo_anio=c.periodo_anio
-                 AND d.periodo_mes=c.periodo_mes
-                GROUP BY c.periodo_anio,2,a.nombre,a.color
-                ORDER BY c.periodo_anio,2
+                    ON d.periodo_anio = c.periodo_anio
+                   AND d.periodo_mes  = c.periodo_mes
+
+                GROUP BY
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1),
+                    a.nombre,
+                    a.color
+
+                ORDER BY
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1)
             """)
 
         else:  # anual
@@ -402,26 +421,6 @@ def graficos01(request):
             "tension": 0.25,
             "fill": False
         })
-
-        # ==========================
-        # MEDIA TRIMESTRAL
-        # ==========================
-
-        if tipo == "trimestral" and valores:
-
-            promedio = sum(valores) / len(valores)
-
-            datasets.append({
-                "label": "Media trimestral",
-                "data": [promedio for _ in labels],
-                "borderColor": "#c0392b",
-                "backgroundColor": "#c0392b",
-                "borderDash": [6, 6],
-                "tension": 0,
-                "fill": False,
-                "type": "line",
-                "pointRadius": 0
-            })
 
     # ==========================
     # RENDER FINAL
