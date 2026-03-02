@@ -49,7 +49,7 @@
 
     <div class="grupo">
         <label>
-            <input type="checkbox" name="desglose" value="1" {% if desglose %}checked{% endif %}>
+            <input type="checkbox" name="desglose" value="1" onchange="this.form.submit();" {% if desglose %}checked{% endif %}>
             Desglose aseguradoras
         </label>
     </div>
