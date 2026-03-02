@@ -51,69 +51,74 @@
 </style>
 
 
-<form method="get" class="barra-controles">
+<div style="display:flex; gap:40px; align-items:flex-start;">
 
-    <div class="grupo">
-        <b>Periodo:</b>
-        <label><input type="radio" name="tipo" value="mensual" {% if tipo == "mensual" %}checked{% endif %}>Mensual</label>
-        <label><input type="radio" name="tipo" value="trimestral" {% if tipo == "trimestral" %}checked{% endif %}>Trimestral</label>
-        <label><input type="radio" name="tipo" value="anual" {% if tipo == "anual" %}checked{% endif %}>Anual</label>
-    </div>
+    <!-- COLUMNA IZQUIERDA -->
+    <div style="min-width:320px;">
 
-    <div class="grupo">
-        <b>Modo:</b>
-        <label><input type="radio" name="modo" value="lineas" {% if modo == "lineas" %}checked{% endif %}>Líneas</label>
-        <label><input type="radio" name="modo" value="barras" {% if modo == "barras" %}checked{% endif %}>Barras</label>
-    </div>
+        <form method="get" class="barra-controles">
 
-    <div class="grupo grupo-anios">
-        <b>Años:</b>
-        <div class="contenedor-anios">
-            {% for anio in anios_disponibles %}
+            <div class="grupo">
+                <b>Periodo:</b>
+                <label><input type="radio" name="tipo" value="mensual" {% if tipo == "mensual" %}checked{% endif %}>Mensual</label>
+                <label><input type="radio" name="tipo" value="trimestral" {% if tipo == "trimestral" %}checked{% endif %}>Trimestral</label>
+                <label><input type="radio" name="tipo" value="anual" {% if tipo == "anual" %}checked{% endif %}>Anual</label>
+            </div>
+
+            <div class="grupo">
+                <b>Modo:</b>
+                <label><input type="radio" name="modo" value="lineas" {% if modo == "lineas" %}checked{% endif %}>Líneas</label>
+                <label><input type="radio" name="modo" value="barras" {% if modo == "barras" %}checked{% endif %}>Barras</label>
+            </div>
+
+            <div class="grupo grupo-anios">
+                <b>Años:</b>
+                <div class="contenedor-anios">
+                    {% for anio in anios_disponibles %}
+                        <label>
+                            <input type="checkbox" name="anio"
+                                   value="{{ anio|unlocalize }}"
+                                   {% if anio in anios_seleccionados %}checked{% endif %}>
+                            {{ anio|unlocalize }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="grupo">
                 <label>
-                    <input type="checkbox" name="anio"
-                           value="{{ anio|unlocalize }}"
-                           {% if anio in anios_seleccionados %}checked{% endif %}>
-                    {{ anio|unlocalize }}
+                    <input type="checkbox" name="desglose" value="1"
+                           onchange="this.form.submit();"
+                           {% if desglose %}checked{% endif %}>
+                    Desglose aseguradoras
                 </label>
-            {% endfor %}
-        </div>
+            </div>
+
+            <div class="grupo">
+                <button type="submit"
+                    style="padding:4px 12px;background:#2c78be;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    Actualizar
+                </button>
+            </div>
+
+        </form>
+
     </div>
 
-    <!-- Desglose ANTES de Actualizar -->
-    <div class="grupo">
-        <label>
-            <input type="checkbox" name="desglose" value="1"
-                   onchange="this.form.submit();"
-                   {% if desglose %}checked{% endif %}>
-            Desglose aseguradoras
-        </label>
+    <!-- COLUMNA DERECHA -->
+    {% if desglose %}
+    <div id="legend-container"
+         style="
+            width:520px;
+            border:1px solid #999;
+            padding:8px 10px;
+            background:#f9f9f9;
+         ">
     </div>
+    {% endif %}
 
-    <div class="grupo">
-        <button type="submit"
-            style="padding:4px 12px;background:#2c78be;color:white;border:none;border-radius:4px;cursor:pointer;">
-            Actualizar
-        </button>
-    </div>
-
-</form>
-
-
-<!-- LEYENDA ARRIBA -->
-
-<div id="legend-container"
-     style="
-        font-size:12px;
-        margin:15px 0 10px 0;
-        width:520px;
-        margin-left:auto;
-        border:1px solid #999;
-        padding:8px 10px;
-        background:#f9f9f9;
-        display: {% if desglose %}block{% else %}none{% endif %};
-     ">
 </div>
+
 
 
 
