@@ -232,370 +232,220 @@ def calcular_tendencia_lineal(valores):
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
 
-{% extends "base.html" %}
-{% load l10n %}
-{% block content %}
-
-<div class="titulo-grafico">
-    Evolución Facturación en USD
-</div>
-
-<style>
-.barra-controles {
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-bottom:10px;
-    font-size:13px;
-}
-
-.grupo {
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-.grupo-anios{
-    flex-direction:column;
-    align-items:flex-start;
-}
-
-.contenedor-anios{
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap:4px 12px;
-    max-width:420px;
-}
-
-.anio-item{
-    font-size:13px;
-}
-
-.fila-final{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.lado-der{
-    margin-left:auto;
-}
-
-.contenedor-grafico {
-    height: calc(100vh - 170px);
-    width:100%;
-}
-</style>
-
-<form method="get" class="barra-controles">
-
-    <div class="grupo">
-        <b>Periodo:</b>
-        <label><input type="radio" name="tipo" value="mensual" {% if tipo == "mensual" %}checked{% endif %}>Mensual</label>
-        <label><input type="radio" name="tipo" value="trimestral" {% if tipo == "trimestral" %}checked{% endif %}>Trimestral</label>
-        <label><input type="radio" name="tipo" value="anual" {% if tipo == "anual" %}checked{% endif %}>Anual</label>
-    </div>
-
-    <div class="grupo">
-        <b>Modo:</b>
-        <label><input type="radio" name="modo" value="lineas" {% if modo == "lineas" %}checked{% endif %}>Líneas</label>
-        <label><input type="radio" name="modo" value="barras" {% if modo == "barras" %}checked{% endif %}>Barras</label>
-    </div>
-
-    <div class="grupo grupo-anios">
-        <b>Años:</b>
-        <div class="contenedor-anios">
-            {% for anio in anios_disponibles %}
-                <label class="anio-item">
-                    <input type="checkbox" name="anio"
-                           value="{{ anio|unlocalize }}"
-                           {% if anio in anios_seleccionados %}checked{% endif %}>
-                    {{ anio|unlocalize }}
-                </label>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="grupo fila-final">
-
-        <div>
-            <button type="submit"
-                style="padding:3px 10px;background:#2c78be;color:white;border:none;border-radius:4px;cursor:pointer;">
-                Actualizar
-            </button>
-        </div>
-
-        <div class="lado-der">
-            <label>
-                <input type="checkbox" name="desglose" value="1"
-                       onchange="this.form.submit();"
-                       {% if desglose %}checked{% endif %}>
-                Desglose aseguradoras
-            </label>
-        </div>
-
-    </div>
-
-</form>
-
-<div id="legend-container" style="font-size:12px;margin-bottom:8px;"></div>
-
-<div class="contenedor-grafico">
-    <canvas id="grafico"></canvas>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-
-const labels = {{ labels|safe }};
-const datasets = {{ datasets|safe }};
-const tipo = "{{ tipo }}";
-const modo = "{{ modo }}";
-const desglose = {{ desglose|yesno:"true,false" }};
-const gruposDeshabilitados = {{ grupos_deshabilitados|default:"[]"|safe }};
-
-let chart = null;
-
-
-// =============================
-// FORMATEAR LABELS
-// =============================
-
-function formatearLabel(label)
-{
-    if(tipo==="mensual")
-    {
-        const mes = label.split("-")[1];
-        const nombres = ["Ene","Feb","Mar","Abr","May","Jun",
-                         "Jul","Ago","Sep","Oct","Nov","Dic"];
-        return nombres[parseInt(mes)-1];
-    }
-
-    if(tipo==="trimestral")
-        return label.split("-")[1];
-
-    return label;
-}
-
-
-// =============================
-// PLUGIN LINEAS CAMBIO AÑO
-// =============================
-
-const lineasCambioAnio = {
-    id: "lineasCambioAnio",
-    afterDraw(chart){
-
-        if(tipo !== "mensual") return;
-
-        const {ctx, chartArea:{top,bottom}} = chart;
-        let ultimoAnio = null;
-
-        labels.forEach((label,index)=>{
-
-            const anio = label.split("-")[0];
-
-            if(ultimoAnio && anio !== ultimoAnio){
-
-                const meta = chart.getDatasetMeta(0);
-                if(!meta || !meta.data[index]) return;
-
-                const x = meta.data[index].x;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(x, top);
-                ctx.lineTo(x, bottom);
-                ctx.strokeStyle = "#cccccc";
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            ultimoAnio = anio;
-        });
-    }
-};
-
-
-// =============================
-// PLUGIN NOMBRE ASEGURADORA
-// =============================
-
-const mostrarNombreLinea = {
-    id: "mostrarNombreLinea",
-    afterDatasetsDraw(chart){
-
-        if(!desglose) return;
-        if(modo !== "lineas") return;
-
-        const { ctx } = chart;
-
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-
-            if(dataset.hidden) return;
-
-            const meta = chart.getDatasetMeta(datasetIndex);
-            if (!meta || meta.data.length === 0) return;
-
-            const punto = meta.data[0];
-
-            let nombre = dataset.label.substring(0,10);
-
-            ctx.save();
-            ctx.font = "bold 11px Arial";
-            ctx.fillStyle = dataset.borderColor;
-            ctx.textAlign = "right";
-
-            ctx.fillText(
-                nombre,
-                punto.x - 8,
-                punto.y
-            );
-
-            ctx.restore();
-        });
-    }
-};
-
-
-// =============================
-// CREAR GRAFICO
-// =============================
-
-function crearGrafico()
-{
-    if(chart) chart.destroy();
-
-    datasets.forEach(ds=>{
-        if(gruposDeshabilitados.includes(ds.grupo)){
-            ds.hidden = true;
-        }
-    });
-
-    chart = new Chart(document.getElementById("grafico"), {
-
-        type: modo==="barras" ? "bar" : "line",
-
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-
-        options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins: {
-                tooltip: { enabled: tipo==="mensual" },
-                legend: { display: !desglose }
-            },
-            scales: {
-                x: {
-                    ticks:{
-                        autoSkip:false,
-                        callback:(value,index)=>{
-                            const label = labels[index];
-                            const mes = formatearLabel(label);
-                            const anio = label.split("-")[0];
-
-                            if(index===0) return mes + "\n" + anio;
-
-                            const anioAnterior = labels[index-1].split("-")[0];
-
-                            if(anio !== anioAnterior)
-                                return mes + "\n" + anio;
-
-                            return mes;
-                        }
-                    }
-                }
-            }
-        },
-
-        plugins: [lineasCambioAnio, mostrarNombreLinea]
-    });
-
-    if(desglose)
-        generarLeyendaAgrupada(chart);
-}
-
-
-// =============================
-// LEYENDA AGRUPADA
-// =============================
-
-function generarLeyendaAgrupada(chart)
-{
-    const container = document.getElementById("legend-container");
-    container.innerHTML = "";
-
-    const grupos = {};
-
-    chart.data.datasets.forEach((ds,index)=>{
-        const grupo = ds.grupo || "Sin Grupo";
-
-        if(!grupos[grupo])
-            grupos[grupo] = [];
-
-        grupos[grupo].push({ index, ds });
-    });
-
-    Object.keys(grupos).sort().forEach(grupo=>{
-
-        const divGrupo = document.createElement("div");
-        divGrupo.style.marginBottom = "6px";
-
-        const titulo = document.createElement("strong");
-        titulo.innerText = grupo + "  ";
-        titulo.style.cursor = "pointer";
-        titulo.style.marginRight = "12px";
-
-        divGrupo.appendChild(titulo);
-
-        grupos[grupo].forEach(item=>{
-
-            const span = document.createElement("span");
-
-            let nombre = item.ds.label.substring(0,10).padEnd(10," ");
-
-            span.innerText = nombre;
-            span.style.display = "inline-block";
-            span.style.width = "110px";
-            span.style.textAlign = "center";
-            span.style.fontFamily = "monospace";
-            span.style.marginRight = "6px";
-            span.style.cursor = "pointer";
-            span.style.backgroundColor = item.ds.borderColor;
-            span.style.color = "black";
-            span.style.borderRadius = "4px";
-            span.style.padding = "2px 6px";
-
-            if(item.ds.hidden){
-                span.style.textDecoration = "line-through";
-                span.style.opacity = "0.5";
-            }
-
-            span.onclick = ()=>{
-                item.ds.hidden = !item.ds.hidden;
-                chart.update();
-                generarLeyendaAgrupada(chart);
-            };
-
-            divGrupo.appendChild(span);
-        });
-
-        container.appendChild(divGrupo);
-    });
-}
-
-crearGrafico();
-
-</script>
-
-{% endblock %}
-
+def graficos01(request):
+
+    import json
+    from django.db import connection
+    from django.shortcuts import render
+    from .services.parametros_service import get_parametro
+    from .models import Aseguradoras
+
+    tipo = request.GET.get("tipo", "mensual")
+    modo = request.GET.get("modo", "lineas")
+    desglose = request.GET.get("desglose") == "1"
+
+    # ==========================
+    # QUERY BASE
+    # ==========================
+
+    with connection.cursor() as cursor:
+
+        if tipo == "mensual":
+
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    c.periodo_mes,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+                GROUP BY c.periodo_anio,c.periodo_mes,a.nombre,a.color
+                ORDER BY c.periodo_anio,c.periodo_mes
+            """)
+
+        elif tipo == "trimestral":
+
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1)::int,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                    /
+                    COUNT(DISTINCT c.periodo_mes)
+
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+
+                GROUP BY
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1),
+                    a.nombre,
+                    a.color
+
+                ORDER BY
+                    c.periodo_anio,
+                    ((c.periodo_mes-1)/3+1)
+            """)
+
+        else:  # anual
+
+            cursor.execute("""
+                SELECT
+                    c.periodo_anio,
+                    1,
+                    a.nombre,
+                    COALESCE(a.color,'#2c78be'),
+                    SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
+                FROM comprobantes_comisiones c
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
+                JOIN cotizaciones_dolar d
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
+                GROUP BY c.periodo_anio,a.nombre,a.color
+                ORDER BY c.periodo_anio
+            """)
+
+        rows = cursor.fetchall()
+
+    if not rows:
+        return render(request, "graficos01.html", {
+            "labels": "[]",
+            "datasets": "[]",
+            "tipo": tipo,
+            "modo": modo,
+            "desglose": desglose,
+            "anios_disponibles": [],
+            "anios_seleccionados": []
+        })
+
+    # ==========================
+    # AÑOS
+    # ==========================
+
+    anios_disponibles = sorted({r[0] for r in rows})
+    anios_raw = request.GET.getlist("anio")
+
+    if anios_raw:
+        anios_seleccionados = [int(a) for a in anios_raw if str(a).isdigit()]
+    else:
+        cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
+        anios_seleccionados = anios_disponibles[-cant:]
+
+    # ==========================
+    # ORGANIZAR DATA
+    # ==========================
+
+    data = {}
+    colores = {}
+
+    for anio, periodo, aseg, color, total in rows:
+
+        if anio not in anios_seleccionados:
+            continue
+
+        if tipo == "mensual":
+            label = f"{anio}-{periodo:02d}"
+        elif tipo == "trimestral":
+            label = f"{anio}-T{periodo}"
+        else:
+            label = str(anio)
+
+        if label not in data:
+            data[label] = {}
+
+        data[label][aseg] = float(total or 0)
+        colores[aseg] = color
+
+    labels = sorted(data.keys())
+
+    # ==========================
+    # DATASETS
+    # ==========================
+
+    datasets = []
+
+    if desglose:
+
+        for aseg, color in colores.items():
+
+            valores = [data[label].get(aseg, 0) for label in labels]
+
+            try:
+                grupo = Aseguradoras.objects.get(nombre=aseg).grupo
+            except:
+                grupo = "Sin Grupo"
+
+            datasets.append({
+                "label": aseg,
+                "grupo": grupo or "Sin Grupo",
+                "data": valores,
+                "borderColor": color,
+                "backgroundColor": color,
+                "tension": 0.25,
+                "fill": False
+            })
+
+    else:
+
+        valores = [sum(data[label].values()) for label in labels]
+
+        datasets.append({
+            "label": "Promedio mensual trimestre" if tipo == "trimestral" else "Facturación USD",
+            "data": valores,
+            "borderColor": "#2c78be",
+            "backgroundColor": "#2c78be",
+            "tension": 0.25,
+            "fill": False
+        })
+
+        # Línea promedio general en trimestral
+        if tipo == "trimestral" and valores:
+            promedio_general = sum(valores) / len(valores)
+
+            datasets.append({
+                "label": "Promedio general trimestres",
+                "data": [promedio_general for _ in labels],
+                "borderColor": "#c0392b",
+                "backgroundColor": "#c0392b",
+                "borderDash": [6,6],
+                "tension": 0,
+                "fill": False,
+                "type": "line",
+                "pointRadius": 0
+            })
+    # ==========================
+    # GRUPOS DESHABILITADOS
+    # ==========================
+
+    grupos_deshabilitados = []
+
+    for i in range(1, 10):  # por si mañana agregás DESHABILITAR3,4,etc
+        codigo = f"DESHABILITAR{i}"
+        valor = get_parametro(codigo)
+        if valor:
+            grupos_deshabilitados.append(valor.strip())
+
+    return render(request, "graficos01.html", {
+        "labels": json.dumps(labels),
+        "datasets": json.dumps(datasets),
+        "tipo": tipo,
+        "modo": modo,
+        "desglose": desglose,
+        "anios_disponibles": anios_disponibles,
+        "anios_seleccionados": anios_seleccionados,
+        "grupos_deshabilitados": json.dumps(grupos_deshabilitados)
+    })
 
 
 
