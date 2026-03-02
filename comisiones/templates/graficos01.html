@@ -146,7 +146,7 @@ const mostrarValores = {
                 ctx.textAlign = "center";
 
                 ctx.fillText(
-                    value.toLocaleString("es-AR"),
+                    Math.round(value).toLocaleString("es-AR"),
                     element.x,
                     element.y - 6
                 );
@@ -191,7 +191,6 @@ const lineasCambioAnio = {
     }
 };
 
-
 Chart.register(lineasCambioAnio, mostrarValores);
 
 
@@ -224,7 +223,7 @@ function crearGrafico()
             plugins: {
 
                 tooltip: {
-                    enabled: tipo==="mensual",
+                    enabled: tipo==="mensual"
                 },
 
                 legend: {
@@ -260,36 +259,92 @@ function crearGrafico()
 
 
 // =============================
-// LEYENDA SIMPLE
+// LEYENDA AGRUPADA POR GRUPO
 // =============================
 
 function generarLeyendaAgrupada(chart)
 {
-    const container=document.getElementById("legend-container");
-    container.innerHTML="";
+    const container = document.getElementById("legend-container");
+    container.innerHTML = "";
+
+    const grupos = {};
 
     chart.data.datasets.forEach((ds,index)=>{
+        const grupo = ds.grupo || "Sin Grupo";
 
-        const span=document.createElement("span");
-        span.innerText = ds.label;
-        span.style.display="inline-block";
-        span.style.marginRight="8px";
-        span.style.cursor="pointer";
-        span.style.color="black";
-        span.style.backgroundColor=ds.borderColor;
-        span.style.borderRadius="4px";
-        span.style.padding="2px 6px";
+        if(!grupos[grupo])
+            grupos[grupo] = [];
 
-        span.onclick=()=>{
-            const meta=chart.getDatasetMeta(index);
-            meta.hidden = meta.hidden===null ? true : null;
+        grupos[grupo].push({ index, ds });
+    });
+
+    Object.keys(grupos).sort().forEach(grupo=>{
+
+        const divGrupo = document.createElement("div");
+        divGrupo.style.marginBottom = "6px";
+
+        const titulo = document.createElement("strong");
+        titulo.innerText = grupo + " ";
+        titulo.style.cursor = "pointer";
+        titulo.style.marginRight = "10px";
+
+        titulo.onclick = ()=>{
+            grupos[grupo].forEach(item=>{
+                const meta = chart.getDatasetMeta(item.index);
+                meta.hidden = meta.hidden === null ? true : null;
+            });
             chart.update();
-            span.style.textDecoration = meta.hidden ? "line-through" : "none";
-            span.style.opacity = meta.hidden ? "0.4" : "1";
+            actualizarEstilos();
         };
 
-        container.appendChild(span);
+        divGrupo.appendChild(titulo);
+
+        grupos[grupo].forEach(item=>{
+
+            const span = document.createElement("span");
+
+            span.innerText = item.ds.label;
+            span.style.display = "inline-block";
+            span.style.marginRight = "6px";
+            span.style.cursor = "pointer";
+            span.style.color = "black";
+            span.style.backgroundColor = item.ds.borderColor;
+            span.style.borderRadius = "4px";
+            span.style.padding = "2px 6px";
+            span.dataset.index = item.index;
+
+            span.onclick = ()=>{
+                const meta = chart.getDatasetMeta(item.index);
+                meta.hidden = meta.hidden === null ? true : null;
+                chart.update();
+                actualizarEstilos();
+            };
+
+            divGrupo.appendChild(span);
+        });
+
+        container.appendChild(divGrupo);
     });
+
+    actualizarEstilos();
+
+    function actualizarEstilos()
+    {
+        container.querySelectorAll("span[data-index]").forEach(span=>{
+            const meta = chart.getDatasetMeta(span.dataset.index);
+
+            if(meta.hidden)
+            {
+                span.style.textDecoration = "line-through";
+                span.style.opacity = "0.4";
+            }
+            else
+            {
+                span.style.textDecoration = "none";
+                span.style.opacity = "1";
+            }
+        });
+    }
 }
 
 crearGrafico();
