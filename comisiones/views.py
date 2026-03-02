@@ -228,6 +228,9 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
+# =====================================================
+# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
+# =====================================================
 
 def graficos01(request):
 
@@ -235,6 +238,7 @@ def graficos01(request):
     from django.db import connection
     from django.shortcuts import render
     from .services.parametros_service import get_parametro
+    from .models import Aseguradoras
 
     tipo = request.GET.get("tipo", "mensual")
     modo = request.GET.get("modo", "lineas")
@@ -266,7 +270,6 @@ def graficos01(request):
 
         elif tipo == "trimestral":
 
-            # PROMEDIO MENSUAL DEL TRIMESTRE
             cursor.execute("""
                 SELECT
                     c.periodo_anio,
@@ -279,13 +282,10 @@ def graficos01(request):
                     COUNT(DISTINCT c.periodo_mes)
 
                 FROM comprobantes_comisiones c
-
-                JOIN aseguradoras a
-                    ON a.id = c.aseguradora_id
-
+                JOIN aseguradoras a ON a.id=c.aseguradora_id
                 JOIN cotizaciones_dolar d
-                    ON d.periodo_anio = c.periodo_anio
-                   AND d.periodo_mes  = c.periodo_mes
+                  ON d.periodo_anio=c.periodo_anio
+                 AND d.periodo_mes=c.periodo_mes
 
                 GROUP BY
                     c.periodo_anio,
@@ -318,10 +318,6 @@ def graficos01(request):
 
         rows = cursor.fetchall()
 
-    # ==========================
-    # SIN DATOS
-    # ==========================
-
     if not rows:
         return render(request, "graficos01.html", {
             "labels": "[]",
@@ -334,27 +330,16 @@ def graficos01(request):
         })
 
     # ==========================
-    # AÑOS DISPONIBLES
+    # AÑOS
     # ==========================
 
     anios_disponibles = sorted({r[0] for r in rows})
-
-    # ==========================
-    # AÑOS SELECCIONADOS
-    # ==========================
-
     anios_raw = request.GET.getlist("anio")
 
     if anios_raw:
-        anios_seleccionados = []
-        for a in anios_raw:
-            try:
-                anios_seleccionados.append(int(str(a)))
-            except:
-                pass
+        anios_seleccionados = [int(a) for a in anios_raw if str(a).isdigit()]
     else:
         cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
-        cant = min(cant, len(anios_disponibles))
         anios_seleccionados = anios_disponibles[-cant:]
 
     # ==========================
@@ -394,13 +379,16 @@ def graficos01(request):
 
         for aseg, color in colores.items():
 
-            valores = []
+            valores = [data[label].get(aseg, 0) for label in labels]
 
-            for label in labels:
-                valores.append(data[label].get(aseg, 0))
+            try:
+                grupo = Aseguradoras.objects.get(nombre=aseg).grupo
+            except:
+                grupo = "Sin Grupo"
 
             datasets.append({
                 "label": aseg,
+                "grupo": grupo or "Sin Grupo",
                 "data": valores,
                 "borderColor": color,
                 "backgroundColor": color,
@@ -410,12 +398,8 @@ def graficos01(request):
 
     else:
 
-        valores = []
+        valores = [sum(data[label].values()) for label in labels]
 
-        for label in labels:
-            valores.append(sum(data[label].values()))
-
-        # DATA PRINCIPAL
         datasets.append({
             "label": "Promedio mensual trimestre" if tipo == "trimestral" else "Facturación USD",
             "data": valores,
@@ -425,9 +409,8 @@ def graficos01(request):
             "fill": False
         })
 
-        # LINEA PROMEDIO GENERAL (solo trimestral)
+        # Línea promedio general en trimestral
         if tipo == "trimestral" and valores:
-
             promedio_general = sum(valores) / len(valores)
 
             datasets.append({
@@ -435,29 +418,21 @@ def graficos01(request):
                 "data": [promedio_general for _ in labels],
                 "borderColor": "#c0392b",
                 "backgroundColor": "#c0392b",
-                "borderDash": [6, 6],
+                "borderDash": [6,6],
                 "tension": 0,
                 "fill": False,
                 "type": "line",
                 "pointRadius": 0
             })
 
-    # ==========================
-    # RENDER FINAL
-    # ==========================
-
     return render(request, "graficos01.html", {
-
         "labels": json.dumps(labels),
         "datasets": json.dumps(datasets),
-
         "tipo": tipo,
         "modo": modo,
         "desglose": desglose,
-
         "anios_disponibles": anios_disponibles,
         "anios_seleccionados": anios_seleccionados
-
     })
 
 

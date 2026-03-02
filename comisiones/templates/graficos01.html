@@ -7,7 +7,6 @@
 </div>
 
 <style>
-
 .barra-controles {
     display:flex;
     align-items:center;
@@ -16,7 +15,6 @@
     margin-bottom:6px;
     font-size:13px;
 }
-
 .grupo {
     display:flex;
     align-items:center;
@@ -24,83 +22,43 @@
     padding-right:14px;
     border-right:1px solid #ddd;
 }
-
 .grupo:last-child {
     border-right:none;
 }
-
 .contenedor-grafico {
     height: calc(100vh - 140px);
     width:100%;
 }
-
 </style>
-
 
 
 <form method="get" class="barra-controles">
 
     <div class="grupo">
         <b>Periodo:</b>
-
-        <label>
-            <input type="radio" name="tipo" value="mensual"
-            {% if tipo == "mensual" %}checked{% endif %}>
-            Mensual
-        </label>
-
-        <label>
-            <input type="radio" name="tipo" value="trimestral"
-            {% if tipo == "trimestral" %}checked{% endif %}>
-            Trimestral
-        </label>
-
-        <label>
-            <input type="radio" name="tipo" value="anual"
-            {% if tipo == "anual" %}checked{% endif %}>
-            Anual
-        </label>
+        <label><input type="radio" name="tipo" value="mensual" {% if tipo == "mensual" %}checked{% endif %}>Mensual</label>
+        <label><input type="radio" name="tipo" value="trimestral" {% if tipo == "trimestral" %}checked{% endif %}>Trimestral</label>
+        <label><input type="radio" name="tipo" value="anual" {% if tipo == "anual" %}checked{% endif %}>Anual</label>
     </div>
-
-
 
     <div class="grupo">
         <b>Modo:</b>
-
-        <label>
-            <input type="radio" name="modo" value="lineas"
-            {% if modo == "lineas" %}checked{% endif %}>
-            Líneas
-        </label>
-
-        <label>
-            <input type="radio" name="modo" value="barras"
-            {% if modo == "barras" %}checked{% endif %}>
-            Barras
-        </label>
+        <label><input type="radio" name="modo" value="lineas" {% if modo == "lineas" %}checked{% endif %}>Líneas</label>
+        <label><input type="radio" name="modo" value="barras" {% if modo == "barras" %}checked{% endif %}>Barras</label>
     </div>
-
-
 
     <div class="grupo">
         <label>
-            <input type="checkbox"
-                   name="desglose"
-                   value="1"
-                   {% if desglose %}checked{% endif %}>
+            <input type="checkbox" name="desglose" value="1" {% if desglose %}checked{% endif %}>
             Desglose aseguradoras
         </label>
     </div>
 
-
-
     <div class="grupo">
         <b>Años:</b>
-
         {% for anio in anios_disponibles %}
             <label>
-                <input type="checkbox"
-                       name="anio"
+                <input type="checkbox" name="anio"
                        value="{{ anio|unlocalize }}"
                        {% if anio in anios_seleccionados %}checked{% endif %}>
                 {{ anio|unlocalize }}
@@ -108,16 +66,9 @@
         {% endfor %}
     </div>
 
-
-
     <div class="grupo">
         <button type="submit"
-                style="padding:3px 10px;
-                       background:#2c78be;
-                       color:white;
-                       border:none;
-                       border-radius:4px;
-                       cursor:pointer;">
+                style="padding:3px 10px;background:#2c78be;color:white;border:none;border-radius:4px;cursor:pointer;">
             Actualizar
         </button>
     </div>
@@ -125,11 +76,11 @@
 </form>
 
 
+<div id="legend-container" style="font-size:12px;margin-bottom:8px;"></div>
 
 <div class="contenedor-grafico">
     <canvas id="grafico"></canvas>
 </div>
-
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,7 +96,6 @@ const desglose = {{ desglose|yesno:"true,false" }};
 let chart = null;
 
 
-
 // =============================
 // FORMATEAR LABELS
 // =============================
@@ -155,12 +105,8 @@ function formatearLabel(label)
     if(tipo==="mensual")
     {
         const mes = label.split("-")[1];
-
-        const nombres = [
-            "Ene","Feb","Mar","Abr","May","Jun",
-            "Jul","Ago","Sep","Oct","Nov","Dic"
-        ];
-
+        const nombres = ["Ene","Feb","Mar","Abr","May","Jun",
+                         "Jul","Ago","Sep","Oct","Nov","Dic"];
         return nombres[parseInt(mes)-1];
     }
 
@@ -171,18 +117,15 @@ function formatearLabel(label)
 }
 
 
-
 // =============================
 // LINEAS CAMBIO AÑO
 // =============================
 
 const lineasCambioAnio = {
     id:"lineasCambioAnio",
-
     afterDraw(chart)
     {
         const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
-
         ctx.save();
         ctx.strokeStyle="#888";
         ctx.lineWidth=1;
@@ -196,18 +139,15 @@ const lineasCambioAnio = {
             if(anioActual!==anioAnterior)
             {
                 const xPos=(x.getPixelForValue(i)+x.getPixelForValue(i-1))/2;
-
                 ctx.beginPath();
                 ctx.moveTo(xPos,top);
                 ctx.lineTo(xPos,bottom);
                 ctx.stroke();
             }
         }
-
         ctx.restore();
     }
 };
-
 
 
 // =============================
@@ -216,13 +156,11 @@ const lineasCambioAnio = {
 
 const etiquetasAnios = {
     id:"etiquetasAnios",
-
     afterDraw(chart)
     {
         if(tipo==="anual") return;
 
         const {ctx,chartArea,scales:{x}}=chart;
-
         ctx.save();
         ctx.font="bold 11px Arial";
         ctx.fillStyle="#444";
@@ -246,23 +184,18 @@ const etiquetasAnios = {
             {
                 const xInicio=x.getPixelForValue(inicio);
                 const xFin=x.getPixelForValue(i);
-
                 const centro=(xInicio+xFin)/2;
-
                 ctx.fillText(anioActual,centro,chartArea.bottom+18);
 
                 anioActual=siguiente;
                 inicio=i+1;
             }
         }
-
         ctx.restore();
     }
 };
 
-
 Chart.register(lineasCambioAnio, etiquetasAnios);
-
 
 
 // =============================
@@ -271,75 +204,115 @@ Chart.register(lineasCambioAnio, etiquetasAnios);
 
 function crearGrafico()
 {
-    if(chart)
-        chart.destroy();
+    if(chart) chart.destroy();
 
-    chart = new Chart(
-        document.getElementById("grafico"),
-        {
-            type: modo==="barras" ? "bar" : "line",
+    chart = new Chart(document.getElementById("grafico"), {
 
-            data: {
-                labels: labels,
-                datasets: datasets
+        type: modo==="barras" ? "bar" : "line",
+
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+
+        options: {
+
+            responsive:true,
+            maintainAspectRatio:false,
+
+            interaction: desglose
+                ? { mode: undefined }
+                : { mode:"index", intersect:false },
+
+            plugins: {
+
+                tooltip: { enabled: !desglose },
+
+                legend: {
+                    display: !desglose,
+                    labels:{ font:{ size:11 } }
+                }
             },
 
-            options: {
+            scales: {
 
-                responsive:true,
-                maintainAspectRatio:false,
-
-                interaction: desglose
-                    ? { mode: undefined }
-                    : { mode:"index", intersect:false },
-
-                plugins: {
-
-                    tooltip: {
-                        enabled: !desglose
-                    },
-
-                    legend: {
-                        display:true,
-                        labels:{ font:{ size:11 } },
-                        onClick:(e,legendItem,legend)=>{
-                            const index=legendItem.datasetIndex;
-                            const ci=legend.chart;
-                            const meta=ci.getDatasetMeta(index);
-
-                            meta.hidden =
-                                meta.hidden===null
-                                ? !ci.data.datasets[index].hidden
-                                : null;
-
-                            ci.update();
-                        }
+                x: {
+                    ticks:{
+                        font:{ size:11 },
+                        callback:(value,index)=>formatearLabel(labels[index]),
+                        maxRotation:0,
+                        autoSkip:false
                     }
                 },
 
-                scales: {
-
-                    x: {
-                        ticks:{
-                            font:{ size:11 },
-                            callback:(value,index)=>
-                                formatearLabel(labels[index]),
-                            maxRotation:0,
-                            autoSkip:false
-                        }
-                    },
-
-                    y: {
-                        ticks:{
-                            font:{ size:11 },
-                            callback:value=>
-                                value.toLocaleString("es-AR")
-                        }
+                y: {
+                    ticks:{
+                        font:{ size:11 },
+                        callback:value=>value.toLocaleString("es-AR")
                     }
                 }
             }
         }
-    );
+    });
+
+    if(desglose)
+        generarLeyendaAgrupada(chart);
+}
+
+
+// =============================
+// LEYENDA AGRUPADA
+// =============================
+
+function generarLeyendaAgrupada(chart)
+{
+    const container=document.getElementById("legend-container");
+    container.innerHTML="";
+
+    const grupos={};
+
+    chart.data.datasets.forEach((ds,index)=>{
+        const grupo=ds.grupo || "Sin Grupo";
+        if(!grupos[grupo]) grupos[grupo]=[];
+        grupos[grupo].push({index,ds});
+    });
+
+    Object.keys(grupos).sort().forEach(grupo=>{
+
+        const div=document.createElement("div");
+
+        const titulo=document.createElement("strong");
+        titulo.innerText=grupo+" ";
+        titulo.style.cursor="pointer";
+
+        titulo.onclick=()=>{
+            grupos[grupo].forEach(item=>{
+                const meta=chart.getDatasetMeta(item.index);
+                meta.hidden = meta.hidden===null ? true : null;
+            });
+            chart.update();
+        };
+
+        div.appendChild(titulo);
+
+        grupos[grupo].forEach(item=>{
+            const span=document.createElement("span");
+            span.innerText="  "+item.ds.label;
+            span.style.cursor="pointer";
+            span.style.marginRight="12px";
+            span.style.color=item.ds.borderColor;
+
+            span.onclick=()=>{
+                const meta=chart.getDatasetMeta(item.index);
+                meta.hidden = meta.hidden===null ? true : null;
+                chart.update();
+            };
+
+            div.appendChild(span);
+        });
+
+        container.appendChild(div);
+    });
 }
 
 crearGrafico();

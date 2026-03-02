@@ -3,8 +3,10 @@ from .models import *
 
 @admin.register(Aseguradoras)
 class AseguradorasAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "cuit", "tipo_factura", "activa")
-    search_fields = ("nombre", "cuit")
+    list_display = ("nombre", "grupo", "cuit", "tipo_factura", "activa")
+    list_editable = ("grupo", "activa")
+    search_fields = ("nombre", "cuit", "grupo")
+    list_filter = ("grupo","activa")
     ordering = ("nombre",)
 
 

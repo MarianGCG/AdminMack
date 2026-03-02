@@ -17,12 +17,8 @@ class Aseguradoras(models.Model):
     email = models.TextField(blank=True, null=True)
     codigo_interno = models.CharField(max_length=20, blank=True, null=True)
     razon_social_afip = models.TextField(blank=True, null=True)
-
-    # NUEVO CAMPO COLOR
-    color = models.CharField(
-        max_length=7,
-        default="#3366cc"
-    )
+    color = models.CharField(max_length=7, default="#3366cc" )
+    grupo = models.CharField(max_length=2, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
