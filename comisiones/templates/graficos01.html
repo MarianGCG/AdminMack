@@ -263,7 +263,6 @@ function crearGrafico()
 // =============================
 // LEYENDA AGRUPADA
 // =============================
-
 function generarLeyendaAgrupada(chart)
 {
     const container=document.getElementById("legend-container");
@@ -279,40 +278,83 @@ function generarLeyendaAgrupada(chart)
 
     Object.keys(grupos).sort().forEach(grupo=>{
 
-        const div=document.createElement("div");
+        const divGrupo=document.createElement("div");
+        divGrupo.style.marginBottom="6px";
 
         const titulo=document.createElement("strong");
         titulo.innerText=grupo+" ";
         titulo.style.cursor="pointer";
+        titulo.style.marginRight="8px";
 
         titulo.onclick=()=>{
             grupos[grupo].forEach(item=>{
                 const meta=chart.getDatasetMeta(item.index);
                 meta.hidden = meta.hidden===null ? true : null;
             });
+            actualizarEstilos();
             chart.update();
         };
 
-        div.appendChild(titulo);
+        divGrupo.appendChild(titulo);
 
         grupos[grupo].forEach(item=>{
+
             const span=document.createElement("span");
-            span.innerText="  "+item.ds.label;
+
+            // Texto fijo 8 caracteres (rellena con espacios)
+            let nombre = item.ds.label;
+            nombre = nombre.padEnd(8," ").substring(0,8);
+
+            span.innerText = nombre;
+
+            span.style.display="inline-block";
+            span.style.width="80px";
+            span.style.marginRight="6px";
+            span.style.textAlign="center";
             span.style.cursor="pointer";
-            span.style.marginRight="12px";
-            span.style.color=item.ds.borderColor;
+            span.style.color="black";
+            span.style.fontSize="12px";
+            span.style.borderRadius="4px";
+            span.style.padding="2px 4px";
+            span.style.backgroundColor=item.ds.borderColor;
 
             span.onclick=()=>{
                 const meta=chart.getDatasetMeta(item.index);
                 meta.hidden = meta.hidden===null ? true : null;
+                actualizarEstilos();
                 chart.update();
             };
 
-            div.appendChild(span);
+            span.dataset.index=item.index;
+
+            divGrupo.appendChild(span);
         });
 
-        container.appendChild(div);
+        container.appendChild(divGrupo);
     });
+
+    actualizarEstilos();
+
+
+    function actualizarEstilos()
+    {
+        container.querySelectorAll("span[data-index]").forEach(span=>{
+
+            const index = span.dataset.index;
+            const meta = chart.getDatasetMeta(index);
+
+            if(meta.hidden===true)
+            {
+                span.style.textDecoration="line-through";
+                span.style.opacity="0.4";
+            }
+            else
+            {
+                span.style.textDecoration="none";
+                span.style.opacity="1";
+            }
+        });
+    }
 }
 
 crearGrafico();
