@@ -95,7 +95,6 @@ def importar_cobranzas_view(request):
 # ================================
 # ASEGURADORAS
 # ================================
-
 def aseguradoras_view(request):
 
     resultado = None
@@ -109,11 +108,15 @@ def aseguradoras_view(request):
     else:
         form = ImportarExcelForm()
 
-    aseguradoras = Aseguradoras.objects.all().order_by("nombre")
+    aseguradoras = Aseguradoras.objects.all()
 
-    # Filtros
+    # ============================
+    # FILTROS
+    # ============================
+
     nombre = request.GET.get("nombre")
     estado = request.GET.get("estado")
+    ordenar = request.GET.get("ordenar")
 
     if nombre:
         aseguradoras = aseguradoras.filter(nombre__icontains=nombre)
@@ -124,6 +127,26 @@ def aseguradoras_view(request):
     elif estado == "inactivas":
         aseguradoras = aseguradoras.filter(activa=False)
 
+    # ============================
+    # ORDENAMIENTO DINÁMICO
+    # ============================
+
+    columnas_validas = [
+        "nombre",
+        "cuit",
+        "tipo_factura",
+        "email",
+        "codigo_interno",
+        "grupo",
+        "activa",
+        "color",
+    ]
+
+    if ordenar in columnas_validas:
+        aseguradoras = aseguradoras.order_by(ordenar)
+    else:
+        aseguradoras = aseguradoras.order_by("nombre")
+
     return render(
         request,
         "importaciones/aseguradoras.html",
@@ -131,6 +154,7 @@ def aseguradoras_view(request):
             "form": form,
             "resultado": resultado,
             "aseguradoras": aseguradoras,
+            "ordenar_actual": ordenar,
         }
     )
 

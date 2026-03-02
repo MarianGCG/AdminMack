@@ -57,6 +57,21 @@
         </select>
     </div>
 
+    <!-- NUEVO: ORDENAR -->
+    <div>
+        <label>Ordenar por</label><br>
+        <select name="ordenar" style="padding:6px;">
+            <option value="nombre" {% if ordenar_actual == "nombre" %}selected{% endif %}>Nombre</option>
+            <option value="cuit" {% if ordenar_actual == "cuit" %}selected{% endif %}>CUIT</option>
+            <option value="tipo_factura" {% if ordenar_actual == "tipo_factura" %}selected{% endif %}>Tipo</option>
+            <option value="email" {% if ordenar_actual == "email" %}selected{% endif %}>Email</option>
+            <option value="codigo_interno" {% if ordenar_actual == "codigo_interno" %}selected{% endif %}>Código</option>
+            <option value="grupo" {% if ordenar_actual == "grupo" %}selected{% endif %}>Grupo</option>
+            <option value="activa" {% if ordenar_actual == "activa" %}selected{% endif %}>Estado</option>
+            <option value="color" {% if ordenar_actual == "color" %}selected{% endif %}>Color</option>
+        </select>
+    </div>
+
     <button type="submit"
             style="padding:8px 14px; background:#174a7c; color:white; border:none; border-radius:6px;">
         Filtrar
