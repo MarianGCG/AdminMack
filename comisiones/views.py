@@ -224,6 +224,11 @@ def calcular_tendencia_lineal(valores):
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
 
+
+# =====================================================
+# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
+# =====================================================
+
 def graficos01(request):
 
     import json
@@ -341,15 +346,12 @@ def graficos01(request):
     anios_raw = request.GET.getlist("anio")
 
     if anios_raw:
-
         anios_seleccionados = []
-
         for a in anios_raw:
             try:
                 anios_seleccionados.append(int(str(a)))
             except:
                 pass
-
     else:
         cant = int(get_parametro("CANTIDAD_ANIOS_DEFAULT", 4))
         cant = min(cant, len(anios_disponibles))
@@ -413,14 +415,32 @@ def graficos01(request):
         for label in labels:
             valores.append(sum(data[label].values()))
 
+        # DATA PRINCIPAL
         datasets.append({
-            "label": "Facturación USD",
+            "label": "Promedio mensual trimestre" if tipo == "trimestral" else "Facturación USD",
             "data": valores,
             "borderColor": "#2c78be",
             "backgroundColor": "#2c78be",
             "tension": 0.25,
             "fill": False
         })
+
+        # LINEA PROMEDIO GENERAL (solo trimestral)
+        if tipo == "trimestral" and valores:
+
+            promedio_general = sum(valores) / len(valores)
+
+            datasets.append({
+                "label": "Promedio general trimestres",
+                "data": [promedio_general for _ in labels],
+                "borderColor": "#c0392b",
+                "backgroundColor": "#c0392b",
+                "borderDash": [6, 6],
+                "tension": 0,
+                "fill": False,
+                "type": "line",
+                "pointRadius": 0
+            })
 
     # ==========================
     # RENDER FINAL
@@ -439,6 +459,7 @@ def graficos01(request):
         "anios_seleccionados": anios_seleccionados
 
     })
+
 
 
 def graficos02(request):
