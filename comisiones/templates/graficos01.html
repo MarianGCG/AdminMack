@@ -118,7 +118,7 @@ function formatearLabel(label)
 
 
 // =============================
-// PLUGIN LINEAS AÑO
+// PLUGIN LINEAS CAMBIO AÑO
 // =============================
 
 const lineasCambioAnio = {
@@ -196,51 +196,7 @@ const etiquetasAnios = {
 };
 
 
-// =============================
-// PLUGIN MOSTRAR NOMBRE SOBRE LINEA (BLINDADO)
-// =============================
-
-const mostrarNombreSobreLinea = {
-    id: "mostrarNombreSobreLinea",
-
-    afterDatasetsDraw(chart)
-    {
-        if (!desglose) return;
-
-        const { ctx } = chart;
-
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-
-            const meta = chart.getDatasetMeta(datasetIndex);
-
-            if (!meta || meta.hidden || !meta.data || meta.data.length === 0) return;
-
-            const lastElement = meta.data[meta.data.length - 1];
-            if (!lastElement || lastElement.x === undefined) return;
-
-            ctx.save();
-            ctx.font = "bold 11px Arial";
-            ctx.fillStyle = "black";
-            ctx.textAlign = "left";
-
-            ctx.fillText(
-                dataset.label,
-                lastElement.x + 6,
-                lastElement.y
-            );
-
-            ctx.restore();
-        });
-    }
-};
-
-
-// 🔴 REGISTRAMOS TODO DESPUÉS DE DECLARAR
-Chart.register(
-    lineasCambioAnio,
-    etiquetasAnios,
-    mostrarNombreSobreLinea
-);
+Chart.register(lineasCambioAnio, etiquetasAnios);
 
 
 // =============================
@@ -261,15 +217,42 @@ function crearGrafico()
         },
 
         options: {
+
             responsive:true,
             maintainAspectRatio:false,
 
-            interaction: desglose
-                ? { mode: undefined }
-                : { mode:"index", intersect:false },
+            interaction: {
+                mode: desglose ? "nearest" : "index",
+                intersect: false
+            },
 
             plugins: {
-                tooltip: { enabled: !desglose },
+
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+
+                        title: function(context) {
+
+                            if (desglose) {
+                                return context[0].dataset.label;
+                            }
+
+                            return context[0].label;
+                        },
+
+                        label: function(context) {
+
+                            if (desglose) {
+                                return "";
+                            }
+
+                            return context.dataset.label + ": " +
+                                   context.parsed.y.toLocaleString("es-AR");
+                        }
+                    }
+                },
+
                 legend: {
                     display: !desglose,
                     labels:{ font:{ size:11 } }
@@ -277,6 +260,7 @@ function crearGrafico()
             },
 
             scales: {
+
                 x: {
                     ticks:{
                         font:{ size:11 },
@@ -285,6 +269,7 @@ function crearGrafico()
                         autoSkip:false
                     }
                 },
+
                 y: {
                     ticks:{
                         font:{ size:11 },
@@ -309,71 +294,29 @@ function generarLeyendaAgrupada(chart)
     const container=document.getElementById("legend-container");
     container.innerHTML="";
 
-    const grupos={};
-
     chart.data.datasets.forEach((ds,index)=>{
-        const grupo=ds.grupo || "Sin Grupo";
-        if(!grupos[grupo]) grupos[grupo]=[];
-        grupos[grupo].push({index,ds});
-    });
 
-    Object.keys(grupos).sort().forEach(grupo=>{
+        const span=document.createElement("span");
 
-        const divGrupo=document.createElement("div");
+        span.innerText = ds.label;
+        span.style.display="inline-block";
+        span.style.marginRight="8px";
+        span.style.cursor="pointer";
+        span.style.color="black";
+        span.style.backgroundColor=ds.borderColor;
+        span.style.borderRadius="4px";
+        span.style.padding="2px 6px";
 
-        const titulo=document.createElement("strong");
-        titulo.innerText=grupo+" ";
-        titulo.style.cursor="pointer";
-        titulo.style.marginRight="8px";
-
-        titulo.onclick=()=>{
-            grupos[grupo].forEach(item=>{
-                const meta=chart.getDatasetMeta(item.index);
-                meta.hidden = meta.hidden===null ? true : null;
-            });
+        span.onclick=()=>{
+            const meta=chart.getDatasetMeta(index);
+            meta.hidden = meta.hidden===null ? true : null;
             chart.update();
-            actualizarEstilos();
-        };
-
-        divGrupo.appendChild(titulo);
-
-        grupos[grupo].forEach(item=>{
-
-            const span=document.createElement("span");
-            span.innerText=item.ds.label;
-            span.style.display="inline-block";
-            span.style.width="90px";
-            span.style.marginRight="6px";
-            span.style.cursor="pointer";
-            span.style.color="black";
-            span.style.backgroundColor=item.ds.borderColor;
-            span.style.borderRadius="4px";
-            span.style.padding="2px 4px";
-
-            span.onclick=()=>{
-                const meta=chart.getDatasetMeta(item.index);
-                meta.hidden = meta.hidden===null ? true : null;
-                chart.update();
-                actualizarEstilos();
-            };
-
-            span.dataset.index=item.index;
-            divGrupo.appendChild(span);
-        });
-
-        container.appendChild(divGrupo);
-    });
-
-    actualizarEstilos();
-
-    function actualizarEstilos()
-    {
-        container.querySelectorAll("span[data-index]").forEach(span=>{
-            const meta = chart.getDatasetMeta(span.dataset.index);
             span.style.textDecoration = meta.hidden ? "line-through" : "none";
             span.style.opacity = meta.hidden ? "0.4" : "1";
-        });
-    }
+        };
+
+        container.appendChild(span);
+    });
 }
 
 crearGrafico();
