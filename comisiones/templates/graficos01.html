@@ -9,29 +9,43 @@
 <style>
 .barra-controles {
     display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:14px;
-    margin-bottom:6px;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:10px;
     font-size:13px;
 }
+
 .grupo {
     display:flex;
-    align-items:center;
-    gap:6px;
-    padding-right:14px;
-    border-right:1px solid #ddd;
+    align-items:flex-start;
+    gap:10px;
+    flex-wrap:wrap;
 }
-.grupo:last-child {
-    border-right:none;
+
+.grupo-anios{
+    flex-direction:column;
+    align-items:flex-start;
 }
+
+.contenedor-anios{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap:4px 12px;
+    max-width:420px;
+}
+
+.anio-item{
+    font-size:13px;
+}
+
 .contenedor-grafico {
-    height: calc(100vh - 140px);
+    height: calc(100vh - 170px);
     width:100%;
 }
 </style>
 
 <form method="get" class="barra-controles">
+
     <div class="grupo">
         <b>Periodo:</b>
         <label><input type="radio" name="tipo" value="mensual" {% if tipo == "mensual" %}checked{% endif %}>Mensual</label>
@@ -45,23 +59,27 @@
         <label><input type="radio" name="modo" value="barras" {% if modo == "barras" %}checked{% endif %}>Barras</label>
     </div>
 
-    <div class="grupo">
-        <label>
-            <input type="checkbox" name="desglose" value="1" onchange="this.form.submit();" {% if desglose %}checked{% endif %}>
-            Desglose aseguradoras
-        </label>
+    <div class="grupo grupo-anios">
+        <b>Años:</b>
+        <div class="contenedor-anios">
+            {% for anio in anios_disponibles %}
+                <label class="anio-item">
+                    <input type="checkbox" name="anio"
+                           value="{{ anio|unlocalize }}"
+                           {% if anio in anios_seleccionados %}checked{% endif %}>
+                    {{ anio|unlocalize }}
+                </label>
+            {% endfor %}
+        </div>
     </div>
 
     <div class="grupo">
-        <b>Años:</b>
-        {% for anio in anios_disponibles %}
-            <label>
-                <input type="checkbox" name="anio"
-                       value="{{ anio|unlocalize }}"
-                       {% if anio in anios_seleccionados %}checked{% endif %}>
-                {{ anio|unlocalize }}
-            </label>
-        {% endfor %}
+        <label>
+            <input type="checkbox" name="desglose" value="1"
+                   onchange="this.form.submit();"
+                   {% if desglose %}checked{% endif %}>
+            Desglose aseguradoras
+        </label>
     </div>
 
     <div class="grupo">
@@ -70,6 +88,7 @@
             Actualizar
         </button>
     </div>
+
 </form>
 
 <div id="legend-container" style="font-size:12px;margin-bottom:8px;"></div>
@@ -88,6 +107,9 @@ const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
 const desglose = {{ desglose|yesno:"true,false" }};
 const gruposDeshabilitados = {{ grupos_deshabilitados|default:"[]"|safe }};
+
+// Normalización defensiva
+const gruposNormalizados = gruposDeshabilitados.map(g => g.trim());
 
 let chart = null;
 
@@ -154,46 +176,6 @@ const mostrarValores = {
 
 
 // =============================
-// NOMBRE ASEGURADORA EN GRAFICO
-// =============================
-
-const mostrarNombreLinea = {
-    id: "mostrarNombreLinea",
-    afterDatasetsDraw(chart)
-    {
-        if(!desglose) return;
-
-        const { ctx } = chart;
-
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-
-            if(dataset.hidden) return;
-
-            const meta = chart.getDatasetMeta(datasetIndex);
-            if (!meta || meta.data.length < 2) return;
-
-            const punto = meta.data[1] || meta.data[0];
-
-            let nombre = dataset.label.substring(0,8).padEnd(8," ");
-
-            ctx.save();
-            ctx.font = "bold 11px monospace";
-            ctx.fillStyle = "#000";
-            ctx.textAlign = "right";
-
-            ctx.fillText(
-                nombre,
-                punto.x - 10,
-                punto.y
-            );
-
-            ctx.restore();
-        });
-    }
-};
-
-
-// =============================
 // CREAR GRAFICO
 // =============================
 
@@ -201,8 +183,9 @@ function crearGrafico()
 {
     if(chart) chart.destroy();
 
+    // Ocultar desde el inicio según parámetros
     datasets.forEach(ds=>{
-        if(gruposDeshabilitados.includes(ds.grupo)){
+        if(gruposNormalizados.includes(ds.grupo?.trim())){
             ds.hidden = true;
         }
     });
@@ -232,7 +215,7 @@ function crearGrafico()
             }
         },
 
-        plugins: [mostrarValores, mostrarNombreLinea]
+        plugins: [mostrarValores]
     });
 
     if(desglose)
@@ -241,10 +224,8 @@ function crearGrafico()
 
 
 // =============================
-// LEYENDA
+// LEYENDA AGRUPADA
 // =============================
-
-
 
 function generarLeyendaAgrupada(chart)
 {
@@ -253,7 +234,6 @@ function generarLeyendaAgrupada(chart)
 
     const grupos = {};
 
-    // Agrupar datasets
     chart.data.datasets.forEach((ds,index)=>{
         const grupo = ds.grupo || "Sin Grupo";
 
@@ -268,11 +248,8 @@ function generarLeyendaAgrupada(chart)
         const divGrupo = document.createElement("div");
         divGrupo.style.marginBottom = "6px";
 
-        const grupoDeshabilitado = gruposDeshabilitados.includes(grupo);
+        const grupoDeshabilitado = gruposNormalizados.includes(grupo?.trim());
 
-        // =========================
-        // TITULO DEL GRUPO
-        // =========================
         const titulo = document.createElement("strong");
         titulo.innerText = grupo + "  ";
         titulo.style.cursor = "pointer";
@@ -297,9 +274,6 @@ function generarLeyendaAgrupada(chart)
 
         divGrupo.appendChild(titulo);
 
-        // =========================
-        // ASEGURADORAS DEL GRUPO
-        // =========================
         grupos[grupo].forEach(item=>{
 
             const span = document.createElement("span");
@@ -318,11 +292,6 @@ function generarLeyendaAgrupada(chart)
             span.style.borderRadius = "4px";
             span.style.padding = "2px 6px";
 
-            // Estado inicial desde parámetros
-            if(grupoDeshabilitado){
-                item.ds.hidden = true;
-            }
-
             if(item.ds.hidden){
                 span.style.textDecoration = "line-through";
                 span.style.opacity = "0.5";
@@ -340,9 +309,6 @@ function generarLeyendaAgrupada(chart)
         container.appendChild(divGrupo);
     });
 }
-
-
-
 
 crearGrafico();
 
