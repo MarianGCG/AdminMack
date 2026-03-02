@@ -88,14 +88,6 @@ const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
 const desglose = {{ desglose|yesno:"true,false" }};
 const gruposDeshabilitados = {{ grupos_deshabilitados|default:"[]"|safe }};
-let chart = null;
-
-const labels = {{ labels|safe }};
-const datasets = {{ datasets|safe }};
-const tipo = "{{ tipo }}";
-const modo = "{{ modo }}";
-const desglose = {{ desglose|yesno:"true,false" }};
-const gruposDeshabilitados = {{ grupos_deshabilitados|default:"[]"|safe }};
 
 let chart = null;
 
@@ -180,7 +172,6 @@ const mostrarNombreLinea = {
             const meta = chart.getDatasetMeta(datasetIndex);
             if (!meta || meta.data.length < 2) return;
 
-            // 👇 usamos el segundo punto (T2 aprox)
             const punto = meta.data[1] || meta.data[0];
 
             let nombre = dataset.label.substring(0,8).padEnd(8," ");
@@ -210,7 +201,6 @@ function crearGrafico()
 {
     if(chart) chart.destroy();
 
-    // 👇 aplicar estado inicial
     datasets.forEach(ds=>{
         if(gruposDeshabilitados.includes(ds.grupo)){
             ds.hidden = true;
@@ -308,3 +298,7 @@ function generarLeyendaAgrupada(chart)
 }
 
 crearGrafico();
+
+</script>
+
+{% endblock %}
