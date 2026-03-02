@@ -6,7 +6,6 @@
     Evolución Facturación en USD
 </div>
 
-
 <style>
 
 .barra-controles {
@@ -41,10 +40,7 @@
 
 <form method="get" class="barra-controles">
 
-
-    <!-- PERIODO -->
     <div class="grupo">
-
         <b>Periodo:</b>
 
         <label>
@@ -64,14 +60,11 @@
             {% if tipo == "anual" %}checked{% endif %}>
             Anual
         </label>
-
     </div>
 
 
 
-    <!-- MODO -->
     <div class="grupo">
-
         <b>Modo:</b>
 
         <label>
@@ -85,14 +78,11 @@
             {% if modo == "barras" %}checked{% endif %}>
             Barras
         </label>
-
     </div>
 
 
 
-    <!-- DESGLOSE -->
     <div class="grupo">
-
         <label>
             <input type="checkbox"
                    name="desglose"
@@ -100,64 +90,45 @@
                    {% if desglose %}checked{% endif %}>
             Desglose aseguradoras
         </label>
-
     </div>
 
 
 
-    <!-- AÑOS -->
     <div class="grupo">
-
         <b>Años:</b>
 
         {% for anio in anios_disponibles %}
-
             <label>
-
                 <input type="checkbox"
                        name="anio"
                        value="{{ anio|unlocalize }}"
                        {% if anio in anios_seleccionados %}checked{% endif %}>
-
                 {{ anio|unlocalize }}
-
             </label>
-
         {% endfor %}
-
     </div>
 
 
 
-    <!-- BOTON -->
     <div class="grupo">
-
         <button type="submit"
-                style="
-                padding:3px 10px;
-                background:#2c78be;
-                color:white;
-                border:none;
-                border-radius:4px;
-                cursor:pointer;">
-
+                style="padding:3px 10px;
+                       background:#2c78be;
+                       color:white;
+                       border:none;
+                       border-radius:4px;
+                       cursor:pointer;">
             Actualizar
-
         </button>
-
     </div>
-
 
 </form>
 
 
 
 <div class="contenedor-grafico">
-
     <canvas id="grafico"></canvas>
-
 </div>
-
 
 
 
@@ -169,6 +140,7 @@ const labels = {{ labels|safe }};
 const datasets = {{ datasets|safe }};
 const tipo = "{{ tipo }}";
 const modo = "{{ modo }}";
+const desglose = {{ desglose|yesno:"true,false" }};
 
 let chart = null;
 
@@ -178,14 +150,13 @@ let chart = null;
 // FORMATEAR LABELS
 // =============================
 
-function formatearLabel(label,index)
+function formatearLabel(label)
 {
-
     if(tipo==="mensual")
     {
-        const [anio,mes]=label.split("-");
+        const mes = label.split("-")[1];
 
-        const nombres=[
+        const nombres = [
             "Ene","Feb","Mar","Abr","May","Jun",
             "Jul","Ago","Sep","Oct","Nov","Dic"
         ];
@@ -194,10 +165,7 @@ function formatearLabel(label,index)
     }
 
     if(tipo==="trimestral")
-    {
-        const [anio,t]=label.split("-");
-        return t;
-    }
+        return label.split("-")[1];
 
     return label;
 }
@@ -208,8 +176,7 @@ function formatearLabel(label,index)
 // LINEAS CAMBIO AÑO
 // =============================
 
-const lineasCambioAnio =
-{
+const lineasCambioAnio = {
     id:"lineasCambioAnio",
 
     afterDraw(chart)
@@ -217,7 +184,6 @@ const lineasCambioAnio =
         const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
 
         ctx.save();
-
         ctx.strokeStyle="#888";
         ctx.lineWidth=1;
         ctx.setLineDash([6,6]);
@@ -242,7 +208,60 @@ const lineasCambioAnio =
     }
 };
 
-Chart.register(lineasCambioAnio);
+
+
+// =============================
+// ETIQUETAS AÑO ABAJO
+// =============================
+
+const etiquetasAnios = {
+    id:"etiquetasAnios",
+
+    afterDraw(chart)
+    {
+        if(tipo==="anual") return;
+
+        const {ctx,chartArea,scales:{x}}=chart;
+
+        ctx.save();
+        ctx.font="bold 11px Arial";
+        ctx.fillStyle="#444";
+        ctx.textAlign="center";
+
+        let anioActual=null;
+        let inicio=0;
+
+        for(let i=0;i<labels.length;i++)
+        {
+            const anio=labels[i].split("-")[0];
+            const siguiente=labels[i+1]?.split("-")[0];
+
+            if(anioActual===null)
+            {
+                anioActual=anio;
+                inicio=i;
+            }
+
+            if(anio!==siguiente)
+            {
+                const xInicio=x.getPixelForValue(inicio);
+                const xFin=x.getPixelForValue(i);
+
+                const centro=(xInicio+xFin)/2;
+
+                ctx.fillText(anioActual,centro,chartArea.bottom+18);
+
+                anioActual=siguiente;
+                inicio=i+1;
+            }
+        }
+
+        ctx.restore();
+    }
+};
+
+
+Chart.register(lineasCambioAnio, etiquetasAnios);
 
 
 
@@ -252,104 +271,79 @@ Chart.register(lineasCambioAnio);
 
 function crearGrafico()
 {
-
     if(chart)
         chart.destroy();
 
     chart = new Chart(
         document.getElementById("grafico"),
         {
-
             type: modo==="barras" ? "bar" : "line",
 
-            data:
-            {
+            data: {
                 labels: labels,
                 datasets: datasets
             },
 
-            options:
-            {
+            options: {
 
                 responsive:true,
                 maintainAspectRatio:false,
 
-                layout:
-                {
-                    padding:
-                    {
-                        top:10
-                    }
-                },
+                interaction: desglose
+                    ? { mode: undefined }
+                    : { mode:"index", intersect:false },
 
-                interaction:
-                {
-                    mode:"index",
-                    intersect:false
-                },
+                plugins: {
 
-                plugins:
-                {
-                    legend:
-                    {
+                    tooltip: {
+                        enabled: !desglose
+                    },
+
+                    legend: {
                         display:true,
-                        labels:
-                        {
-                            font:
-                            {
-                                size:11
-                            }
+                        labels:{ font:{ size:11 } },
+                        onClick:(e,legendItem,legend)=>{
+                            const index=legendItem.datasetIndex;
+                            const ci=legend.chart;
+                            const meta=ci.getDatasetMeta(index);
+
+                            meta.hidden =
+                                meta.hidden===null
+                                ? !ci.data.datasets[index].hidden
+                                : null;
+
+                            ci.update();
                         }
                     }
                 },
 
-                scales:
-                {
+                scales: {
 
-                    x:
-                    {
-                        ticks:
-                        {
-                            font:
-                            {
-                                size:11
-                            },
-
+                    x: {
+                        ticks:{
+                            font:{ size:11 },
                             callback:(value,index)=>
                                 formatearLabel(labels[index]),
-
                             maxRotation:0,
                             autoSkip:false
                         }
                     },
 
-                    y:
-                    {
-                        ticks:
-                        {
-                            font:
-                            {
-                                size:11
-                            },
-
+                    y: {
+                        ticks:{
+                            font:{ size:11 },
                             callback:value=>
                                 value.toLocaleString("es-AR")
                         }
                     }
-
                 }
-
             }
-
         }
     );
-
 }
-
 
 crearGrafico();
 
 </script>
-
 
 {% endblock %}
