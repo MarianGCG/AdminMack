@@ -118,6 +118,47 @@ function formatearLabel(label)
 
 
 // =============================
+// PLUGIN VALORES SOBRE PUNTOS/BARRAS
+// =============================
+
+const mostrarValores = {
+    id: "mostrarValores",
+
+    afterDatasetsDraw(chart)
+    {
+        if (tipo === "mensual") return;
+
+        const { ctx } = chart;
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta || meta.hidden) return;
+
+            meta.data.forEach((element, index) => {
+
+                const value = dataset.data[index];
+                if (!value || value === 0) return;
+
+                ctx.save();
+                ctx.font = "bold 10px Arial";
+                ctx.fillStyle = "#000";
+                ctx.textAlign = "center";
+
+                ctx.fillText(
+                    value.toLocaleString("es-AR"),
+                    element.x,
+                    element.y - 6
+                );
+
+                ctx.restore();
+            });
+        });
+    }
+};
+
+
+// =============================
 // PLUGIN LINEAS CAMBIO AÑO
 // =============================
 
@@ -125,10 +166,11 @@ const lineasCambioAnio = {
     id:"lineasCambioAnio",
     afterDraw(chart)
     {
+        if(tipo==="anual") return;
+
         const {ctx,chartArea:{top,bottom},scales:{x}}=chart;
         ctx.save();
         ctx.strokeStyle="#888";
-        ctx.lineWidth=1;
         ctx.setLineDash([6,6]);
 
         for(let i=1;i<labels.length;i++)
@@ -150,53 +192,7 @@ const lineasCambioAnio = {
 };
 
 
-// =============================
-// PLUGIN ETIQUETA AÑO ABAJO
-// =============================
-
-const etiquetasAnios = {
-    id:"etiquetasAnios",
-    afterDraw(chart)
-    {
-        if(tipo==="anual") return;
-
-        const {ctx,chartArea,scales:{x}}=chart;
-        ctx.save();
-        ctx.font="bold 11px Arial";
-        ctx.fillStyle="#444";
-        ctx.textAlign="center";
-
-        let anioActual=null;
-        let inicio=0;
-
-        for(let i=0;i<labels.length;i++)
-        {
-            const anio=labels[i].split("-")[0];
-            const siguiente=labels[i+1]?.split("-")[0];
-
-            if(anioActual===null)
-            {
-                anioActual=anio;
-                inicio=i;
-            }
-
-            if(anio!==siguiente)
-            {
-                const xInicio=x.getPixelForValue(inicio);
-                const xFin=x.getPixelForValue(i);
-                const centro=(xInicio+xFin)/2;
-                ctx.fillText(anioActual,centro,chartArea.bottom+18);
-
-                anioActual=siguiente;
-                inicio=i+1;
-            }
-        }
-        ctx.restore();
-    }
-};
-
-
-Chart.register(lineasCambioAnio, etiquetasAnios);
+Chart.register(lineasCambioAnio, mostrarValores);
 
 
 // =============================
@@ -221,36 +217,14 @@ function crearGrafico()
             responsive:true,
             maintainAspectRatio:false,
 
-            interaction: {
-                mode: desglose ? "nearest" : "index",
-                intersect: false
-            },
+            interaction: tipo==="mensual"
+                ? { mode: desglose ? "nearest" : "index", intersect:false }
+                : false,
 
             plugins: {
 
                 tooltip: {
-                    enabled: true,
-                    callbacks: {
-
-                        title: function(context) {
-
-                            if (desglose) {
-                                return context[0].dataset.label;
-                            }
-
-                            return context[0].label;
-                        },
-
-                        label: function(context) {
-
-                            if (desglose) {
-                                return "";
-                            }
-
-                            return context.dataset.label + ": " +
-                                   context.parsed.y.toLocaleString("es-AR");
-                        }
-                    }
+                    enabled: tipo==="mensual",
                 },
 
                 legend: {
@@ -286,7 +260,7 @@ function crearGrafico()
 
 
 // =============================
-// LEYENDA AGRUPADA
+// LEYENDA SIMPLE
 // =============================
 
 function generarLeyendaAgrupada(chart)
@@ -297,7 +271,6 @@ function generarLeyendaAgrupada(chart)
     chart.data.datasets.forEach((ds,index)=>{
 
         const span=document.createElement("span");
-
         span.innerText = ds.label;
         span.style.display="inline-block";
         span.style.marginRight="8px";
