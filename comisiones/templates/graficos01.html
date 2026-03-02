@@ -195,7 +195,12 @@ const etiquetasAnios = {
     }
 };
 
-Chart.register(lineasCambioAnio, etiquetasAnios);
+
+Chart.register(
+    lineasCambioAnio,
+    etiquetasAnios,
+    mostrarNombreSobreLinea
+);
 
 
 // =============================
@@ -356,6 +361,43 @@ function generarLeyendaAgrupada(chart)
         });
     }
 }
+// =============================
+// MOSTRAR NOMBRE SOBRE LINEA
+// =============================
+
+const mostrarNombreSobreLinea = {
+    id: "mostrarNombreSobreLinea",
+
+    afterDatasetsDraw(chart)
+    {
+        if(!desglose) return;
+
+        const {ctx} = chart;
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+
+            if(meta.hidden) return;
+
+            const lastPoint = meta.data[meta.data.length - 1];
+            if(!lastPoint) return;
+
+            ctx.save();
+            ctx.font = "bold 11px Arial";
+            ctx.fillStyle = "black";
+            ctx.textAlign = "left";
+
+            ctx.fillText(
+                dataset.label,
+                lastPoint.x + 6,
+                lastPoint.y
+            );
+
+            ctx.restore();
+        });
+    }
+};
 
 crearGrafico();
 
