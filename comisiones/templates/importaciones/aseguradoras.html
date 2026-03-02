@@ -81,6 +81,7 @@
             <th>Tipo</th>
             <th>Email</th>
             <th>Código</th>
+            <th>Grupo</th>
             <th>Estado</th>
             <th>Color</th>
             <th>Acción</th>
@@ -98,6 +99,26 @@
             <td>{{ a.email }}</td>
             <td style="text-align:center;">{{ a.codigo_interno }}</td>
 
+            <!-- GRUPO EDITABLE -->
+            <td style="text-align:center;">
+
+                <form method="post"
+                      action="{% url 'actualizar_grupo_aseguradora' a.id %}"
+                      style="margin:0;">
+
+                    {% csrf_token %}
+
+                    <input type="text"
+                           name="grupo"
+                           value="{{ a.grupo|default:'' }}"
+                           maxlength="2"
+                           style="width:35px; text-align:center;"
+                           onchange="this.form.submit()">
+
+                </form>
+
+            </td>
+
             <td style="text-align:center;">
                 {% if a.activa %}  
                     <span style="color:green; font-weight:bold;">Activa</span>
@@ -106,54 +127,46 @@
                 {% endif %}
             </td>
 
-        <!-- COLUMNA COLOR -->
-        <td style="text-align:center;">
+            <!-- COLOR -->
+            <td style="text-align:center;">
 
-            <form method="post"
-                action="{% url 'activar_aseguradora' a.id %}"
-                style="margin:0;">
+                <form method="post"
+                      action="{% url 'activar_aseguradora' a.id %}"
+                      style="margin:0;">
 
-                {% csrf_token %}
+                    {% csrf_token %}
 
-                <input type="color"
-                    name="color"
-                    value="{{ a.color|default:'#3366cc' }}"
-                    onchange="this.form.submit()"
-                    style="width:40px;height:28px;border:none;cursor:pointer;">
+                    <input type="color"
+                           name="color"
+                           value="{{ a.color|default:'#3366cc' }}"
+                           onchange="this.form.submit()"
+                           style="width:40px;height:28px;border:none;cursor:pointer;">
 
-            </form>
+                </form>
 
-        </td>
+            </td>
 
+            <!-- ACCION -->
+            <td style="text-align:center;">
 
-        <!-- COLUMNA ACCION -->
-        <td style="text-align:center;">
+                {% if a.activa %}
+                    <a href="{% url 'eliminar_aseguradora' a.id %}"
+                       style="padding:6px 10px; background:#c0392b; color:white; border-radius:6px; text-decoration:none;">
+                        Desactivar
+                    </a>
+                {% else %}
+                    <a href="{% url 'activar_aseguradora' a.id %}"
+                       style="padding:6px 10px; background:#27ae60; color:white; border-radius:6px; text-decoration:none;">
+                        Activar
+                    </a>
+                {% endif %}
 
-            {% if a.activa %}
-                <a href="{% url 'eliminar_aseguradora' a.id %}"
-                style="padding:6px 10px; background:#c0392b; color:white; border-radius:6px; text-decoration:none;">
-                    Desactivar
-                </a>
-            {% else %}
-                <a href="{% url 'activar_aseguradora' a.id %}"
-                style="padding:6px 10px; background:#27ae60; color:white; border-radius:6px; text-decoration:none;">
-                    Activar
-                </a>
-            {% endif %}
-
-        </td>
-
-
-
-
-
-
-
+            </td>
 
         </tr>
         {% empty %}
         <tr>
-            <td colspan="7" style="padding:15px; text-align:center;">
+            <td colspan="9" style="padding:15px; text-align:center;">
                 No hay aseguradoras registradas
             </td>
         </tr>

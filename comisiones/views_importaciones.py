@@ -8,6 +8,7 @@ from .services.comprobantes_arca_service import importar_comprobantes_arca
 from .services.cobranzas_service import importar_cobranzas_excel
 
 
+
 # ================================
 # IMPORTAR DÓLAR
 # ================================
@@ -53,17 +54,55 @@ def listar_aseguradoras_view(request):
 
 
 # ================================
-# IMPORTAR ASEGURADORAS
+# IMPORTAR COMPROBANTES ARCA
 # ================================
+def importar_comprobantes_arca_view(request):
+
+    resultado = None
+
+    if request.method == "POST":
+        archivo = request.FILES.get("archivo")
+
+        if archivo:
+            resultado = importar_comprobantes_arca(archivo)
+
+    return render( request, "importaciones/comprobantes_arca.html", {"resultado": resultado }
+    )
 
 
+
+def importar_cobranzas_view(request):
+
+    resultado = None
+
+    if request.method == "POST":
+        archivo = request.FILES.get("archivo")
+
+        if archivo:
+            resultado = importar_cobranzas_excel(archivo)
+
+    return render(
+        request,
+        "importaciones/cobranzas.html",
+        {
+            "resultado": resultado
+        }
+    )
+
+
+
+
+# ================================
+# ASEGURADORAS
+# ================================
 
 def aseguradoras_view(request):
 
     resultado = None
 
-    if request.method == "POST":
+    if request.method == "POST" and "archivo" in request.FILES:
         form = ImportarExcelForm(request.POST, request.FILES)
+
         if form.is_valid():
             archivo = request.FILES["archivo"]
             resultado = importar_aseguradoras_excel(archivo)
@@ -72,7 +111,7 @@ def aseguradoras_view(request):
 
     aseguradoras = Aseguradoras.objects.all().order_by("nombre")
 
-    # 🔎 Filtros
+    # Filtros
     nombre = request.GET.get("nombre")
     estado = request.GET.get("estado")
 
@@ -97,15 +136,33 @@ def aseguradoras_view(request):
 
 
 # ================================
-# ACTIVAR ASEGURADORA
+# ACTUALIZAR GRUPO
 # ================================
 
+def actualizar_grupo_aseguradora(request, id):
+
+    aseguradora = Aseguradoras.objects.get(id=id)
+
+    grupo = request.POST.get("grupo")
+
+    if grupo:
+        aseguradora.grupo = grupo.strip().upper()
+    else:
+        aseguradora.grupo = None
+
+    aseguradora.save()
+
+    return redirect("aseguradoras")
+
+
+# ================================
+# ACTIVAR ASEGURADORA
+# ================================
 
 def activar_aseguradora(request, id):
 
     aseguradora = Aseguradoras.objects.get(id=id)
 
-    # guardar color si viene
     color = request.POST.get("color")
     if color:
         aseguradora.color = color
@@ -116,11 +173,10 @@ def activar_aseguradora(request, id):
     return redirect("aseguradoras")
 
 
-
-
 # ================================
-# ELIMINAR / DESACTIVAR ASEGURADORA
+# DESACTIVAR / ELIMINAR
 # ================================
+
 def eliminar_o_desactivar_aseguradora(request, id):
 
     aseguradora = Aseguradoras.objects.get(id=id)
@@ -138,37 +194,4 @@ def eliminar_o_desactivar_aseguradora(request, id):
     return redirect("aseguradoras")
 
 
-# ================================
-# IMPORTAR COMPROBANTES ARCA
-# ================================
-def importar_comprobantes_arca_view(request):
-
-    resultado = None
-
-    if request.method == "POST":
-        archivo = request.FILES.get("archivo")
-
-        if archivo:
-            resultado = importar_comprobantes_arca(archivo)
-
-    return render( request, "importaciones/comprobantes_arca.html", {"resultado": resultado }
-    )
-
-def importar_cobranzas_view(request):
-
-    resultado = None
-
-    if request.method == "POST":
-        archivo = request.FILES.get("archivo")
-
-        if archivo:
-            resultado = importar_cobranzas_excel(archivo)
-
-    return render(
-        request,
-        "importaciones/cobranzas.html",
-        {
-            "resultado": resultado
-        }
-    )
 
