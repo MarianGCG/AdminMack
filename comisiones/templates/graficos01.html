@@ -56,7 +56,8 @@
     <!-- COLUMNA IZQUIERDA -->
     <div style="min-width:320px;">
 
-        <form method="get" class="barra-controles">
+        <form method="get" class="barra-controles"
+            onchange="this.submit()">
 
             <div class="grupo">
                 <b>Periodo:</b>
@@ -94,12 +95,6 @@
                 </label>
             </div>
 
-            <div class="grupo">
-                <button type="submit"
-                    style="padding:4px 12px;background:#2c78be;color:white;border:none;border-radius:4px;cursor:pointer;">
-                    Actualizar
-                </button>
-            </div>
 
         </form>
 
@@ -333,11 +328,11 @@ function generarLeyendaAgrupada(chart){
     Object.keys(grupos).sort().forEach(grupo=>{
 
         const div=document.createElement("div");
-        div.style.marginBottom="6px";
+        div.style.marginBottom="2px";
         div.style.display="flex";
-        div.style.justifyContent="flex-end";
+        div.style.justifyContent="flex-start";
         div.style.flexWrap="wrap";
-        div.style.gap="6px";
+        div.style.gap="4px";
 
         const titulo=document.createElement("strong");
         titulo.innerText=grupo+" ";
@@ -365,8 +360,8 @@ function generarLeyendaAgrupada(chart){
             const span=document.createElement("span");
             span.innerText=item.ds.label.substring(0,8);
             span.style.display="inline-block";
-            span.style.padding="2px 4px";
-            span.style.margin="2px";
+            span.style.padding="1px 4px";
+            span.style.margin="1px";
             span.style.backgroundColor=item.ds.borderColor;
             span.style.borderRadius="4px";
             span.style.cursor="pointer";
