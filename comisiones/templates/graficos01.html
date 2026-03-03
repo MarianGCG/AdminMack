@@ -11,7 +11,7 @@
     display:flex;
     flex-direction:column;
     gap:8px;
-    margin-bottom:12px;
+    margin-bottom:4px;
     font-size:13px;
 }
 
@@ -258,14 +258,10 @@ const mostrarNombreLinea = {
             const meta = chart.getDatasetMeta(datasetIndex);
             if (!meta || !meta.data || meta.data.length === 0) return;
 
-            // Elegimos punto 2 o 3 según cantidad
-            let indexCentro = 2;
+            // Elegimos 
+            const mitad = Math.floor(meta.data.length / 2);
+            const punto = meta.data[mitad];
 
-            if(meta.data.length < 3){
-                indexCentro = Math.floor(meta.data.length / 2);
-            }
-
-            const punto = meta.data[indexCentro];
             if(!punto) return;
 
             const nombre = dataset.label.substring(0,8);
@@ -273,12 +269,12 @@ const mostrarNombreLinea = {
             ctx.save();
             ctx.font = "bold 11px Arial";
             ctx.fillStyle = dataset.borderColor;
-            ctx.textAlign = "left";
+            ctx.textAlign = "center";
 
             ctx.fillText(
                 nombre,
-                punto.x + 6,
-                punto.y - 6
+                punto.x ,
+                punto.y - 14
             );
 
             ctx.restore();
@@ -407,11 +403,12 @@ function generarLeyendaAgrupada(chart){
 
         const codigo=grupo.substring(0,2);
 
-        if(gruposDeshabilitados.includes(codigo)){
-            grupos[grupo].forEach(x=>x.ds.hidden=true);
+        const todosOcultos = grupos[grupo].every(x => x.ds.hidden);
+        if(todosOcultos){
             titulo.style.textDecoration="line-through";
             titulo.style.opacity="0.5";
         }
+
 
         titulo.onclick=()=>{
             const ocultar=!grupos[grupo].every(x=>x.ds.hidden);
