@@ -217,20 +217,6 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
-# =====================================================
-# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
-# =====================================================
-# =====================================================
-# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
-# =====================================================
-
-
-# =====================================================
-# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
-# =====================================================
-# =====================================================
-# GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
-# =====================================================
 
 def graficos01(request):
 
@@ -278,8 +264,7 @@ def graficos01(request):
                     COALESCE(a.color,'#2c78be'),
 
                     SUM((c.neto+c.no_gravado+c.exento)/NULLIF(d.valor,0))
-                    /
-                    COUNT(DISTINCT c.periodo_mes)
+                    
 
                 FROM comprobantes_comisiones c
                 JOIN aseguradoras a ON a.id=c.aseguradora_id
@@ -400,30 +385,48 @@ def graficos01(request):
 
         valores = [sum(data[label].values()) for label in labels]
 
-        datasets.append({
-            "label": "Promedio mensual trimestre" if tipo == "trimestral" else "Facturación USD",
-            "data": valores,
-            "borderColor": "#2c78be",
-            "backgroundColor": "#2c78be",
-            "tension": 0.25,
-            "fill": False
-        })
+        # ==========================
+        # TRIMESTRAL
+        # ==========================
+        if tipo == "trimestral":
 
-        # Línea promedio general en trimestral
-        if tipo == "trimestral" and valores:
-            promedio_general = sum(valores) / len(valores)
+            # 1️⃣ Facturación trimestral real
+            datasets.append({
+                "label": "Facturación trimestral USD",
+                "data": valores,
+                "borderColor": "#2c78be",
+                "backgroundColor": "#2c78be",
+                "tension": 0.25,
+                "fill": False
+            })
+
+            # 2️⃣ Promedio mensual dentro del trimestre
+            promedios = [v / 3 for v in valores]
 
             datasets.append({
-                "label": "Promedio general trimestres",
-                "data": [promedio_general for _ in labels],
+                "label": "Promedio mensual trimestre",
+                "data": promedios,
                 "borderColor": "#c0392b",
                 "backgroundColor": "#c0392b",
                 "borderDash": [6,6],
-                "tension": 0,
-                "fill": False,
-                "type": "line",
-                "pointRadius": 0
+                "tension": 0.25,
+                "fill": False
             })
+
+        # ==========================
+        # MENSUAL / ANUAL
+        # ==========================
+        else:
+
+            datasets.append({
+                "label": "Facturación USD",
+                "data": valores,
+                "borderColor": "#2c78be",
+                "backgroundColor": "#2c78be",
+                "tension": 0.25,
+                "fill": False
+            })
+
     # ==========================
     # GRUPOS DESHABILITADOS
     # ==========================

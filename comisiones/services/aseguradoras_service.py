@@ -19,6 +19,7 @@ def importar_aseguradoras_excel(archivo):
         email = row.get("email")
         codigo_interno = row.get("codigo_interno")
         razon_social_afip = row.get("razon_social_afip")
+        grupo = row.get("grupo")
 
         # ---------------------------
         # VALIDACIONES BÁSICAS
@@ -51,7 +52,7 @@ def importar_aseguradoras_excel(archivo):
         tipo_factura = None if pd.isna(tipo_factura) else str(tipo_factura).strip()
         email = None if pd.isna(email) else str(email).strip()
         razon_social_afip = None if pd.isna(razon_social_afip) else str(razon_social_afip).strip()
-
+        grupo = None if pd.isna(grupo) else str(grupo).strip().upper()
         # ---------------------------
         # BUSCAR EXISTENTE (CUIT + CODIGO)
         # ---------------------------
@@ -68,6 +69,7 @@ def importar_aseguradoras_excel(archivo):
             aseguradora.tipo_factura = tipo_factura
             aseguradora.email = email
             aseguradora.razon_social_afip = razon_social_afip
+            aseguradora.grupo = grupo   # ← AGREGAR
             aseguradora.activa = True  # reactivar si estaba inactiva
             aseguradora.save()
 
@@ -84,6 +86,7 @@ def importar_aseguradoras_excel(archivo):
                 email=email,
                 codigo_interno=codigo_interno,
                 razon_social_afip=razon_social_afip,
+                grupo=grupo,   # ← AGREGAR
                 activa=True
             )
 

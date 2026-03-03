@@ -11,8 +11,11 @@
     display:flex;
     flex-direction:column;
     gap:8px;
-    margin-bottom:4px;
+    margin-bottom:1px;
     font-size:13px;
+}
+.titulo-grafico{
+    text-align:left;
 }
 
 .grupo{
@@ -51,13 +54,12 @@
 </style>
 
 
-<div style="display:flex; gap:40px; align-items:flex-start;">
+<form method="get" class="barra-controles" onchange="this.submit()">
 
-    <!-- COLUMNA IZQUIERDA -->
-    <div style="min-width:320px;">
+    <div style="display:flex; gap:40px; align-items:flex-start;">
 
-        <form method="get" class="barra-controles"
-            onchange="this.submit()">
+        <!-- COLUMNA IZQUIERDA -->
+        <div style="min-width:480px;">
 
             <div class="grupo">
                 <b>Periodo:</b>
@@ -85,35 +87,48 @@
                     {% endfor %}
                 </div>
             </div>
+        </div>
 
-            <div class="grupo">
-                <label>
-                    <input type="checkbox" name="desglose" value="1"
-                           onchange="this.form.submit();"
-                           {% if desglose %}checked{% endif %}>
-                    Desglose aseguradoras
-                </label>
+        <!-- COLUMNA DERECHA -->
+        <div style="width:580px;">
+
+            <div style="display:flex; align-items:flex-start; gap:5px;">
+
+                <!-- BLOQUE CHECKBOX + TEXTO -->
+                <div style="width:160px; text-align:center;">
+
+                    <!-- Checkbox centrado -->
+                    <div>
+                        <input type="checkbox" name="desglose" value="1"
+                            {% if desglose %}checked{% endif %}>
+                    </div>
+
+                    <!-- Texto debajo -->
+                    <div style="margin-top:2px;">
+                        <b>Aseguradoras</b>
+                    </div>
+
+                </div>
+
+                <!-- PANEL A LA DERECHA -->
+                <div id="legend-container"
+                    style="
+                        border:1px solid #999;
+                        padding:8px 10px;
+                        background:#f9f9f9;
+                        width:400px;
+                        margin-top:-40px;
+                        visibility: {% if desglose %}visible{% else %}hidden{% endif %};
+                    ">
+                </div>
+
+
             </div>
 
-
-        </form>
-
+        </div>
     </div>
 
-    <!-- COLUMNA DERECHA -->
-    {% if desglose %}
-    <div id="legend-container"
-         style="
-            width:520px;
-            border:1px solid #999;
-            padding:8px 10px;
-            background:#f9f9f9;
-         ">
-    </div>
-    {% endif %}
-
-</div>
-
+</form>
 
 
 
@@ -227,16 +242,12 @@ const anioCentrado={
             ctx.font="bold 12px Arial";
             ctx.fillStyle="#444";
             ctx.textAlign="center";
-            ctx.fillText(anio,centro,bottom+22);
+            ctx.fillText(anio,centro,bottom+8);
             ctx.restore();
         });
     }
 };
 
-
-// =============================
-// NOMBRE ASEGURADORA EN LINEAL
-// =============================
 
 // =============================
 // NOMBRE ASEGURADORA EN LINEAL
