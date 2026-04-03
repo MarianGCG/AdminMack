@@ -8,3 +8,4 @@ pandas==2.2.2
 openpyxl==3.1.2
 matplotlib==3.7.5
 XlsxWriter
+pdfplumber==0.10.3
