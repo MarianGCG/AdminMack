@@ -114,6 +114,26 @@ def reporte_comisiones_view(request):
         porcentaje_pas = 0
         comision_pas = 0
 
+
+
+        # 🔥 comision_agente segun moneda
+        comision_agente = d.comision_agente or 0
+        if d.moneda == "U$S" and d.cotizacion_dolar:
+            comision_agente = comision_agente * d.cotizacion_dolar
+        else:
+            comision_agente = d.comision_agente or 0
+
+        # 🔥 PRIMA segun moneda
+        prima = d.prima or 0
+        if d.moneda == "U$S" and d.cotizacion_dolar:
+            prima = prima * d.cotizacion_dolar
+        else:
+            prima = d.prima or 0
+
+            
+
+
+
         # ============================
         # BUSCAR % PAS (regla)
         # ============================
@@ -165,16 +185,6 @@ def reporte_comisiones_view(request):
                         Q(producto__isnull=True) | Q(producto="")
                     ).first()
 
-
-                # 🔥 comision_agente segun moneda
-                comision_agente = d.comision_agente or 0
-                if d.moneda == "U$S" and d.cotizacion_dolar:
-                    comision_agente = comision_agente * d.cotizacion_dolar
-
-                # 🔥 PRIMA segun moneda
-                prima = d.prima or 0
-                if d.moneda == "U$S" and d.cotizacion_dolar:
-                    prima = prima * d.cotizacion_dolar
 
 
                 if regla:
