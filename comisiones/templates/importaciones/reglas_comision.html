@@ -352,7 +352,7 @@ font-size:20px;
 
 .titulo-arbol{
     display:grid;
-    grid-template-columns: 120px 180px 90px 70px 110px 70px 90px;
+    grid-template-columns: 120px 180px 90px 70px 110px 70px 90px 90px;
     gap:10px;
 }
 
@@ -360,7 +360,7 @@ font-size:20px;
 
 .grid-reglas{
     display:grid;
-    grid-template-columns:  300px 90px 70px 110px 70px 90px;
+    grid-template-columns:  300px 90px 70px 110px 70px 90px 90px;
     gap:10px;
     align-items:center;
 }
@@ -397,6 +397,7 @@ font-size:20px;
     <div>Rango</div>
     <div>Año</div>
     <div>Comisión</div>
+    <div>Base</div>
 </div>
 
 
@@ -442,6 +443,13 @@ font-size:20px;
                         {{r.porcentaje}}%
                         <span onclick="event.stopPropagation(); eliminar('{{r.id}}')" 
                             class="icono-eliminar">🗑</span>
+                    </div>
+                    <div>
+                        {% if r.base_comision == "Prima" %}
+                            💰 Prima
+                        {% else %}
+                            📊 Comisión
+                        {% endif %}
                     </div>
 
                 </div>
