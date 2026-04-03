@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+
+<h2>Reporte de Comisiones</h2>
+
+
+<style>
+.filtros{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.filtros input,
+.filtros select{
+    padding:4px;
+}
+
+
+.filtros-linea{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+}
+
+.numero{
+    text-align:right;
+}
+
+.texto{
+    text-align:left;
+}
+
+.centro{
+    text-align:center;
+}
+
+tr:hover{
+    background:#f5f5f5;
+}
+
+
+</style>
+
+
+<style>
+.tabla-comisiones {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+}
+
+.tabla-comisiones th,
+.tabla-comisiones td {
+    padding: 3px 6px;
+    white-space: nowrap;   /* 🔥 clave: no corta línea */
+}
+
+/* columnas importantes más anchas */
+
+.col-cliente {
+    min-width: 220px;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.col-ramo {
+    min-width: 160px;
+}
+
+/* números alineados */
+.numero {
+    text-align: right;
+}
+
+
+.tabla-comisiones th{
+    background:#174a7c;
+    color:white;
+    font-weight:600;
+    text-align:center;
+    border:1px solid #174a7c;
+}
+.tabla-comisiones th.texto{
+    text-align:left;
+}
+
+.tabla-comisiones th.numero{
+    text-align:right;
+}
+.btn-buscar{
+    background:#174a7c;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:500;
+}
+
+.btn-buscar:hover{
+    background:#123a61;
+}
+
+/* Excel separado + otro color */
+.btn-excel{
+    background:#1a7f37;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:500;
+
+    margin-left:60px;   /* 👈 separación */
+}
+
+.btn-excel:hover{
+    background:#146c2e;
+}
+
+</style>
+
+<div class="filtros-box">
+
+    <form method="get">
+
+    <div class="filtros-linea">
+
+        PAS
+        <select name="pas">
+        <option value="">Todos</option>
+        {% for p in pas %}
+        <option value="{{p.codigo_pas}}"
+        {% if request.GET.pas == p.codigo_pas %}selected{% endif %}>
+        {{p.codigo_pas}} - {{p.nombre}}
+        </option>
+        {% endfor %}
+        </select>
+
+
+        Aseguradora
+        <select name="aseguradora">
+        <option value="">Todas</option>
+        {% for a in aseguradoras %}
+        <option value="{{a.id}}"
+        {% if request.GET.aseguradora == a.id|stringformat:"s" %}selected{% endif %}>
+        {{a.nombre}}
+        </option>
+        {% endfor %}
+        </select>
+
+        Cliente clave1
+        <input type="text" name="clave1" value="{{request.GET.clave1}}">
+
+        Cliente clave2
+        <input type="text" name="clave2" value="{{request.GET.clave2}}">
+
+    </div>
+
+    <div class="filtros-linea">
+
+        Fecha desde
+        <input type="date" name="fecha_desde" value="{{request.GET.fecha_desde}}">
+
+        Fecha hasta
+        <input type="date" name="fecha_hasta" value="{{request.GET.fecha_hasta}}">
+
+        <label>
+            <input type="checkbox" name="solo_pas" value="1"
+            {% if request.GET.solo_pas == "1" %}checked{% endif %}>
+            Destino (PAS)
+        </label>
+
+        <button type="submit" class="btn-buscar">🔍 Buscar</button>
+        <button type="submit" name="exportar" value="excel" class="btn-excel">
+            📥 Descargar
+        </button>
+
+    </div>
+    </form>
+</div>
+
+
+<div style="overflow-x:auto;">
+
+
+
+    <table border="1" class="tabla-comisiones">
+    <tr>
+
+    <th>Fecha Liq</th>
+    <th>Q</th>
+    <th>Aseg</th>
+    <th>Pas</th>
+    <th class="texto">Cliente</th>
+    <th class="texto">Ramo</th>
+    <th>Poliza</th>
+    <th>Endoso</th>
+    <th>Moneda</th>
+
+    <th>Cotización Dólar</th>
+    <th>Meses Adelanto</th>
+    <th>Premio</th>
+    <th>Prima</th>
+
+    {% if request.GET.solo_pas != "1" %}
+    <th>%</th>
+    <th>Comisión Agente</th>
+    <th>Desc. Adelanto</th>
+    <th>Comisión Adelantada</th>
+    {% endif %}
+
+    <th>% PAS</th>
+    <th>Comisión PAS</th>
+    <th>Comisión PAS s/IVA</th>
+
+    </tr>
+
+
+    {% for d in datos %}
+
+    <tr>
+    <td class="texto">{{d.fecha|date:"d/m/Y"}}</td>
+    <td>{{d.quincena}}</td>
+    <td>{{d.aseg}}</td>
+    <td>{{pas_seleccionado}}</td>
+    <td class="col-cliente">{{d.cliente}}</td>
+
+    <td class="col-ramo">{{ d.ramo|default_if_none:""|default:"" }}</td>
+    <td>{{d.poliza}}</td>
+    <td class="centro">{{d.endoso}}</td>
+    <td class="centro">{{d.moneda}}</td>
+    <td class="numero">{{d.cotizacion|floatformat:2|intcomma}}</td>
+    <td>{{d.meses|default:""}}</td>
+    <td>{{d.premio|default:""}}</td>
+    <td>{{d.prima|default:""|floatformat:2 }}</td>
+
+
+
+    {% if request.GET.solo_pas != "1" %}
+
+    <td class="numero">
+        {{ d.porcentaje|floatformat:2 }}%
+    </td>
+
+    <td>{{d.comision_agente|default:""|floatformat:2 }}</td>
+    <td>{{d.descuento_adelanto}}</td>
+    <td>{{d.comision_adelantada|default:""}}</td>
+
+    {% endif %}
+
+    <td class="numero">{{ d.porcentaje_pas|default:0|floatformat:2 }}%</td>
+    <td class="numero">{{ d.comision_pas|default:0|floatformat:2|intcomma }}</td>
+    <td class="numero">{{ d.comision_pas_sin_iva|default:0|floatformat:2|intcomma }}</td>
+
+    </tr>
+
+    {% endfor %}
+
+
+    <tr style="font-weight:bold; background:#f0f4fa; border-top:2px solid #244c7a;">
+    {% if request.GET.solo_pas == "1" %}
+        <td colspan="14">TOTAL</td>
+        <td></td>
+        <td class="numero">{{ total_comision_pas_sin_iva|floatformat:2|intcomma }}</td>    
+    {% else %}
+        <td colspan="14">TOTAL</td>
+        <td class="numero">{{total_comision|floatformat:2|intcomma}}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>    
+        <td class="numero">{{ total_comision_pas_sin_iva|floatformat:2|intcomma }}</td>    
+    {% endif %}
+    </tr>
+
+
+    </table>
+</div>
+{% endblock %}

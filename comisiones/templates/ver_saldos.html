@@ -36,23 +36,84 @@
 
 <div class="contenedor-tabla">
 
-<table class="tabla-reporte">
+<table class="tabla-sistema">
 
 <tr>
 
-    <th>Periodo</th>
-    <th>Fact</th>
-    <th>Cred</th>
+<th onclick="ordenar('periodo')">
+    Periodo 
+    <span class="flechas">     
+        {% if request.GET.orden == 'periodo' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>    
+</th>
 
-    <th style="text-align:right;">Neto</th>
-    <th style="text-align:right;">No Grav</th>
-    <th style="text-align:right;">Exento</th>
-    <th style="text-align:right;">IVA</th>
-    <th style="text-align:right;">Total</th>
-    <th style="text-align:right;">Cobrado</th>
+<th onclick="ordenar('fact')">
+    Fact 
+    <span class="flechas">     
+        {% if request.GET.orden == 'fact' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>    
+</th>
+
+<th onclick="ordenar('cred')">
+    Cred 
+    <span class="flechas"> 
+        {% if request.GET.orden == 'cred' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>
+</th>
+
+
+
+<th onclick="ordenar('neto')">
+    Neto 
+    <span class="flechas">    
+        {% if request.GET.orden == 'neto' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>
+
+</th>
+
+<th>No Grav</th>
+<th>Exento</th>
+<th>IVA</th>
+
+<th onclick="ordenar('total')">
+    Total 
+    <span class="flechas">     
+        {% if request.GET.orden == 'total' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>    
+</th>
+
+<th onclick="ordenar('cobrado')">
+    Cobrado 
+    <span class="flechas">     
+        {% if request.GET.orden == 'cobrado' %}
+            {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
+        {% else %}
+            ▲▼
+        {% endif %}
+    </span>    
+</th>
 
 </tr>
-
 
 {% for s in saldos %}
 
@@ -149,6 +210,29 @@
     <strong>Cantidad de períodos:</strong>
     {{ saldos|length }}
 </p>
+
+
+<script>
+
+function ordenar(campo){
+
+    const url = new URL(window.location.href)
+
+    let actual = url.searchParams.get("orden")
+    let direccion = url.searchParams.get("dir") || "asc"
+
+    if(actual === campo){
+        direccion = direccion === "asc" ? "desc" : "asc"
+    }else{
+        direccion = "asc"
+    }
+
+    url.searchParams.set("orden", campo)
+    url.searchParams.set("dir", direccion)
+
+    window.location.href = url.toString()
+}
+</script>
 
 
 {% endblock %}

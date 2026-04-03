@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+
+{% load static %}
+
+
 <html>
 <head>
     <meta charset="UTF-8">
@@ -12,7 +16,7 @@
             background-color: #f4f6f9;
         }
 
-        /* NAVBAR FIJO */
+        /* NAVBAR */
         .navbar {
             background-color: #174a7c;
             padding: 10px 25px;
@@ -38,19 +42,18 @@
             opacity: 0.8;
         }
 
-        /* CONTENIDO NORMAL */
+        /* CONTENIDO */
         .contenido {
             padding: 10px 20px 15px 20px;
             max-width: 1800px;
             margin: 0 auto;
         }
 
-        /* CONTENIDO FULL WIDTH (para gráficos grandes) */
         .contenido.fullwidth {
             max-width: 100%;
         }
 
-        /* TITULOS DE GRAFICOS */
+        /* TITULOS */
         .titulo-grafico {
             font-size: 22px;
             font-weight: bold;
@@ -58,7 +61,8 @@
             margin-bottom: 10px;
         }
 
-        /* BARRA DE OPCIONES */
+        /* BARRA OPCIONES */
+
         .barra-opciones {
             background-color: white;
             padding: 10px 12px;
@@ -71,47 +75,105 @@
             flex-wrap: wrap;
         }
 
-        /* =========================
-           TABLAS DE REPORTES
-           ========================= */
+        /* TABLAS */
 
-        .contenedor-tabla {
-            max-width: 1200px;
-            margin: 0 auto;
+        .tabla th {
+            padding:4px 4px;
+            font-size:12px;
+        
         }
 
-        .tabla-reporte {
+        .tabla td {
+            padding:1px 1px;
+            font-size:12px;
+        }
+
+        .tabla-grande td,
+        .tabla-grande th{
+            font-size:16px;
+        }
+
+        .tabla-listado{
+            width:100%;
+            border-collapse:collapse;
+            background:white;
+        }
+
+        .tabla-listado th{
+            background:#244c7a;
+            color:white;
+            padding:8px;
+            text-align:left;
+            font-size:14px;
+        }
+
+        .tabla-listado td{
+            padding:6px;
+            border-bottom:1px solid #e5e5e5;
+            font-size:14px;
+        }
+
+        .tabla-listado tr:hover{
+            background:#f5f7fb;
+        }
+
+
+        .tabla-sistema {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
             background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            font-size: 13px;
         }
 
-        .tabla-reporte th {
-            background: #174a7c;
+        .tabla-sistema th {
+            background: #244c7a;
             color: white;
-            padding: 6px 8px;
+            padding: 6px;
+
             text-align: left;
-            font-weight: bold;
+            font-size: 13px;
         }
 
-        .tabla-reporte td {
-            padding: 5px 8px;
-            border-bottom: 1px solid #e0e0e0;
+        .tabla-sistema td {
+            padding: 5px;
+            border-bottom: 1px solid #e5e5e5;
         }
 
-        .tabla-reporte tr:last-child td {
-            border-bottom: none;
+        .tabla-sistema tr:hover {
+            background: #f5f7fb;
         }
 
-        .tabla-reporte tr:hover {
-            background-color: #f5f8fb;
+        .tabla-sistema th .flechas {
+            opacity: 0.4;   /* 👈 opacas */
+            margin-left: 4px;
+            font-size: 11px;
+        }
+
+        .tabla-sistema th.activo .flechas {
+           opacity: 1;
+        }
+
+
+
+        .numero{
+            text-align:right !important;
+        }
+
+        /* BOTONES */
+
+        .btn-editar{
+            text-decoration:none;
+            margin-right:6px;
+            font-size:16px;
+        }
+
+        .btn-eliminar{
+            text-decoration:none;
+            font-size:16px;
         }
 
         /* DROPDOWN */
+
         .dropdown {
             position: relative;
         }
@@ -131,10 +193,11 @@
             top: 100%;
             left: 0;
             background-color: white;
-            min-width: 220px;
+            min-width: 280px;
             box-shadow: 0px 6px 14px rgba(0,0,0,0.2);
             border-radius: 8px;
             z-index: 1000;
+            white-space: nowrap; /* 👈 evita salto de línea */
         }
 
         .dropdown-content a {
@@ -149,9 +212,77 @@
             background-color: #f2f6fa;
         }
 
-        .dropdown:hover .dropdown-content {
+        /* SOLO primer nivel */
+        .dropdown > .dropdown-content {
+            display: none;
+        }
+
+        /* SOLO primer nivel */
+        .dropdown > .dropdown-content {
+            display: none;
+        }
+
+        .dropdown:hover > .dropdown-content {
             display: block;
         }
+
+
+
+        /* SUBMENU dentro de dropdown-content */
+        .dropdown-submenu {
+            position: relative;
+        }
+
+        .dropdown-submenu .dropdown-content {
+            top: 0;
+            left: 100%;
+            position: absolute;
+            display: none;
+        }
+
+        .dropdown-submenu:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-submenu > a {
+            display: block;
+            padding: 10px 14px;
+        }
+
+        .dropdown-submenu::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -10px;
+            width: 10px;
+            height: 100%;
+        }
+
+        .dropdown-submenu > a:hover {
+            background-color: #f2f6fa;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .menu {
+            display: flex;
+            gap: 25px;
+            margin-left: 80px;   /* 👈 ESTE ES EL AJUSTE */
+        }
+
+
+        .filtros-box{
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+
+
 
     </style>
 
@@ -160,30 +291,100 @@
 
 <div class="navbar">
 
-    <a href="/comprobantes/">Comprobantes</a>
-    <a href="/saldos/">Saldos</a>
-    <a href="/graficos01/">Evolución USD</a>
-    <a href="/graficos22/">Top N Participación</a>
-    <a href="/grafico-indice-mensual/">Índice Interanual Mensual</a>
 
-    <div class="dropdown">
-        <a href="#" class="dropbtn">Importaciones ▾</a>
-        <div class="dropdown-content">
-            <a href="{% url 'importar_dolar' %}">Cotizaciones dólar</a>
-            <a href="{% url 'aseguradoras' %}">Aseguradoras</a>
-            <a href="{% url 'importar_cobranzas' %}">Cobranzas</a>
-            <a href="{% url 'importar_comprobantes_arca' %}">Comprobantes ARCA</a>
-        </div>
+{% load static %}
+
+    <!-- LOGO -->
+    <div class="logo">
+        <img src="{% static 'img/MackinlayFondoazul.png' %}" 
+             style="height:40px;">
     </div>
 
-    <div class="dropdown">
-        <a href="#" class="dropbtn">Sistema ▾</a>
-        <div class="dropdown-content">
-            <a href="{% url 'parametros' %}">Parámetros</a>
-        </div>
-    </div>
+    <!-- IMPORTACIONES -->
+    <div class="menu">
 
-</div>
+        <div class="dropdown">
+            <a href="#" class="dropbtn">Facturación/Cobranza ▾</a>
+            <div class="dropdown-content">
+
+                <!-- SUBMENU REPORTES -->
+                <div class="dropdown-submenu"; >
+                    <a href="#">Reportes ▶</a>
+
+                    <div class="dropdown-content">
+                        <a href="/comprobantes/">Comprobantes</a>
+                        <a href="/saldos/">Saldos</a>
+                    </div>
+                </div>
+
+                <a href="{% url 'importar_comprobantes_arca' %}">Importar Comprobantes ARCA</a>
+                <a href="{% url 'importar_cobranzas' %}">Importar Cobranzas</a>
+
+
+
+                <a href="{% url 'aseguradoras' %}">Aseguradoras</a>
+                <a href="{% url 'importar_dolar' %}">Cotizaciones dólar</a>
+
+            </div>
+        </div>
+
+
+        <!-- COMISIONES -->
+
+        <div class="dropdown">
+            <a href="#" class="dropbtn">Comisiones ▾</a>
+
+            <div class="dropdown-content">
+
+                <a href="{% url 'importar_liquidaciones' %}">Importar Liquidaciones</a>
+                <a href="{% url 'reporte_comisiones' %}">Reporte Comisiones</a>
+
+                <a href="{% url 'productores' %}">Productores</a>
+
+                <!-- SUBMENU -->
+                <div class="dropdown-submenu">
+                    <a href="#">Reglas ▶</a>
+
+                    <div class="dropdown-content">
+                        <a href="{% url 'pas_aseguradoras' %}">PAS - Aseguradoras</a>
+                        <a href="{% url 'pas_clientes' %}">PAS - Clientes</a>
+                        <a href="{% url 'reglas_comision' %}">Reglas comisión</a>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+
+        <!-- GRAFICOS -->
+
+        <div class="dropdown">
+            <a href="#" class="dropbtn">Gráficos ▾</a>
+
+            <div class="dropdown-content">
+
+                <a href="/graficos01/">Evolución U$S</a>
+                <a href="/graficos22/">Top N Participación</a>
+                <a href="/grafico-indice-mensual/">Índice Interanual Mensual</a>
+
+            </div>
+        </div>
+
+
+        <!-- SISTEMA -->
+
+        <div class="dropdown">
+            <a href="#" class="dropbtn">Sistema ▾</a>
+
+            <div class="dropdown-content">
+                <a href="{% url 'parametros' %}">Parámetros</a>
+            </div>
+        </div>
+
+
+    </div> <!-- menu -->
+    </div> <!-- navbar -->
 
 
 <div class="contenido">

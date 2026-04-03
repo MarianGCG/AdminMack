@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,11 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-qjq0x*)_q+5t#dh=y%*&6cex@r44*ydb6qh4%t^@ot_qoi11q3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
 
- 
+DEBUG = os.getenv("DEBUG", "False") == "True"
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.onrender.com']
+
+
  # Application definition
 
 INSTALLED_APPS = [
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'comisiones',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
@@ -80,12 +82,23 @@ WSGI_APPLICATION = 'adminmack.wsgi.application'
 import dj_database_url
 import os
 
+# TRABAJAR LOCALMENTE
+#DATABASES = {
+#    'default': dj_database_url.config(
+#        default='postgresql://postgres:@localhost:5432/MACKINLAY',
+#        conn_max_age=600
+#    )
+#}
+
+
+# TRABAJAR RENDER
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:@localhost:5432/MACKINLAY',
+        default=os.getenv('DATABASE_URL', 'postgresql://postgres:@localhost:5432/MACKINLAY'),
         conn_max_age=600
     )
 }
+
 
 
 
@@ -127,7 +140,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

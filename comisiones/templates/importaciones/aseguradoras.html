@@ -67,8 +67,8 @@
             <option value="email" {% if ordenar_actual == "email" %}selected{% endif %}>Email</option>
             <option value="codigo_interno" {% if ordenar_actual == "codigo_interno" %}selected{% endif %}>Código</option>
             <option value="grupo" {% if ordenar_actual == "grupo" %}selected{% endif %}>Grupo</option>
-            <option value="activa" {% if ordenar_actual == "activa" %}selected{% endif %}>Estado</option>
             <option value="color" {% if ordenar_actual == "color" %}selected{% endif %}>Color</option>
+            <option value="activa" {% if ordenar_actual == "activa" %}selected{% endif %}>Estado</option>
         </select>
     </div>
 
@@ -99,6 +99,7 @@
             <th>Grupo</th>
             <th>Estado</th>
             <th>Color</th>
+            <th>IVA</th>            
             <th>Acción</th>
         </tr>
     </thead>
@@ -161,6 +162,31 @@
 
             </td>
 
+
+            <td style="text-align:center;">
+
+                <form method="post"
+                    action="{% url 'actualizar_iva_aseguradora' a.id %}"
+                    style="margin:0;">
+
+                    {% csrf_token %}
+
+                    <select name="incluye_iva"
+                            onchange="this.form.submit()"
+                            style="padding:4px;">
+
+                        <option value="S" {% if a.incluye_iva == "S" %}selected{% endif %}>S</option>
+                        <option value="N" {% if a.incluye_iva == "N" %}selected{% endif %}>N</option>
+
+                    </select>
+
+                </form>
+
+            </td>
+
+
+
+
             <!-- ACCION -->
             <td style="text-align:center;">
 
@@ -181,7 +207,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="9" style="padding:15px; text-align:center;">
+            <td colspan="10" style="padding:15px; text-align:center;">
                 No hay aseguradoras registradas
             </td>
         </tr>

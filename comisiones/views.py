@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum, Count, Q, DecimalField, Value
 from django.db.models.functions import Coalesce, Cast
 
@@ -11,36 +11,45 @@ from .services.parametros_service import get_parametro
 from django.db.models.functions import Cast
 from django.db.models import IntegerField
 
-
-
 import numpy as np
 from django.http import HttpResponse
 from io import BytesIO
 
 from .models import ParametroSistema
-
+from .models import Aseguradoras
 
 import io
 import base64
 
 
 
-# =====================================================
-# 1️⃣ VER COMPROBANTES
-# =====================================================
-
-
-
 
 def ver_comprobantes(request):
 
+    from .models import Aseguradoras
+
     anio = request.GET.get("anio")
     mes = request.GET.get("mes")
+
+    if anio:
+        anio = anio.replace(".", "")
+
+    if mes:
+        mes = mes.replace(".", "")
+
+    # si no se indicó filtro, usar último período cargado
+    if not anio and not mes:
+
+        ultimo = ComprobantesComisiones.objects.order_by(
+            "-periodo_anio", "-periodo_mes"
+        ).values("periodo_anio", "periodo_mes").first()
+
+        if ultimo:
+            anio = ultimo["periodo_anio"]
+            mes = ultimo["periodo_mes"]
+
     aseguradora = request.GET.get("aseguradora")
     numero = request.GET.get("numero")
-
-    orden1 = request.GET.get("orden1")
-    orden2 = request.GET.get("orden2")
 
     comprobantes = ComprobantesComisiones.objects.all()
 
@@ -56,7 +65,7 @@ def ver_comprobantes(request):
 
     if aseguradora:
         comprobantes = comprobantes.filter(
-            aseguradora__nombre__icontains=aseguradora
+            aseguradora__id=aseguradora   # 🔥 IMPORTANTE: ahora es combo
         )
 
     if numero:
@@ -85,34 +94,38 @@ def ver_comprobantes(request):
     )
 
     # ============================
-    # 🔀 ORDEN DOBLE
+    # 🔥 ORDEN POR COLUMNAS
     # ============================
 
-    orden_campos = []
+    orden = request.GET.get("orden")
+    dir = request.GET.get("dir", "asc")
 
-    def agregar_orden(valor):
-        if not valor:
-            return
+    if orden:
 
-        if valor == "aseguradora":
-            orden_campos.append("aseguradora__nombre")
+        campo_map = {
+            "aseguradora": "aseguradora__nombre",
+            "periodo": "periodo_anio",
+            "numero": "numero_int",
+            "neto": "neto",
+            "total": "total",
+            "cobrado": "cobrado",
+        }
 
-        elif valor == "periodo":
-            orden_campos.extend(["periodo_anio", "periodo_mes"])
+        campo_db = campo_map.get(orden)
 
-        elif valor == "numero":
-            orden_campos.append("numero_int")
+        if campo_db:
 
-        elif valor == "cobrado":
-            orden_campos.append("-cobrado")
+            if orden == "periodo":
+                if dir == "desc":
+                    comprobantes = comprobantes.order_by("-periodo_anio", "-periodo_mes")
+                else:
+                    comprobantes = comprobantes.order_by("periodo_anio", "periodo_mes")
+            else:
+                if dir == "desc":
+                    campo_db = "-" + campo_db
 
-    agregar_orden(orden1)
+                comprobantes = comprobantes.order_by(campo_db)
 
-    if orden2 and orden2 != orden1:
-        agregar_orden(orden2)
-
-    if orden_campos:
-        comprobantes = comprobantes.order_by(*orden_campos)
     else:
         comprobantes = comprobantes.order_by(
             "aseguradora__nombre",
@@ -122,7 +135,7 @@ def ver_comprobantes(request):
         )
 
     # ============================
-    # 📊 TOTALES
+    # 📊 TOTALES (🔥 ESTO FALTABA)
     # ============================
 
     totales = comprobantes.aggregate(
@@ -134,24 +147,42 @@ def ver_comprobantes(request):
         sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
     )
 
+    # ============================
+    # 🎯 RENDER FINAL
+    # ============================
+
     return render(request, "ver_comprobantes.html", {
         "comprobantes": comprobantes,
-        "totales": totales
+        "totales": totales,
+        "anio": anio,
+        "mes": mes,
+        "aseguradoras": Aseguradoras.objects.all()
     })
 
 
 # =====================================================
 # 2️⃣ VER SALDOS POR PERIODO
 # =====================================================
+from django.db.models import F, DecimalField, Value
+from django.db.models.functions import Coalesce
 
 def ver_saldos(request):
 
     anio = request.GET.get("anio")
 
+    try:
+        anio = int(anio)
+    except:
+        anio = None
+
     comprobantes = ComprobantesComisiones.objects.all()
 
     if anio:
         comprobantes = comprobantes.filter(periodo_anio=anio)
+
+    # ============================
+    # AGRUPADO
+    # ============================
 
     saldos = (
         comprobantes
@@ -159,25 +190,64 @@ def ver_saldos(request):
         .annotate(
             cant_facturas=Count("id", filter=Q(tipo_comprobante="FACTURA")),
             cant_creditos=Count("id", filter=Q(tipo_comprobante="NOTA_CREDITO")),
-            sum_neto=Sum("neto"),
-            sum_no_gravado=Sum("no_gravado"),
-            sum_exento=Sum("exento"),
-            sum_iva=Sum("iva"),
-            sum_total=Sum("total"),
-            sum_cobrado=Sum("cobranzascomisiones__importe")
+
+            sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
+            sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),
+            sum_exento=Coalesce(Sum("exento"), Value(0), output_field=DecimalField()),
+            sum_iva=Coalesce(Sum("iva"), Value(0), output_field=DecimalField()),
+            sum_total=Coalesce(Sum("total"), Value(0), output_field=DecimalField()),
+            sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
         )
-        .order_by("-periodo_anio", "-periodo_mes")
     )
+
+    # ============================
+    # 🔥 ORDEN (CLAVE)
+    # ============================
+
+    orden = request.GET.get("orden")
+    dir = request.GET.get("dir", "asc")
+
+    campo_map = {
+        "periodo": ["periodo_anio", "periodo_mes"],
+        "fact": "cant_facturas",
+        "cred": "cant_creditos",
+        "neto": "sum_neto",
+        "total": "sum_total",
+        "cobrado": "sum_cobrado",
+    }
+
+    if orden in campo_map:
+
+        campo = campo_map[orden]
+
+        if isinstance(campo, list):
+            if dir == "desc":
+                saldos = saldos.order_by("-periodo_anio", "-periodo_mes")
+            else:
+                saldos = saldos.order_by("periodo_anio", "periodo_mes")
+
+        else:
+            if dir == "desc":
+                saldos = saldos.order_by(F(campo).desc(nulls_last=True))
+            else:
+                saldos = saldos.order_by(F(campo).asc(nulls_last=True))
+
+    else:
+        saldos = saldos.order_by("-periodo_anio", "-periodo_mes")
+
+    # ============================
+    # TOTALES
+    # ============================
 
     totales = comprobantes.aggregate(
         total_facturas=Count("id", filter=Q(tipo_comprobante="FACTURA")),
         total_creditos=Count("id", filter=Q(tipo_comprobante="NOTA_CREDITO")),
-        sum_neto=Sum("neto"),
-        sum_no_gravado=Sum("no_gravado"),
-        sum_exento=Sum("exento"),
-        sum_iva=Sum("iva"),
-        sum_total=Sum("total"),
-        sum_cobrado=Sum("cobranzascomisiones__importe")
+        sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
+        sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),
+        sum_exento=Coalesce(Sum("exento"), Value(0), output_field=DecimalField()),
+        sum_iva=Coalesce(Sum("iva"), Value(0), output_field=DecimalField()),
+        sum_total=Coalesce(Sum("total"), Value(0), output_field=DecimalField()),
+        sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
     )
 
     return render(request, "ver_saldos.html", {
@@ -185,7 +255,6 @@ def ver_saldos(request):
         "totales": totales,
         "anio": anio
     })
-
 # =====================================================
 # FUNCIÓN: tendencia lineal
 # =====================================================
@@ -745,6 +814,19 @@ def importar_aseguradoras_view(request):
         "titulo": "Importar Aseguradoras"
     })
 
+
+
+
+def actualizar_iva_aseguradora(request, id):
+
+    if request.method == "POST":
+
+        aseguradora = get_object_or_404(Aseguradoras, id=id)
+
+        aseguradora.incluye_iva = request.POST.get("incluye_iva", "S")
+        aseguradora.save()
+
+    return redirect("aseguradoras")
 
 
 

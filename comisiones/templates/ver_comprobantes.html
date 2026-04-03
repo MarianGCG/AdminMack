@@ -13,42 +13,40 @@
 <form method="get" style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
 
     Año:
+
     <input type="text" name="anio"
-           value="{{ request.GET.anio|default:'' }}"
-           style="width:70px;">
+        value="{{ request.GET.anio|default:anio|unlocalize }}"
+        style="width:70px;"
+        inputmode="numeric"
+        pattern="[0-9]*">
+
+
 
     Mes:
     <input type="text" name="mes"
-           value="{{ request.GET.mes|default:'' }}"
-           style="width:50px;">
+        value="{{ request.GET.mes|default:mes|unlocalize }}"
+        style="width:70px;"
+        inputmode="numeric"
+        pattern="[0-9]*">
+
 
     Aseguradora:
-    <input type="text" name="aseguradora"
-           value="{{ request.GET.aseguradora|default:'' }}"
-           style="width:140px;">
+    <select name="aseguradora" style="width:160px; padding:4px;">
+        <option value="">Todas</option>
+        {% for a in aseguradoras %}
+        <option value="{{a.id}}"
+            {% if request.GET.aseguradora == a.id|stringformat:"s" %}selected{% endif %}>
+            {{a.nombre}}
+        </option>
+        {% endfor %}
+    </select>
+
 
     Número:
     <input type="text" name="numero"
            value="{{ request.GET.numero|default:'' }}"
            style="width:120px;">
 
-    Ordenar:
-    <select name="orden1">
-        <option value="">---</option>
-        <option value="aseguradora">Aseguradora</option>
-        <option value="periodo">Periodo</option>
-        <option value="numero">Número</option>
-        <option value="cobrado">Cobrado</option>
-    </select>
-
-    Luego:
-    <select name="orden2">
-        <option value="">---</option>
-        <option value="aseguradora">Aseguradora</option>
-        <option value="periodo">Periodo</option>
-        <option value="numero">Número</option>
-        <option value="cobrado">Cobrado</option>
-    </select>
 
     <button type="submit"
         style="padding:4px 10px;
@@ -64,93 +62,80 @@
 </div>
 
 
-
 <div class="contenedor-tabla">
 
-<table class="tabla-reporte">
+<table class="tabla-sistema">
+
 
 <tr>
-    <th>Aseguradora</th>
-    <th>Periodo</th>
-    <th>Número</th>
-    <th style="text-align:right;">Neto</th>
-    <th style="text-align:right;">No Gravado</th>
-    <th style="text-align:right;">Exento</th>
-    <th style="text-align:right;">IVA</th>
-    <th style="text-align:right;">Total</th>
-    <th style="text-align:right;">Cobrado</th>
+
+    <th onclick="ordenar('aseguradora')" style="cursor:pointer;">
+        Aseguradora ▲▼
+    </th>
+
+    <th onclick="ordenar('periodo')" style="cursor:pointer;">
+        Periodo ▲▼
+    </th>
+
+    <th onclick="ordenar('numero')" style="cursor:pointer;">
+        Número ▲▼
+    </th>
+
+    <th class="numero" onclick="ordenar('neto')" style="cursor:pointer;">
+        Neto ▲▼
+    </th>
+
+    <th class="numero">No Gravado</th>
+    <th class="numero">Exento</th>
+    <th class="numero">IVA</th>
+
+
+    <th class="numero" onclick="ordenar('total')" style="cursor:pointer;">
+        Total ▲▼
+    </th>
+
+    <th class="numero" onclick="ordenar('cobrado')" style="cursor:pointer;">
+        Cobrado ▲▼
+    </th>
+
 </tr>
 
 {% for c in comprobantes %}
 
 <tr>
 
-    <td>{{ c.aseguradora.nombre }}</td>
+    <td class="texto">{{ c.aseguradora.nombre }}</td>
 
-    <td>
+    <td class="centro">
         {{ c.periodo_anio|unlocalize }}-
         {{ c.periodo_mes|stringformat:"02d" }}
     </td>
 
-    <td>{{ c.numero_comprobante }}</td>
+    <td class="texto">{{ c.numero_comprobante }}</td>
 
-    <td style="text-align:right;">
-        ${{ c.neto|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ c.no_gravado|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ c.exento|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ c.iva|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ c.total|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ c.cobrado|default:0|localize }}
-    </td>
+    <td class="numero">${{ c.neto|default:0|localize }}</td>
+    <td class="numero">${{ c.no_gravado|default:0|localize }}</td>
+    <td class="numero">${{ c.exento|default:0|localize }}</td>
+    <td class="numero">${{ c.iva|default:0|localize }}</td>
+    <td class="numero">${{ c.total|default:0|localize }}</td>
+    <td class="numero">${{ c.cobrado|default:0|localize }}</td>
 
 </tr>
 
 {% endfor %}
 
 
+<!-- TOTALES -->
+<tr style="font-weight:bold; background:#e8eef7; border-top:2px solid #244c7a;">
 
-<tr style="font-weight:bold; background-color:#eef3f8;">
+    <td colspan="3" class="texto">TOTALES</td>
 
-    <td colspan="3">TOTALES</td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_neto|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_no_gravado|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_exento|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_iva|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_total|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_cobrado|default:0|localize }}
-    </td>
+    <td class="numero">${{ totales.sum_neto|default:0|localize }}</td>
+    <td class="numero">${{ totales.sum_no_gravado|default:0|localize }}</td>
+    <td class="numero">${{ totales.sum_exento|default:0|localize }}</td>
+    <td class="numero">${{ totales.sum_iva|default:0|localize }}</td>
+    <td class="numero">${{ totales.sum_total|default:0|localize }}</td>
+    <td class="numero">${{ totales.sum_cobrado|default:0|localize }}</td>
 
 </tr>
 
@@ -160,10 +145,34 @@
 
 
 
+
 <p style="margin-top:10px; font-size:13px; color:#444;">
     <strong>Cantidad de registros:</strong>
     {{ comprobantes|length }}
 </p>
+
+
+<script>
+
+function ordenar(campo){
+
+    const url = new URL(window.location.href)
+
+    let actual = url.searchParams.get("orden")
+    let direccion = url.searchParams.get("dir") || "asc"
+
+    if(actual === campo){
+        direccion = direccion === "asc" ? "desc" : "asc"
+    }else{
+        direccion = "asc"
+    }
+
+    url.searchParams.set("orden", campo)
+    url.searchParams.set("dir", direccion)
+
+    window.location.href = url.toString()
+}
+</script>
 
 
 {% endblock %}
