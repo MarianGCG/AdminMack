@@ -274,7 +274,13 @@ def reporte_comisiones_view(request):
 
                     if comision_adelantada and comision_adelantada > 0:
                         base = comision_adelantada   # 🔥 YA TOTAL
-                        comision_pas = base * porcentaje_pas / porcentaje
+
+                        if porcentaje:
+                            comision_pas = base * porcentaje_pas / porcentaje
+                        else:
+                            comision_pas = 0
+                            
+   
                     else:
                         if regla.base_comision == "Comision":
                             base = comision_agente or 0
