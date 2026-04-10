@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 import pandas as pd
 from decimal import Decimal, ROUND_HALF_UP
+from decimal import InvalidOperation
 from .models import (
     LiquidacionAseguradora,
     PAS,
@@ -275,21 +276,18 @@ def reporte_comisiones_view(request):
                     if comision_adelantada and comision_adelantada > 0:
                         base = comision_adelantada   # 🔥 YA TOTAL
 
-                        # 🔥 if porcentaje:
-                        # 🔥     comision_pas = base * porcentaje_pas / porcentaje
-                        # 🔥 else:
-                        # 🔥     comision_pas = 0
-                        comision_pas = 100    
-   
+                        if porcentaje:
+                           comision_pas = base * porcentaje_pas / porcentaje
+                        else:
+                           comision_pas = 0
+                        
                     else:
                         if regla.base_comision == "Comision":
                             base = comision_agente or 0
                         else:
                             base = prima or 0
-                        # 🔥comision_pas = base * porcentaje_pas / 100
-                        comision_pas = 100  
-
-
+                            comision_pas = base * porcentaje_pas / 100
+                        
                     
 
                 if d.moneda == "U$S" and d.cotizacion_dolar:
@@ -741,16 +739,16 @@ def normalizar_texto(texto):
     return texto
 
 
+
 def normalizar_signo(valor, aseguradora):
-    """
-    Si la aseguradora tiene invierte_signo=True:
-    👉 convierte TODO a positivo
-    """
 
-    if valor is None:
-        return 0
+    if valor in [None, "", " "]:
+        return Decimal('0')
 
-    valor = Decimal(valor)
+    try:
+        valor = Decimal(valor)
+    except (InvalidOperation, TypeError):
+        return Decimal('0')
 
     if getattr(aseguradora, "invierte_signo", False):
         valor = abs(valor)
