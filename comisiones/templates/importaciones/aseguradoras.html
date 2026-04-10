@@ -99,7 +99,8 @@
             <th>Grupo</th>
             <th>Estado</th>
             <th>Color</th>
-            <th>IVA</th>            
+            <th>IVA</th>     
+            <th>Invierte signo</th>
             <th>Acción</th>
         </tr>
     </thead>
@@ -184,7 +185,11 @@
 
             </td>
 
-
+            <td>
+                <input type="checkbox"
+                    onchange="window.location.href='?toggle_signo={{a.id}}' "
+                    {% if a.invierte_signo %}checked{% endif %}>
+            </td>
 
 
             <!-- ACCION -->

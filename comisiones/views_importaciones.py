@@ -135,6 +135,17 @@ def aseguradoras_view(request):
     else:
         form = ImportarExcelForm()
 
+
+    # 🔥 AGREGAR ESTO ACÁ
+    toggle_signo = request.GET.get("toggle_signo")
+
+    if toggle_signo:
+
+        aseg = Aseguradoras.objects.get(id=toggle_signo)
+        aseg.invierte_signo = not aseg.invierte_signo
+        aseg.save()
+        
+
     aseguradoras = Aseguradoras.objects.all()
 
     # FILTROS

@@ -3,7 +3,7 @@ from django.db.models import Q
 
 from django.http import HttpResponse
 import pandas as pd
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from .models import (
     LiquidacionAseguradora,
     PAS,
@@ -14,7 +14,10 @@ from .models import (
 
 def reporte_comisiones_view(request):
 
+
     pas_codigo = request.GET.get("pas")
+    ver_grafico = request.GET.get("ver_grafico")    
+    solo_con_pas = pas_codigo == "SOLO"
     aseguradora_id = request.GET.get("aseguradora")
     clave1 = request.GET.get("clave1")
     clave2 = request.GET.get("clave2")
@@ -29,8 +32,8 @@ def reporte_comisiones_view(request):
     # FILTRO PAS (clientes)
     # ============================
 
-    if pas_codigo:
-
+    
+    if pas_codigo and pas_codigo != "SOLO":
         clientes = PASCliente.objects.filter(
             pas__codigo_pas=pas_codigo
         )
@@ -101,6 +104,59 @@ def reporte_comisiones_view(request):
 
     pas_obj = PAS.objects.filter(codigo_pas=pas_codigo).first()
     pas_seleccionado = pas_obj.nombre if pas_obj else ""
+    # ============================
+    # 🔥 MAPA PAS CLIENTE (UNA VEZ)
+    # ============================
+
+    pas_clientes = PASCliente.objects.select_related("pas")
+
+    mapa_pas = []
+
+    for pc in pas_clientes:
+        mapa_pas.append({
+            "pas_codigo": pc.pas.codigo_pas,
+            "nombre": pc.pas.nombre,
+            "clave1": normalizar_texto(pc.cliente_clave1),
+            "clave2": normalizar_texto(pc.cliente_clave2),
+            "aseguradora": pc.aseguradora_id
+        })
+
+    # ============================
+    # 🔥 FILTRO SOLO PAS
+    # ============================
+
+    if solo_con_pas:
+
+        datos_filtrados = []
+
+        for d in datos:
+
+            cliente_norm = normalizar_texto(d.cliente)
+
+            tiene_pas = False
+
+            for m in mapa_pas:
+
+                if m["aseguradora"] and m["aseguradora"] != d.aseguradora_id:
+                    continue
+
+                ok = True
+
+                if m["clave1"] and m["clave1"] not in cliente_norm:
+                    ok = False
+
+                if m["clave2"] and m["clave2"] not in cliente_norm:
+                    ok = False
+
+                if ok:
+                    tiene_pas = True
+                    break
+
+            if tiene_pas:
+                datos_filtrados.append(d)
+
+        datos = datos_filtrados
+
 
     filas = []
 
@@ -114,23 +170,14 @@ def reporte_comisiones_view(request):
         porcentaje_pas = 0
         comision_pas = 0
 
+        prima_original = d.prima or 0
 
+        # 🔥 NORMALIZAR SIGNO PRIMERO (ANTES DE TODO)
 
-        # 🔥 comision_agente segun moneda
-        comision_agente = d.comision_agente or 0
-        if d.moneda == "U$S" and d.cotizacion_dolar:
-            comision_agente = comision_agente * d.cotizacion_dolar
-        else:
-            comision_agente = d.comision_agente or 0
-
-        # 🔥 PRIMA segun moneda
-        prima = d.prima or 0
-        if d.moneda == "U$S" and d.cotizacion_dolar:
-            prima = prima * d.cotizacion_dolar
-        else:
-            prima = d.prima or 0
-
-            
+        comision_agente = normalizar_signo(d.comision_agente or 0, d.aseguradora)
+        prima = normalizar_signo(d.prima or 0, d.aseguradora)
+        comision_adelantada = normalizar_signo(d.comision_adelantada or 0, d.aseguradora)
+        descuento_adelanto = normalizar_signo(d.descuento_adelanto or 0, d.aseguradora)
 
 
 
@@ -138,13 +185,48 @@ def reporte_comisiones_view(request):
         # BUSCAR % PAS (regla)
         # ============================
 
-        if pas_codigo:
+        # ============================
+        # 🔥 BUSCAR PAS POR FILA
+        # ============================
+
+        pas_para_fila = None
+        pas_nombre = ""
+
+        cliente_norm = normalizar_texto(d.cliente)
+
+        for m in mapa_pas:
+
+            if m["aseguradora"] and m["aseguradora"] != d.aseguradora_id:
+                continue
+
+            ok = True
+
+            if m["clave1"] and m["clave1"] not in cliente_norm:
+                ok = False
+
+            if m["clave2"] and m["clave2"] not in cliente_norm:
+                ok = False
+
+            if ok:
+                pas_para_fila = m["pas_codigo"]
+                pas_nombre = m["nombre"]
+                break
+
+        if pas_codigo and pas_codigo != "SOLO":
+            pas_usar = pas_codigo
+        else:
+            pas_usar = pas_para_fila
+
+            
+        
+        if pas_usar:
 
             pa = PASAseguradora.objects.filter(
-                pas_id=pas_codigo,
+                pas_id=pas_usar,
                 aseguradora_id=d.aseguradora_id
             ).first()
 
+            
             if pa:
 
                 from comisiones.models import ReglaComision
@@ -190,19 +272,22 @@ def reporte_comisiones_view(request):
                 if regla:
                     porcentaje_pas = regla.porcentaje
 
-                    # 🔥 BASE
-                    if regla.base_comision == "Comision":
-                        base = comision_agente or 0
+                    if comision_adelantada and comision_adelantada > 0:
+                        base = comision_adelantada   # 🔥 YA TOTAL
+                        comision_pas = base * porcentaje_pas / porcentaje
                     else:
-                        base = prima or 0
-
-                    if d.comision_adelantada and d.comision_adelantada > 0:
-                        meses = d.meses_adelanto or 1
-                        comision_pas = base * porcentaje_pas / 100 * meses
-                    else:
+                        if regla.base_comision == "Comision":
+                            base = comision_agente or 0
+                        else:
+                            base = prima or 0
                         comision_pas = base * porcentaje_pas / 100
+                    
+                    
 
-                        
+                if d.moneda == "U$S" and d.cotizacion_dolar:
+                    comision_pas *= d.cotizacion_dolar
+
+
 
         # ============================
         # 🔥 NEGATIVO (nota crédito)
@@ -214,24 +299,60 @@ def reporte_comisiones_view(request):
             d.comision_adelantada
         ]
 
-        if any(v and v < 0 for v in valores):
-            comision_pas = comision_pas * -1
+
+
+
+        if d.moneda == "U$S" and d.cotizacion_dolar:
+            comision_agente *= d.cotizacion_dolar
+            prima *= d.cotizacion_dolar
+            comision_adelantada *= d.cotizacion_dolar
+            descuento_adelanto *= d.cotizacion_dolar
+
+
+
+        # 🔥 SI HAY DESCUENTO → reemplaza comisión agente
+        if descuento_adelanto != 0:
+            comision_agente = descuento_adelanto
+
+
+        if descuento_adelanto != 0 and porcentaje:
+            comision_pas = Decimal(porcentaje_pas) * descuento_adelanto / Decimal(porcentaje)
+
+        # 🔥 redondeo final único
+        
+
+        descuento_adelanto = round(descuento_adelanto, 2)
 
         # ============================
         # 🔥 COMISION PAS SIN IVA
         # ============================
 
+        comision_pas_sin_iva = 0
+
         if d.aseguradora and d.aseguradora.incluye_iva == "S":
-            base = comision_pas or Decimal("0")
+            base = comision_pas or 0
+
             comision_pas_sin_iva = base / Decimal("1.21")
+
         else:
-            comision_pas_sin_iva = comision_pas or Decimal("0")
+            comision_pas_sin_iva = comision_pas or 0
 
-            
 
-        prima = round(prima, 2)
+
+        # 🔥 SIN PAS → igualar a agente
+        if not pas_para_fila:
+            porcentaje_pas = porcentaje or 0
+            comision_pas = comision_agente or 0
+            comision_pas_sin_iva = comision_agente or 0
+
+
+
+        # 🔥 recién acá redondeás
         comision_pas = round(comision_pas, 2)
         comision_pas_sin_iva = round(comision_pas_sin_iva, 2)
+        prima = round(prima, 2)
+        comision_adelantada = round(comision_adelantada, 2)
+
 
 
         # ============================
@@ -242,23 +363,24 @@ def reporte_comisiones_view(request):
             "fecha": d.fecha_liquidacion,
             "quincena": d.quincena,
             "aseg": d.aseguradora.nombre,
-            "pas": pas_seleccionado,   # 🔥 AGREGAR ESTO            
             "cliente": d.cliente,
             "ramo": d.ramo,
             "poliza": d.poliza,
             "endoso": d.endoso,
             "moneda": d.moneda,
             "cotizacion": d.cotizacion_dolar,
+            "prima_original": prima_original,
             "meses": d.meses_adelanto,
             "premio": d.premio,
             "prima": prima,
             "porcentaje": porcentaje ,
             "comision_agente": comision_agente,
-            "descuento_adelanto": d.descuento_adelanto,
-            "comision_adelantada": d.comision_adelantada,
+            "descuento_adelanto": descuento_adelanto,
+            "comision_adelantada": comision_adelantada,
             "porcentaje_pas": (porcentaje_pas or 0) ,
             "comision_pas": comision_pas,
-            "comision_pas_sin_iva": comision_pas_sin_iva
+            "comision_pas_sin_iva": comision_pas_sin_iva,
+            "pas_nombre": pas_nombre
         })
 
 # ============================
@@ -271,14 +393,14 @@ def reporte_comisiones_view(request):
 
         if request.GET.get("solo_pas") == "1":
             columnas = [
-                "fecha", "quincena", "aseg", "pas", "cliente", "ramo",
+                "fecha", "quincena", "aseg",  "cliente", "ramo",
                 "poliza", "endoso", "moneda", "cotizacion",
                 "meses", "premio", "prima",                
                 "porcentaje_pas", "comision_pas", "comision_pas_sin_iva"
             ]
         else:
             columnas = [
-                "fecha", "quincena", "aseg", "pas", "cliente", "ramo",
+                "fecha", "quincena", "aseg", "cliente", "ramo",
                 "poliza", "endoso", "moneda", "cotizacion",
                 "meses", "premio", "prima",  
                 "porcentaje", "comision_agente",
@@ -287,11 +409,11 @@ def reporte_comisiones_view(request):
             ]
 
         df = df[columnas]
-
+        
+        df["quincena"] = df["quincena"].apply(lambda x: "" if str(x) == "0" else x)
         df = df.rename(columns={
             "fecha": "Fecha",
             "aseg": "Aseguradora",
-            "pas": "PAS",
             "cliente": "Cliente",
             "ramo": "Ramo",
             "poliza": "Poliza",
@@ -343,7 +465,25 @@ def reporte_comisiones_view(request):
             df.to_excel(writer, index=False, sheet_name='Reporte', startrow=4)
             workbook  = writer.book
             worksheet = writer.sheets['Reporte']
+              
 
+            # =========================
+            # FORMATO HEADER (AZUL)
+            # =========================
+
+            formato_header = workbook.add_format({
+                'bold': True,
+                'align': 'center',
+                'valign': 'middle',
+                'border': 1,
+                'bg_color': '#1F4E78',
+                'font_color': 'white'
+            })
+
+            for col_num, col_name in enumerate(df.columns):
+                worksheet.write(4, col_num, col_name, formato_header)
+
+                
 
             # ============================
             # CALCULAR TOTALES
@@ -359,7 +499,7 @@ def reporte_comisiones_view(request):
             # ============================
             # POSICIÓN (columna O)
             # ============================
-            col_inicio = 14   # columna O (empieza en 0)
+            col_inicio = len(df.columns) - 2
             fila_inicio = len(df) + 8
 
             # ============================
@@ -385,7 +525,8 @@ def reporte_comisiones_view(request):
 
             formato_moneda = workbook.add_format({
                 'num_format': '$ #,##0.00',
-                'border': 2
+                'border': 1,
+                'align': 'right'
             })
 
             formato_porcentaje = workbook.add_format({
@@ -429,25 +570,36 @@ def reporte_comisiones_view(request):
             # =========================
             from datetime import date
 
+
             formato_titulo = workbook.add_format({
                 'bold': True,
-                'font_size': 14
+                'font_size': 14,
+                'align': 'left',
+                'font_color': '#1F4E78'
             })
+
 
             formato_texto = workbook.add_format({
                 'bold': True
             })
 
-            worksheet.write("A1", "Reporte de Comisiones", formato_titulo)
-            worksheet.write("D1", f"Fecha: {date.today().strftime('%d/%m/%Y')}", formato_texto)
 
-            worksheet.write("A2", f"PAS: {pas_seleccionado or 'Todos'}", formato_texto)
-
-            worksheet.write(
-                "A3",
-                f"fecha_desde: {fecha_desde or ''} - fecha_hasta: {fecha_hasta or ''}",
-                formato_texto
+            worksheet.merge_range(
+                0, 0, 0, len(df.columns)-1,
+                f"Reporte de Comisiones - {pas_seleccionado}",
+                formato_titulo
             )
+
+
+            # 👇 
+            worksheet.set_row(1, 12)
+      
+
+            # 👇
+            worksheet.write(2, 0, f"Periodo: {fecha_desde} al {fecha_hasta}", formato_texto)
+            worksheet.write(3, 0, f"Fecha emisión: {date.today().strftime('%d/%m/%Y')}", formato_texto)
+
+
 
             # =========================
             # FORMATO COLUMNAS
@@ -488,6 +640,8 @@ def reporte_comisiones_view(request):
 
                 worksheet.set_column(i, i, ancho)
 
+
+        worksheet.autofilter(4, 0, 4 + len(df), len(df.columns)-1)
         return response
 
 
@@ -501,6 +655,25 @@ def reporte_comisiones_view(request):
     total_prima = sum([d["prima"] or 0 for d in filas])
     total_comision = sum([d["comision_agente"] or 0 for d in filas])
     total_comision_pas_sin_iva = sum([d["comision_pas_sin_iva"] or 0 for d in filas])
+
+    from collections import defaultdict
+
+
+    totales_pas = {}
+    totales_agente = {}
+
+    for f in filas:
+
+        pas = f["pas_nombre"] or "Sin PAS"
+
+        # PAS
+        totales_pas[pas] = totales_pas.get(pas, 0) + (f["comision_pas_sin_iva"] or 0)
+
+        # AGENTE
+        totales_agente[pas] = totales_agente.get(pas, 0) + (f["comision_agente"] or 0)
+
+        
+
 
     # ============================
     # RENDER
@@ -516,7 +689,11 @@ def reporte_comisiones_view(request):
             "pas_seleccionado": pas_seleccionado,
             "total_prima": total_prima,
             "total_comision": total_comision,
-            "total_comision_pas_sin_iva": total_comision_pas_sin_iva
+            "total_comision_pas_sin_iva": total_comision_pas_sin_iva,
+            "totales_pas": totales_pas,
+            "totales_agente": totales_agente,
+            "ver_grafico": ver_grafico
+                        
         }
     )
 
@@ -542,3 +719,20 @@ def normalizar_texto(texto):
     texto = texto.encode("ascii", "ignore").decode("ascii")
 
     return texto
+
+
+def normalizar_signo(valor, aseguradora):
+    """
+    Si la aseguradora tiene invierte_signo=True:
+    👉 convierte TODO a positivo
+    """
+
+    if valor is None:
+        return 0
+
+    valor = Decimal(valor)
+
+    if getattr(aseguradora, "invierte_signo", False):
+        valor = abs(valor)
+
+    return valor

@@ -1,6 +1,18 @@
 import pandas as pd
-
+import unicodedata
 from ..models import ReglaComision, Aseguradoras
+from .comisiones_service import (
+    COLUMNAS_EQUIVALENTES,
+    normalizar_texto,
+    detectar_columnas
+)
+
+
+def normalizar(texto):
+    texto = str(texto).lower().strip()
+    texto = unicodedata.normalize("NFKD", texto)
+    texto = texto.encode("ascii", "ignore").decode("ascii")
+    return texto
 
 
 def importar_reglas_comision_excel(archivo, aseguradora_id):
@@ -12,9 +24,47 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
         aseguradora_id=aseguradora_id
     ).delete()
 
-    df = pd.read_excel(archivo)
-    
-    df.columns = [str(c).strip().lower() for c in df.columns]
+
+    # Busco la linea que está el titulo en el archivo de comisiones de la aseguradora 
+    # palabras clave (solo lo importante)
+
+    df_temp = pd.read_excel(archivo, header=None)
+
+    fila_header = None
+
+    # 🔥 usar equivalencias existentes
+    claves_cliente = [normalizar_texto(x) for x in COLUMNAS_EQUIVALENTES["cliente"]]
+    claves_poliza = [normalizar_texto(x) for x in COLUMNAS_EQUIVALENTES["poliza"]]
+
+    for i, fila in df_temp.iterrows():
+
+        textos = [normalizar_texto(x) for x in fila.values]
+
+        tiene_cliente = any(
+            any(clave in celda for clave in claves_cliente)
+            for celda in textos
+        )
+
+        tiene_poliza = any(
+            any(clave in celda for clave in claves_poliza)
+            for celda in textos
+        )
+
+        # 👉 condición mínima REAL
+        if tiene_cliente and tiene_poliza:
+            fila_header = i
+            break
+
+    # fallback
+    if fila_header is None:
+        fila_header = 0
+
+    archivo.seek(0)
+    df = pd.read_excel(archivo, header=fila_header)    
+
+    df.columns = [normalizar(c) for c in df.columns]
+    columnas_detectadas = detectar_columnas(df.columns)
+    print("COLUMNAS DETECTADAS:", columnas_detectadas)
 
     registros = 0
     errores = 0
@@ -45,24 +95,26 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             # PRODUCTO
             # ------------------------
 
-            producto = str(row.get("producto")).strip().upper()
+            producto = None
+            if "ramo" in columnas_detectadas:
+                producto = str(row[columnas_detectadas["ramo"]]).strip().upper()
 
             if producto == "" or producto.lower() == "nan":
                 producto = None
 
-
+                
             # ------------------------
             # NIVEL
             # ------------------------
-
-            nivel = row.get("nivel")
+            nivel = None
+            if "nivel" in columnas_detectadas:
+                nivel = row[columnas_detectadas["nivel"]]
 
             try:
                 nivel = int(float(nivel))
             except:
                 errores += 1
                 continue
-
 
             # ------------------------
             # AÑO POLIZA
@@ -83,17 +135,17 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             # MONEDA
             # ------------------------
 
-            moneda = str(row.get("moneda")).strip().upper()
+            moneda = None
+            if "moneda" in columnas_detectadas:
+                moneda = str(row[columnas_detectadas["moneda"]]).strip().upper()
 
             if moneda in ["U$S", "USD"]:
                 moneda = "U$S"
-
-            if moneda in ["$", "ARS"]:
+            elif moneda in ["$", "ARS"]:
                 moneda = "$"
-
-            if moneda == "" or moneda.lower() == "nan":
+            else:
                 moneda = None
-
+                
 
             # ------------------------
             # RANGO
@@ -132,7 +184,10 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             # PORCENTAJE
             # ------------------------
 
-            porcentaje = row.get("porcentaje")
+            if "porcentaje" not in columnas_detectadas:
+                raise Exception("No se encontró columna porcentaje")
+
+            porcentaje = row[columnas_detectadas["porcentaje"]]
 
             if pd.isna(porcentaje):
                 errores += 1
@@ -152,7 +207,9 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             # BASE COMISION
             # ------------------------
 
-            base = str(row.get("base_comision")).strip().upper()
+            base = None
+            if "base_comision" in columnas_detectadas:
+                base = str(row[columnas_detectadas["base_comision"]]).strip().upper()
 
             if base in ["PRIMA"]:
                 base_comision = "Prima"
@@ -160,7 +217,7 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
                 base_comision = "Comision"
             else:
                 base_comision = "Prima"
-
+                
                 
 
 

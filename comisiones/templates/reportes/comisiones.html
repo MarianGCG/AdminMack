@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
 <h2>Reporte de Comisiones</h2>
 
@@ -44,6 +46,11 @@ tr:hover{
     background:#f5f5f5;
 }
 
+th {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1.2;
+}
 
 </style>
 
@@ -124,7 +131,40 @@ tr:hover{
 .btn-excel:hover{
     background:#146c2e;
 }
+.izq {
+    text-align: left;
+}
+</style>
 
+<style>
+.modal-grafico{
+    display:none;
+    position:fixed;
+    z-index:9999;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+}
+
+.modal-contenido{
+    background:white;
+    margin:5% auto;
+    padding:20px;
+    width:80%;
+    max-width:900px;
+    border-radius:10px;
+    position:relative;
+}
+
+.cerrar{
+    position:absolute;
+    top:10px;
+    right:15px;
+    font-size:22px;
+    cursor:pointer;
+}
 </style>
 
 <div class="filtros-box">
@@ -134,15 +174,19 @@ tr:hover{
     <div class="filtros-linea">
 
         PAS
+
         <select name="pas">
-        <option value="">Todos</option>
-        {% for p in pas %}
-        <option value="{{p.codigo_pas}}"
-        {% if request.GET.pas == p.codigo_pas %}selected{% endif %}>
-        {{p.codigo_pas}} - {{p.nombre}}
-        </option>
-        {% endfor %}
+            <option value="">Todos</option>
+            <option value="SOLO" {% if request.GET.pas == "SOLO" %}selected{% endif %}>Solo PAS</option>
+
+            {% for p in pas %}
+            <option value="{{p.codigo_pas}}"
+            {% if request.GET.pas == p.codigo_pas %}selected{% endif %}>
+            {{p.codigo_pas}} - {{p.nombre}}
+            </option>
+            {% endfor %}
         </select>
+
 
 
         Aseguradora
@@ -183,6 +227,13 @@ tr:hover{
             📥 Descargar
         </button>
 
+
+        <button type="submit" name="ver_grafico" value="1" class="btn-buscar">
+            📊 Ver gráfico
+        </button>
+
+
+
     </div>
     </form>
 </div>
@@ -195,31 +246,32 @@ tr:hover{
     <table border="1" class="tabla-comisiones">
     <tr>
 
-    <th>Fecha Liq</th>
+    <th>Fecha<br>Liquida</th>
     <th>Q</th>
     <th>Aseg</th>
     <th>Pas</th>
     <th class="texto">Cliente</th>
-    <th class="texto">Ramo</th>
+    <th>Ramo</th>
     <th>Poliza</th>
     <th>Endoso</th>
     <th>Moneda</th>
 
-    <th>Cotización Dólar</th>
-    <th>Meses Adelanto</th>
+    
+    <th>Cotizac<br>Dólar</th>
+    <th>Prima<br>U$S</th>
     <th>Premio</th>
     <th>Prima</th>
-
     {% if request.GET.solo_pas != "1" %}
     <th>%</th>
-    <th>Comisión Agente</th>
-    <th>Desc. Adelanto</th>
-    <th>Comisión Adelantada</th>
+    <th>Comisión<br>Agente</th>
+    
+    <th>Desc.<br>Adelanto</th>
+    <th>Comisión<br>Adelantada</th>
     {% endif %}
 
     <th>% PAS</th>
-    <th>Comisión PAS</th>
-    <th>Comisión PAS s/IVA</th>
+    <th>Comisión<br>PAS</th>
+    <th>Comisión<br>PAS s/IVA</th>
 
     </tr>
 
@@ -227,20 +279,54 @@ tr:hover{
     {% for d in datos %}
 
     <tr>
-    <td class="texto">{{d.fecha|date:"d/m/Y"}}</td>
-    <td>{{d.quincena}}</td>
+    <td class="texto">{{d.fecha|date:"d/m/y"}}</td>
+
+
+    <td>
+        {% if d.quincena and d.quincena != "0" %}
+            {{ d.quincena }}
+        {% endif %}
+    </td>
+
+
+
     <td>{{d.aseg}}</td>
-    <td>{{pas_seleccionado}}</td>
+
+    <td>
+        {% if pas_seleccionado %}
+            {{ pas_seleccionado }}
+        {% else %}
+            {{ d.pas_nombre|default:"-" }}
+        {% endif %}
+    </td>
+
+
     <td class="col-cliente">{{d.cliente}}</td>
 
-    <td class="col-ramo">{{ d.ramo|default_if_none:""|default:"" }}</td>
+    <td>{{ d.ramo|default_if_none:""|default:""|truncatechars:20  }}</td>
+
+
     <td>{{d.poliza}}</td>
-    <td class="centro">{{d.endoso}}</td>
+
+    <td class="centro">
+        {% if d.endoso %}
+            {{ d.endoso }}
+        {% endif %}
+    </td>
+
+
+    
     <td class="centro">{{d.moneda}}</td>
     <td class="numero">{{d.cotizacion|floatformat:2|intcomma}}</td>
-    <td>{{d.meses|default:""}}</td>
-    <td>{{d.premio|default:""}}</td>
-    <td>{{d.prima|default:""|floatformat:2 }}</td>
+
+    <td>
+        {% if d.moneda == "U$S" %}
+            {{ d.prima_original|floatformat:2 }}
+        {% endif %}
+    </td>
+
+    <td class="numero">{{d.premio|floatformat:2|default:""}}</td>
+    <td class="numero">{{d.prima|default:""|floatformat:2 }}</td>
 
 
 
@@ -250,15 +336,24 @@ tr:hover{
         {{ d.porcentaje|floatformat:2 }}%
     </td>
 
-    <td>{{d.comision_agente|default:""|floatformat:2 }}</td>
-    <td>{{d.descuento_adelanto}}</td>
+    <td class="numero">{{d.comision_agente|default:""|floatformat:2 }}</td>
+    <td class="numero">{{d.descuento_adelanto|floatformat:2}}</td>
     <td>{{d.comision_adelantada|default:""}}</td>
 
     {% endif %}
 
     <td class="numero">{{ d.porcentaje_pas|default:0|floatformat:2 }}%</td>
-    <td class="numero">{{ d.comision_pas|default:0|floatformat:2|intcomma }}</td>
-    <td class="numero">{{ d.comision_pas_sin_iva|default:0|floatformat:2|intcomma }}</td>
+
+
+    <td class="numero">
+        {{ d.comision_pas|floatformat:2|intcomma }}
+    </td>
+
+
+    <td class="numero">
+        {{ d.comision_pas_sin_iva|floatformat:2|intcomma }}
+    </td>
+
 
     </tr>
 
@@ -281,7 +376,181 @@ tr:hover{
     {% endif %}
     </tr>
 
-
     </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    
+    {{ totales_pas|json_script:"totales-pas-data" }}
+    {{ totales_agente|json_script:"totales-agente-data" }}
+
+
+    <div id="modal-grafico" class="modal-grafico">
+
+        <div class="modal-contenido">
+
+            <span class="cerrar" onclick="cerrarGrafico()">✖</span>
+
+            <canvas id="graficoComisiones"></canvas>
+
+        </div>
+
+    </div>
+
+
+
+
+    <script>
+
+    let grafico = null;
+
+    function mostrarGrafico(){
+
+        document.getElementById("modal-grafico").style.display = "block";
+
+        const totalesPAS = JSON.parse(document.getElementById('totales-pas-data').textContent);
+        const totalesAgente = JSON.parse(document.getElementById('totales-agente-data').textContent);
+
+        
+        const labels = [];
+        const dataPAS = [];
+        const dataAgente = [];
+
+        for (const pas in totalesPAS){
+            labels.push(pas);
+            dataPAS.push(totalesPAS[pas]);
+            dataAgente.push(totalesAgente[pas] || 0);
+        }
+
+     
+
+        if (grafico){
+            grafico.destroy();
+        }
+        const ctx = document.getElementById('graficoComisiones').getContext('2d');
+
+const mostrarValores = {
+    id: "mostrarValores",
+    afterDatasetsDraw(chart){
+
+                const { ctx } = chart;
+
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+
+                    if(dataset.hidden) return;
+
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    if (!meta || !meta.data) return;
+
+                    meta.data.forEach((element, index) => {
+
+                        const value = dataset.data[index];
+                        if (!value && value !== 0) return;
+
+                        ctx.save();
+
+                        ctx.font = "bold 11px Arial";
+                        ctx.fillStyle = "#000";
+                        ctx.textAlign = "center";
+
+                        // 🔥 POSICIÓN REAL SOBRE LA BARRA
+                        const y = element.y - 12;
+
+                        ctx.fillText(
+                            "$ " + Number(value).toLocaleString("es-AR", {maximumFractionDigits: 0 }),
+                            element.x,
+                            y
+                        );
+
+                        ctx.restore();
+                    });
+                });
+            }
+        };
+
+
+        grafico = new Chart(ctx, {
+            type: 'bar',
+
+            plugins: [mostrarValores],   // 👈 👈 👈 ESTA LÍNEA FALTABA
+  
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Comisión PAS s/IVA',
+                        data: dataPAS,
+                        backgroundColor: 'rgba(41, 128, 185, 0.7)',
+                        borderColor: 'rgba(41, 128, 185, 1)',
+                        borderWidth: 0.5,
+                        barPercentage: 1,
+                        categoryPercentage: 0.8
+                    },
+                    {
+                        label: 'Comisión Agente',
+                        data: dataAgente,
+                        backgroundColor: 'rgba(192, 57, 43, 0.7)',
+                        borderColor: 'rgba(192, 57, 43, 1)',
+                        borderWidth: 0.5,
+                        barPercentage: 1,
+                        categoryPercentage: 0.8
+                    }
+                ]
+            },
+
+            options: {
+  
+
+                // 👇 AHORA SÍ dentro de options
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grace: '15%'
+                    }
+                }
+            }
+        });
+
+
+        }  // 👈 CIERRA mostrarGrafico()
+
+    function cerrarGrafico(){
+        document.getElementById("modal-grafico").style.display = "none";
+    }
+
+
+    function irYGraficar(){
+
+        const params = new URLSearchParams(window.location.search);
+        params.set("ver_grafico", "1");
+
+        window.location.search = params.toString();
+    }
+
+    window.onload = function(){
+        const auto = "{{ ver_grafico }}";
+        if (auto === "1"){
+            mostrarGrafico();
+        }
+    }
+
+    window.addEventListener("load", function(){
+        if ("{{ ver_grafico }}" === "1"){
+            mostrarGrafico();
+        }
+    });
+
+    // 💎 BONUS ACA 👇
+    window.onclick = function(event){
+        const modal = document.getElementById("modal-grafico");
+        if (event.target === modal){
+            modal.style.display = "none";
+        }
+    }
+
+    </script>
+
 </div>
 {% endblock %}
+

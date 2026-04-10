@@ -21,6 +21,9 @@ class Aseguradoras(models.Model):
     grupo = models.CharField(max_length=2, blank=True, null=True)
     incluye_iva = models.CharField(max_length=1, choices=[("S", "Sí"), ("N", "No")], default="N")
 
+    # 👇 AGREGAR ESTO
+    invierte_signo = models.BooleanField(default=False)
+
     def __str__(self):
         return self.nombre
 

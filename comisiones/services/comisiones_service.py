@@ -155,7 +155,8 @@ COLUMNAS_EQUIVALENTES = {
         "Contratante", 
         "Apellido y Nombre del Cliente", 
         "ASEGURADO",
-        "Asegurado"
+        "Asegurado",
+        "Detalle"
     ],
 
     "cuit": [
@@ -167,10 +168,11 @@ COLUMNAS_EQUIVALENTES = {
 
     "ramo": [
         "ramo", 
-        "producto",
         "Línea de Negocio",
         "SECCION", 
-        "Sección"
+        "Sección",
+        "producto",
+        "Sc"        
     ],
 
     "poliza": [
@@ -180,7 +182,8 @@ COLUMNAS_EQUIVALENTES = {
         "numero de poliza",
         "N° DE PÓLIZA",
         "Nro. Póliza",
-        "Número de Póliza"
+        "Número de Póliza",
+        "Nro Poliza"
     ],
 
     "premio": [
@@ -210,8 +213,9 @@ COLUMNAS_EQUIVALENTES = {
         "comisión",
         "Comisiones devengadas",
         "Comisión Total" ,
-        "ComisiónPesos"
-        "Comisión Pesos"        
+        "ComisiónPesos",
+        "Comisión Pesos",
+        "ComisionBruta"
     ],
 
     "comision_adelantada": [
@@ -227,7 +231,8 @@ COLUMNAS_EQUIVALENTES = {
 
     "endoso": [
         "endoso",
-        "nro endoso"
+        "nro endoso",
+        "Número Certificado"
     ],
 
 
@@ -247,7 +252,8 @@ COLUMNAS_EQUIVALENTES = {
         "cot usd",
         "cotizacion dolar",
         "cotización dólar",
-        "tipo de cambio"  
+        "tipo de cambio"  ,
+        "moneda_valor"
     ],
 
     "fecha_pago": [
@@ -275,7 +281,7 @@ def detectar_columnas(columnas_excel):
 
             for col_norm, col_original in columnas_normalizadas.items():
 
-                if alias_norm == col_norm:
+                if alias_norm == col_norm:   # 🔥 CAMBIO CLAVE
                     resultado[campo] = col_original
                     break
 
@@ -283,7 +289,7 @@ def detectar_columnas(columnas_excel):
                 break
 
     return resultado
-    
+
 
 # ==========================================
 # VALIDAR CAMPOS OBLIGATORIOS
@@ -405,7 +411,14 @@ def importar_comisiones_excel(archivo, aseguradora_id):
 
     # --------------------------------------
 
-    df = leer_excel_detectando_header(archivo)
+
+    df_raw = pd.read_excel(archivo, header=None)
+
+    fila_header = detectar_header(df_raw)
+
+    archivo.seek(0)
+
+    df = pd.read_excel(archivo, header=fila_header)
 
     df.columns = [normalizar_texto(c) for c in df.columns]
 
@@ -523,11 +536,12 @@ def importar_comisiones_excel(archivo, aseguradora_id):
 
         meses_adelanto = None
 
-        if "meses_adelanto" in columnas:
-            valor_meses = limpiar_numero(row[columnas["meses_adelanto"]])
+        valor_meses = limpiar_numero(
+            row[columnas.get("meses_adelanto")]
+        ) if columnas.get("meses_adelanto") else None
 
-            if valor_meses is not None:
-                meses_adelanto = int(valor_meses)
+        meses_adelanto = int(valor_meses) if valor_meses is not None else None
+
 
                 
         comision = limpiar_numero(row[columnas["comision"]])
@@ -538,8 +552,8 @@ def importar_comisiones_excel(archivo, aseguradora_id):
         # ==========================
 
         comision_adelantada = limpiar_numero(
-            row[columnas["comision_adelantada"]]
-        ) if "comision_adelantada" in columnas else None
+            row[columnas.get("comision_adelantada")]
+        ) if columnas.get("comision_adelantada") else None
 
         if comision_adelantada and comision_adelantada > 0:
             comision_agente_final = comision_adelantada
@@ -555,7 +569,18 @@ def importar_comisiones_excel(archivo, aseguradora_id):
                 endoso_val = int(valor_endoso)
 
 
-                
+        if "moneda" in columnas:
+            moneda_valor = str(row[columnas["moneda"]]).strip().upper()
+
+            if moneda_valor in ["USD", "U$S"]:
+                moneda_valor = "U$S"
+            else:
+                moneda_valor = "$"
+
+        else:
+            moneda_valor = "$"
+
+            
 
 
         LiquidacionAseguradora.objects.create(
@@ -573,7 +598,9 @@ def importar_comisiones_excel(archivo, aseguradora_id):
             prima=prima,
             porcentaje=porcentaje,
 
-            moneda=row[columnas["moneda"]] if "moneda" in columnas else None,
+
+                
+
             cotizacion_dolar=limpiar_numero(row[columnas["cotizacion_dolar"]]) if "cotizacion_dolar" in columnas else None,
 
             fecha_liquidacion=fecha_liq,
@@ -581,7 +608,7 @@ def importar_comisiones_excel(archivo, aseguradora_id):
 
             fecha_pago=limpiar_fecha(row[columnas["fecha_pago"]]) if "fecha_pago" in columnas else None,
 
-
+            moneda= moneda_valor,   # ✅ acá sí
 
             comision_agente=comision_agente_final,    
                         
@@ -702,3 +729,27 @@ def importar_desde_dataframe(df, nombre_archivo, aseguradora_id):
 
     return importar_comisiones_excel(output, aseguradora_id)
 
+def detectar_header(df_raw):
+
+    claves_cliente = [normalizar_texto(x) for x in COLUMNAS_EQUIVALENTES["cliente"]]
+    claves_poliza = [normalizar_texto(x) for x in COLUMNAS_EQUIVALENTES["poliza"]]
+
+    for i, fila in df_raw.iterrows():
+
+        textos = [normalizar_texto(x) for x in fila.values]
+
+        tiene_cliente = any(
+            any(clave in celda for clave in claves_cliente)
+            for celda in textos
+        )
+
+        tiene_poliza = any(
+            any(clave in celda for clave in claves_poliza)
+            for celda in textos
+        )
+
+        # 👉 condición mínima (simple como querés)
+        if tiene_cliente or tiene_poliza:
+            return i
+
+    return 0
