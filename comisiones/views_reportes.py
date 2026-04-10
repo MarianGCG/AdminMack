@@ -287,7 +287,9 @@ def reporte_comisiones_view(request):
                         else:
                             base = prima or 0
                         comision_pas = base * porcentaje_pas / 100
-                    
+
+
+
                     
 
                 if d.moneda == "U$S" and d.cotizacion_dolar:
@@ -322,27 +324,39 @@ def reporte_comisiones_view(request):
 
 
         if descuento_adelanto != 0 and porcentaje:
-            comision_pas = Decimal(porcentaje_pas) * descuento_adelanto / Decimal(porcentaje)
+
+
+            if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
+                comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
+            else:
+                comision_pas = Decimal('0')
+
+                
+
 
         # 🔥 redondeo final único
-        
-
-        descuento_adelanto = round(descuento_adelanto, 2)
-
+                
+        if descuento_adelanto:
+            descuento_adelanto = round(descuento_adelanto, 2)
+        else:
+            descuento_adelanto = 0
+            
+    
         # ============================
         # 🔥 COMISION PAS SIN IVA
         # ============================
 
         comision_pas_sin_iva = 0
 
+
         if d.aseguradora and d.aseguradora.incluye_iva == "S":
-            base = comision_pas or 0
-
+            base = Decimal(comision_pas or 0)
             comision_pas_sin_iva = base / Decimal("1.21")
-
         else:
-            comision_pas_sin_iva = comision_pas or 0
+            comision_pas_sin_iva = Decimal(comision_pas or 0)
 
+
+            
 
 
         # 🔥 SIN PAS → igualar a agente
