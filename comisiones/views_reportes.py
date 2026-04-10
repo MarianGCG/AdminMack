@@ -275,19 +275,19 @@ def reporte_comisiones_view(request):
                     if comision_adelantada and comision_adelantada > 0:
                         base = comision_adelantada   # 🔥 YA TOTAL
 
-                        if porcentaje:
-                            comision_pas = base * porcentaje_pas / porcentaje
-                        else:
-                            comision_pas = 0
-                            
+                        # 🔥 if porcentaje:
+                        # 🔥     comision_pas = base * porcentaje_pas / porcentaje
+                        # 🔥 else:
+                        # 🔥     comision_pas = 0
+                        comision_pas = 100    
    
                     else:
                         if regla.base_comision == "Comision":
                             base = comision_agente or 0
                         else:
                             base = prima or 0
-                        comision_pas = base * porcentaje_pas / 100
-
+                        # 🔥comision_pas = base * porcentaje_pas / 100
+                        comision_pas = 100  
 
 
                     
@@ -323,15 +323,13 @@ def reporte_comisiones_view(request):
             comision_agente = descuento_adelanto
 
 
-        if descuento_adelanto != 0 and porcentaje:
+        # 🔥 if descuento_adelanto != 0 and porcentaje:
+        # 🔥     if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
+        # 🔥         comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
+        # 🔥     else:
+        # 🔥         comision_pas = Decimal('0')
 
-
-            if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
-                comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
-            else:
-                comision_pas = Decimal('0')
-
-                
+            comision_pas =  1
 
 
         # 🔥 redondeo final único
@@ -693,6 +691,8 @@ def reporte_comisiones_view(request):
         totales_agente[pas] = totales_agente.get(pas, 0) + (f["comision_agente"] or 0)
 
         
+    totales_pas = {k: float(v or 0) for k, v in totales_pas.items()}
+    totales_agente = {k: float(v or 0) for k, v in totales_agente.items()}
 
 
     # ============================
