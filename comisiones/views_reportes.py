@@ -272,10 +272,11 @@ def reporte_comisiones_view(request):
                 if regla:
                     porcentaje_pas = regla.porcentaje
 
-                    if comision_adelantada and comision_adelantada > 0:
+                    
+                    if Decimal(comision_adelantada or 0) > 0:
                         base = comision_adelantada   # 🔥 YA TOTAL
 
-                        if porcentaje:
+                        if porcentaje not in [None, 0, "0"]:
                            comision_pas = base * porcentaje_pas / porcentaje
                         else:
                            comision_pas = 0
@@ -321,12 +322,25 @@ def reporte_comisiones_view(request):
             comision_agente = descuento_adelanto
 
 
-        if descuento_adelanto != 0 and porcentaje:
-            if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
-                comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
-            else:
-                comision_pas = Decimal('0')
+      
 
+
+        if descuento_adelanto != 0 and porcentaje:
+
+            try:
+                desc = Decimal(descuento_adelanto or 0)
+                porc_pas = Decimal(porcentaje_pas or 0)
+                porc = Decimal(porcentaje or 0)
+
+                if porc != 0:
+                    comision_pas = porc_pas * desc / porc
+                else:
+                    comision_pas = Decimal('0')
+
+            except Exception:
+                comision_pas = Decimal('0')
+                
+        
         
 
 
