@@ -162,6 +162,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
+
+
 LOGGING = {
     'version': 1,
     'handlers': {
@@ -169,8 +171,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'ERROR',
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
     },
 }
