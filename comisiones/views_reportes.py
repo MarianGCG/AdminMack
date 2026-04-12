@@ -325,6 +325,21 @@ def reporte_comisiones_view(request):
       
 
 
+        if descuento_adelanto != 0 and porcentaje:
+
+            try:
+                desc = Decimal(descuento_adelanto or 0)
+                porc_pas = Decimal(porcentaje_pas or 0)
+                porc = Decimal(porcentaje or 0)
+
+                if porc != 0:
+                    comision_pas = porc_pas * desc / porc
+                else:
+                    comision_pas = Decimal('0')
+
+            except Exception:
+                comision_pas = Decimal('0')
+                
         
         
 
@@ -337,6 +352,20 @@ def reporte_comisiones_view(request):
             descuento_adelanto = 0
             
     
+        # ============================
+        # 🔥 COMISION PAS SIN IVA
+        # ============================
+
+
+
+        if d.aseguradora and d.aseguradora.incluye_iva == "S":
+            base = Decimal(comision_pas or 0)
+            comision_pas_sin_iva = base / Decimal("1.21")
+        else:
+            comision_pas_sin_iva = Decimal(comision_pas or 0)
+
+
+
 
             
 
