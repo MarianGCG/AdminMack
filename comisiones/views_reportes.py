@@ -192,7 +192,6 @@ def reporte_comisiones_view(request):
 
         pas_para_fila = None
         pas_nombre = ""
-
         cliente_norm = normalizar_texto(d.cliente)
 
         for m in mapa_pas:
@@ -286,7 +285,7 @@ def reporte_comisiones_view(request):
                             base = comision_agente or 0
                         else:
                             base = prima or 0
-                            comision_pas = base * porcentaje_pas / 100
+                        comision_pas = base * porcentaje_pas / 100
                         
                     
 
@@ -321,13 +320,13 @@ def reporte_comisiones_view(request):
             comision_agente = descuento_adelanto
 
 
-        # 🔥 if descuento_adelanto != 0 and porcentaje:
-        # 🔥     if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
-        # 🔥         comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
-        # 🔥     else:
-        # 🔥         comision_pas = Decimal('0')
+        if descuento_adelanto != 0 and porcentaje:
+            if descuento_adelanto != 0 and porcentaje and Decimal(porcentaje) != 0:
+                comision_pas = Decimal(porcentaje_pas) * Decimal(descuento_adelanto) / Decimal(porcentaje)
+            else:
+                comision_pas = Decimal('0')
 
-            comision_pas =  1
+        
 
 
         # 🔥 redondeo final único
