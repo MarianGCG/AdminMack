@@ -283,9 +283,10 @@ def reporte_comisiones_view(request):
                     else:
                         if regla.base_comision == "Comision":
                             base = comision_agente or 0
+                            comision_pas = base * porcentaje_pas / 100
                         else:
                             base = prima or 0
-                        comision_pas = base * porcentaje_pas / 100
+                            comision_pas = base * porcentaje_pas / 100
                         
                     
 
