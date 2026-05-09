@@ -90,14 +90,16 @@ def reporte_comisiones_view(request):
     if fecha_hasta:
         datos = datos.filter(fecha_liquidacion__lte=fecha_hasta)
 
+
     datos = datos.order_by(
+        "aseguradora__nombre",
+        "cliente", 
+        "poliza",
+        "endoso"               
         "fecha_liquidacion",
         "quincena",
-        "aseguradora__nombre",
-        "cliente",
-        "poliza",
-        "endoso"
     )
+
 
     # ============================
     # PAS seleccionado
