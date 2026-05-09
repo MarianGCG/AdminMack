@@ -95,9 +95,9 @@ def reporte_comisiones_view(request):
         "aseguradora__nombre",
         "cliente", 
         "poliza",
-        "endoso"               
+        "endoso" ,              
         "fecha_liquidacion",
-        "quincena",
+        "quincena"
     )
 
 
