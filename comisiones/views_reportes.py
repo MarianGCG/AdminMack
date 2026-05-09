@@ -561,7 +561,7 @@ def reporte_comisiones_view(request):
             # ============================
 
 
-            total_bruto = df["Comisión PAS"].sum()
+            total_bruto =  df["Comisión PAS s/IVA"].sum()
             total_neto = df["Comisión PAS s/IVA"].sum()
 
             descuento = 0.09
