@@ -12,4 +12,6 @@ urlpatterns = [
     path('graficos01/', graficos01),
     path("graficos22/", graficos22, name="graficos22"),
     path('', include('comisiones.urls')),
+    path('calculadora/', include('calculadora.urls')),
+    path('simulacion/', include('simulacion.urls')),
 ]

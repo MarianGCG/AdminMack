@@ -40,6 +40,41 @@ from io import BytesIO
 import pandas as pd
 from datetime import datetime
 from ..models import Aseguradoras, ComprobantesComisiones
+
+def leer_excel_arca(archivo):
+    import pandas as pd
+
+    archivo.seek(0)
+    df_raw = pd.read_excel(archivo, header=None)
+
+    fila_header = None
+
+    for i in range(min(15, len(df_raw))):
+        fila_texto = " ".join(df_raw.iloc[i].astype(str)).lower()
+
+        if (
+            "fecha" in fila_texto
+            and ("tipo" in fila_texto or "comprobante" in fila_texto)
+            and ("número" in fila_texto or "numero" in fila_texto)
+        ):
+            fila_header = i
+            break
+
+    if fila_header is None:
+        raise Exception("No se encontró la fila de encabezados")
+
+    archivo.seek(0)
+    df = pd.read_excel(archivo, header=fila_header)
+
+    df.columns = df.columns.astype(str).str.strip()
+
+    return df
+
+
+
+
+
+
 def importar_comprobantes_arca(archivo):
 
     import pandas as pd
@@ -49,7 +84,7 @@ def importar_comprobantes_arca(archivo):
     # ================================
     try:
         archivo.seek(0)
-        df = pd.read_excel(archivo)
+        df = leer_excel_arca(archivo)
     except Exception as e:
         return {
             "ooinsertados": 0,
@@ -58,7 +93,7 @@ def importar_comprobantes_arca(archivo):
             "no_encontrados": 0,
             "error": str(e)
         }
-
+    print(df.columns.tolist())
     # limpiar nombres columnas
     df.columns = df.columns.astype(str).str.strip()
 

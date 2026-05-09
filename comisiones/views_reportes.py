@@ -390,6 +390,24 @@ def reporte_comisiones_view(request):
         # ARMAR FILA
         # ============================
 
+
+
+        try:
+            if prima and porcentaje and porcentaje != 0:
+                meses = (
+                    comision_agente / (prima * (porcentaje / 100))
+                )
+
+                meses = round(meses)
+
+            else:
+                meses = 0
+
+        except:
+            meses = 0
+            
+
+
         filas.append({
             "fecha": d.fecha_liquidacion,
             "quincena": d.quincena,
@@ -401,8 +419,7 @@ def reporte_comisiones_view(request):
             "moneda": d.moneda,
             "cotizacion": d.cotizacion_dolar,
             "prima_original": prima_original,
-            "meses": d.meses_adelanto,
-            "premio": d.premio,
+            "meses": meses,
             "prima": prima,
             "porcentaje": porcentaje ,
             "comision_agente": comision_agente,
@@ -426,14 +443,16 @@ def reporte_comisiones_view(request):
             columnas = [
                 "fecha", "quincena", "aseg",  "cliente", "ramo",
                 "poliza", "endoso", "moneda", "cotizacion",
-                "meses", "premio", "prima",                
+                "prima_original",
+                "meses", "prima",                
                 "porcentaje_pas", "comision_pas", "comision_pas_sin_iva"
             ]
         else:
             columnas = [
                 "fecha", "quincena", "aseg", "cliente", "ramo",
                 "poliza", "endoso", "moneda", "cotizacion",
-                "meses", "premio", "prima",  
+                "prima_original",
+                "meses", "prima",  
                 "porcentaje", "comision_agente",
                 "descuento_adelanto", "comision_adelantada",
                 "porcentaje_pas", "comision_pas", "comision_pas_sin_iva"
@@ -451,9 +470,14 @@ def reporte_comisiones_view(request):
             "endoso": "Endoso",
             "moneda": "Moneda",
             "cotizacion": "Cotización",
+            "prima_original": "Prima U$S",            
             "meses": "Meses",
-            "premio": "Premio",
             "prima": "Prima",
+            "porcentaje": "Porcentaje",
+            "comision_agente": "Comisión Agente",
+            "descuento_adelanto": "Descuento Adelanto",
+            "comision_adelantada": "Comisión Adelantada",
+            "prima_original": "Prima U$S",
             "porcentaje_pas": "% PAS",
             "comision_pas": "Comisión PAS",
             "comision_pas_sin_iva": "Comisión PAS s/IVA"
@@ -464,11 +488,25 @@ def reporte_comisiones_view(request):
         # ============================
 
         columnas_moneda = [
-            "Premio",
+            "Cotización",
+            "Prima U$S",
             "Prima",
             "Comisión PAS",
             "Comisión PAS s/IVA"
         ]
+
+        # 👇 SOLO si existen
+        for col in [
+            "Porcentaje",
+            "Comisión Agente",
+            "Descuento Adelanto",
+            "Comisión Adelantada"
+        ]:
+            if col in df.columns:
+                columnas_moneda.append(col)
+                
+
+
 
         columnas_porcentaje = [
             "% PAS"
@@ -637,7 +675,6 @@ def reporte_comisiones_view(request):
             # =========================
 
             columnas_moneda = [
-                "Premio",
                 "Prima",
                 "Comisión PAS",
                 "Comisión PAS s/IVA"

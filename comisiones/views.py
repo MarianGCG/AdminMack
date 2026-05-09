@@ -188,8 +188,10 @@ def ver_saldos(request):
         comprobantes
         .values("periodo_anio", "periodo_mes")
         .annotate(
-            cant_facturas=Count("id", filter=Q(tipo_comprobante="FACTURA")),
-            cant_creditos=Count("id", filter=Q(tipo_comprobante="NOTA_CREDITO")),
+
+            cant_facturas=Count("id", filter=Q(tipo_comprobante="FACTURA"), distinct=True),
+            cant_creditos=Count("id", filter=Q(tipo_comprobante="NOTA_CREDITO"), distinct=True),
+
 
             sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
             sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),

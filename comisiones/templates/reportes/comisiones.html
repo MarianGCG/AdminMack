@@ -259,7 +259,7 @@ th {
     
     <th>Cotizac<br>Dólar</th>
     <th>Prima<br>U$S</th>
-    <th>Premio</th>
+    <th>Meses</th>
     <th>Prima</th>
     {% if request.GET.solo_pas != "1" %}
     <th>%</th>
@@ -281,14 +281,11 @@ th {
     <tr>
     <td class="texto">{{d.fecha|date:"d/m/y"}}</td>
 
-
     <td>
         {% if d.quincena and d.quincena != "0" %}
             {{ d.quincena }}
         {% endif %}
     </td>
-
-
 
     <td>{{d.aseg}}</td>
 
@@ -313,8 +310,6 @@ th {
             {{ d.endoso }}
         {% endif %}
     </td>
-
-
     
     <td class="centro">{{d.moneda}}</td>
     <td class="numero">{{d.cotizacion|floatformat:2|intcomma}}</td>
@@ -325,10 +320,11 @@ th {
         {% endif %}
     </td>
 
-    <td class="numero">{{d.premio|floatformat:2|default:""}}</td>
+    <td class="centro">
+        {{ d.meses|default:"" }}
+    </td>
+
     <td class="numero">{{d.prima|default:""|floatformat:2 }}</td>
-
-
 
     {% if request.GET.solo_pas != "1" %}
 
@@ -343,38 +339,38 @@ th {
     {% endif %}
 
     <td class="numero">{{ d.porcentaje_pas|default:0|floatformat:2 }}%</td>
-
-
-    <td class="numero">
-        {{ d.comision_pas|floatformat:2|intcomma }}
-    </td>
-
-
-    <td class="numero">
-        {{ d.comision_pas_sin_iva|floatformat:2|intcomma }}
-    </td>
-
+    <td class="numero">{{ d.comision_pas|floatformat:2|intcomma }}</td>
+    <td class="numero">{{ d.comision_pas_sin_iva|floatformat:2|intcomma }}</td>
 
     </tr>
 
     {% endfor %}
 
-
     <tr style="font-weight:bold; background:#f0f4fa; border-top:2px solid #244c7a;">
+
     {% if request.GET.solo_pas == "1" %}
+
         <td colspan="14">TOTAL</td>
         <td></td>
-        <td class="numero">{{ total_comision_pas_sin_iva|floatformat:2|intcomma }}</td>    
+        <td class="numero">
+            {{ total_comision_pas_sin_iva|floatformat:2|intcomma }}
+        </td>
+
     {% else %}
-        <td colspan="14">TOTAL</td>
-        <td class="numero">{{total_comision|floatformat:2|intcomma}}</td>
+
+        <td colspan="13">TOTAL</td>
         <td></td>
-        <td></td>
-        <td></td>
-        <td></td>    
-        <td class="numero">{{ total_comision_pas_sin_iva|floatformat:2|intcomma }}</td>    
+        <td class="numero">{{ total_comision|floatformat:2|intcomma }} </td>  <!-- Comisión Agente -->
+        <td></td><!-- Desc Adelanto -->
+        <td></td><!-- Comisión Adelantada -->
+        <td></td><!-- % PAS -->
+        <td></td><!-- Comisión PAS -->
+        <td class="numero"> {{ total_comision_pas_sin_iva|floatformat:2|intcomma }} </td> <!-- Comisión PAS s/IVA -->
+
     {% endif %}
+
     </tr>
+
 
     </table>
     </div>
