@@ -620,20 +620,20 @@ def reporte_comisiones_view(request):
             # 📊 CUADRO
             # ============================
 
-            worksheet.write(fila_inicio+1, col_inicio, "Bruto", formato_label)
-            worksheet.write(fila_inicio+1, col_inicio+1, total_bruto, formato_moneda)
+            # ==worksheet.write(fila_inicio+1, col_inicio, "Bruto", formato_label)
+            # ==worksheet.write(fila_inicio+1, col_inicio+1, total_bruto, formato_moneda)
 
-            worksheet.write(fila_inicio+2, col_inicio, "IVA", formato_label)
-            worksheet.write(fila_inicio+2, col_inicio+1, "-", formato_label)
+            # ==worksheet.write(fila_inicio+2, col_inicio, "IVA", formato_label)
+            # ==worksheet.write(fila_inicio+2, col_inicio+1, "-", formato_label)
 
-            worksheet.write(fila_inicio+3, col_inicio, "Neto", formato_label)
-            worksheet.write(fila_inicio+3, col_inicio+1, total_neto, formato_moneda)
+            worksheet.write(fila_inicio+1, col_inicio, "A facturar", formato_label)
+            worksheet.write(fila_inicio+1, col_inicio+1, total_neto, formato_moneda)
 
-            worksheet.write(fila_inicio+5, col_inicio, "Desc. (Imp.)", formato_label)
-            worksheet.write(fila_inicio+5, col_inicio+1, descuento, formato_porcentaje)
+            worksheet.write(fila_inicio+2, col_inicio, "Desc. (Imp.)", formato_label)
+            worksheet.write(fila_inicio+2, col_inicio+1, descuento, formato_porcentaje)
 
-            worksheet.write(fila_inicio+6, col_inicio, "Pago", formato_label)
-            worksheet.write(fila_inicio+6, col_inicio+1, pago, formato_moneda)
+            worksheet.write(fila_inicio+3, col_inicio, "Pago", formato_label)
+            worksheet.write(fila_inicio+3, col_inicio+1, pago, formato_moneda)
 
 
             # =========================
