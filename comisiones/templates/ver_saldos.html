@@ -76,7 +76,7 @@
 
 
 <th onclick="ordenar('neto')">
-    Neto 
+    Subtotal 
     <span class="flechas">    
         {% if request.GET.orden == 'neto' %}
             {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
@@ -87,8 +87,6 @@
 
 </th>
 
-<th>No Grav</th>
-<th>Exento</th>
 <th>IVA</th>
 
 <th onclick="ordenar('total')">
@@ -133,20 +131,13 @@
     </td>
 
     <td style="text-align:right;">
-        ${{ s.sum_neto|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ s.sum_no_gravado|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ s.sum_exento|default:0|localize }}
+        ${{ s.sum_neto|add:s.sum_no_gravado|add:s.sum_exento|default:0|localize }}
     </td>
 
     <td style="text-align:right;">
         ${{ s.sum_iva|default:0|localize }}
     </td>
+
 
     <td style="text-align:right;">
         ${{ s.sum_total|default:0|localize }}
@@ -175,15 +166,7 @@
     </td>
 
     <td style="text-align:right;">
-        ${{ totales.sum_neto|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_no_gravado|default:0|localize }}
-    </td>
-
-    <td style="text-align:right;">
-        ${{ totales.sum_exento|default:0|localize }}
+        ${{ totales.sum_neto|add:totales.sum_no_gravado|add:totales.sum_exento|default:0|localize }}
     </td>
 
     <td style="text-align:right;">

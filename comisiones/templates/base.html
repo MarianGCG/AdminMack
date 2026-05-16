@@ -17,29 +17,31 @@
         }
 
         /* NAVBAR */
+
         .navbar {
             background-color: #174a7c;
-            padding: 10px 25px;
-            display: flex;
-            gap: 25px;
-            align-items: center;
-
+            padding: 16px 35px;
             position: sticky;
             top: 0;
             z-index: 1000;
-
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
         .navbar a {
-            color: white;
+            color: white;            
             text-decoration: none;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 20px;
         }
+
 
         .navbar a:hover {
             opacity: 0.8;
+        }
+
+        .navbar .logo,
+        .navbar .menu{
+            vertical-align:middle;
         }
 
         /* CONTENIDO */
@@ -47,11 +49,11 @@
             padding: 10px 20px 15px 20px;
             max-width: 1800px;
             margin: 0 auto;
+            overflow-x: auto;
+              
         }
 
-        .contenido.fullwidth {
-            max-width: 100%;
-        }
+
 
         /* TITULOS */
         .titulo-grafico {
@@ -118,12 +120,24 @@
         }
 
 
+        .contenedor-tabla{
+            width: fit-content;
+            max-width: 95%;
+
+            margin-left: 0px;
+
+
+            overflow-x:auto;
+        }
+
         .tabla-sistema {
-            width: 100%;
+            width: auto;
+            min-width: 1200px;
             border-collapse: collapse;
             background: white;
             font-size: 13px;
         }
+
 
         .tabla-sistema th {
             background: #244c7a;
@@ -267,12 +281,23 @@
             align-items: center;
         }
 
+
+
         .menu {
-            display: flex;
-            gap: 25px;
-            margin-left: 80px;   /* 👈 ESTE ES EL AJUSTE */
+            display:flex;
+            gap:40px;
+            margin-left:180px;
+            align-items:center;
+            position: relative;
+            top: -25px;
+            
+
         }
 
+        .logo{
+            position: relative;
+            top: 15px;
+        }
 
         .filtros-box{
             background: white;
@@ -281,7 +306,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
             margin-bottom: 15px;
         }
-
 
 
     </style>
@@ -297,7 +321,8 @@
     <!-- LOGO -->
     <div class="logo">
         <img src="{% static 'img/Mackinlay.png' %}" 
-             style="height:40px;">
+            style="height:58px;">
+                      
     </div>
 
     <!-- IMPORTACIONES -->

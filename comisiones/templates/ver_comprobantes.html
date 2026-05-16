@@ -82,11 +82,9 @@
     </th>
 
     <th class="numero" onclick="ordenar('neto')" style="cursor:pointer;">
-        Neto ▲▼
+        Subtotal ▲▼
     </th>
 
-    <th class="numero">No Gravado</th>
-    <th class="numero">Exento</th>
     <th class="numero">IVA</th>
 
 
@@ -113,10 +111,13 @@
 
     <td class="texto">{{ c.numero_comprobante }}</td>
 
-    <td class="numero">${{ c.neto|default:0|localize }}</td>
-    <td class="numero">${{ c.no_gravado|default:0|localize }}</td>
-    <td class="numero">${{ c.exento|default:0|localize }}</td>
+    <td class="numero">
+        ${{ c.neto|add:c.no_gravado|add:c.exento|default:0|localize }}
+    </td>
+
     <td class="numero">${{ c.iva|default:0|localize }}</td>
+
+
     <td class="numero">${{ c.total|default:0|localize }}</td>
     <td class="numero">${{ c.cobrado|default:0|localize }}</td>
 
@@ -130,10 +131,13 @@
 
     <td colspan="3" class="texto">TOTALES</td>
 
-    <td class="numero">${{ totales.sum_neto|default:0|localize }}</td>
-    <td class="numero">${{ totales.sum_no_gravado|default:0|localize }}</td>
-    <td class="numero">${{ totales.sum_exento|default:0|localize }}</td>
+    <td class="numero">
+        ${{ totales.sum_neto|add:totales.sum_no_gravado|add:totales.sum_exento|default:0|localize }}
+    </td>
+
     <td class="numero">${{ totales.sum_iva|default:0|localize }}</td>
+
+
     <td class="numero">${{ totales.sum_total|default:0|localize }}</td>
     <td class="numero">${{ totales.sum_cobrado|default:0|localize }}</td>
 
