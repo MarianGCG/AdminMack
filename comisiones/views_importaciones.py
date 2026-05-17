@@ -43,13 +43,22 @@ def importar_dolar_view(request):
     else:
         form = ImportarExcelForm()
 
+
+    # 👇 SIEMPRE carga datos al abrir pantalla
+    cotizaciones = CotizacionesDolar.objects.all().order_by(
+        "-periodo_anio",
+        "-periodo_mes"
+    )
+
     return render(
         request,
         "importaciones/form_importar.html",
         {
             "form": form,
             "resultado": resultado,
-            "titulo": "Importar cotizaciones dólar"
+            "titulo": "Importar cotizaciones dólar",
+            "cotizaciones": cotizaciones
+
         }
     )
 

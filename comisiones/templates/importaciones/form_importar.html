@@ -17,6 +17,36 @@
     </button>
 </form>
 
+
+
+<br><br>
+
+<table class="table table-striped table-hover">
+
+    <thead>
+        <tr>
+            <th>Año</th>
+            <th>Mes</th>
+            <th>Valor</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for c in cotizaciones %}
+        <tr>
+            <td>{{ c.periodo_anio }}</td>
+            <td>{{ c.periodo_mes }}</td>
+            <td>{{ c.valor }}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+
+
 {% if resultado %}
 <hr>
 <h4>Resultado</h4>
