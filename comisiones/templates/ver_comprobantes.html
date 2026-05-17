@@ -62,37 +62,38 @@
 </div>
 
 
-<div class="contenedor-tabla">
 
-<table class="tabla-sistema">
+<div class="layout-doble">
 
+<div class="contenedor-tabla-comprobantes">
 
+<table class="tabla-comprobantes">
 <tr>
 
-    <th onclick="ordenar('aseguradora')" style="cursor:pointer;">
+    <th onclick="ordenar('aseguradora')" style="cursor:pointer;width:100px;">
         Aseguradora ▲▼
     </th>
 
-    <th onclick="ordenar('periodo')" style="cursor:pointer;">
+    <th onclick="ordenar('periodo')" style="cursor:pointer;width:80px;">
         Periodo ▲▼
     </th>
 
-    <th onclick="ordenar('numero')" style="cursor:pointer;">
+    <th onclick="ordenar('numero')" style="cursor:pointer;width:80px;">
         Número ▲▼
     </th>
 
-    <th class="numero" onclick="ordenar('neto')" style="cursor:pointer;">
+    <th class="numero" onclick="ordenar('neto')" style="cursor:pointer;width:100px;">
         Subtotal ▲▼
     </th>
 
-    <th class="numero">IVA</th>
+    <th class="numero" style="width:80px;">IVA</th>
 
 
-    <th class="numero" onclick="ordenar('total')" style="cursor:pointer;">
+    <th class="numero" onclick="ordenar('total')" style="cursor:pointer;width:100px;">
         Total ▲▼
     </th>
 
-    <th class="numero" onclick="ordenar('cobrado')" style="cursor:pointer;">
+    <th class="numero" onclick="ordenar('cobrado')" style="cursor:pointer;width:120px;">
         Cobrado ▲▼
     </th>
 
@@ -148,6 +149,32 @@
 </div>
 
 
+<div class="panel-grafico-comprobantes">
+
+    <div class="barra-superior-grafico">
+
+        <h3>Subtotal por aseguradora</h3>
+
+        <select id="tipoGrafico">
+            <option value="bar">Barras</option>
+            <option value="pie">Torta</option>
+            <option value="doughnut">Doughnut</option>
+        </select>
+
+    </div>
+
+    <canvas id="graficoAseguradoras"></canvas>
+
+</div>
+
+
+
+
+</div>
+
+</div>
+
+
 
 
 <p style="margin-top:10px; font-size:13px; color:#444;">
@@ -155,6 +182,8 @@
     {{ comprobantes|length }}
 </p>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
 
@@ -176,6 +205,156 @@ function ordenar(campo){
 
     window.location.href = url.toString()
 }
+
+
+const ctx = document.getElementById('graficoAseguradoras');
+
+let grafico;
+
+function crearGrafico(tipo){
+
+    if(grafico){
+        grafico.destroy();
+    }
+
+    if(tipo === 'pie' || tipo === 'doughnut'){
+        ctx.height = 520;
+    }else{
+        ctx.height = 700;
+    }
+
+
+    grafico = new Chart(ctx, {
+
+        type: tipo,
+        plugins:[ChartDataLabels],
+        data: {
+            labels: {{ labels_grafico|safe }},
+            datasets: [{
+                label: 'Subtotal por aseguradora',
+                data: {{ datos_grafico|safe }},
+
+                radius:
+                    (tipo === 'pie' || tipo === 'doughnut')
+                    ? '70%'
+                    : undefined,
+            }]
+        },
+
+        options: {
+
+            cutout:
+                (tipo === 'doughnut')
+                ? '45%'
+                : 0,
+        
+            rotation:
+                (tipo === 'pie' || tipo === 'doughnut')
+                ? 0
+                : 0,            
+            circumference: 360,
+            layout:{
+                padding:{
+                    top:
+                        (tipo === 'pie' || tipo === 'doughnut')
+                        ? -200
+                        : 0,
+                    bottom:
+                        (tipo === 'pie' || tipo === 'doughnut')
+                        ? 0
+                        : 0
+
+                }
+            },
+                        
+            indexAxis: tipo === 'bar' ? 'y' : 'x',
+            responsive:true,
+            aspectRatio:1.2,
+            maintainAspectRatio:false,
+            plugins:{
+
+                legend:{
+                    display:
+                        (tipo === 'pie' || tipo === 'doughnut'),
+
+                    position:'left',
+
+                    align:'center',
+
+                    labels:{
+                        boxWidth:12,
+                        padding:8,
+                        font:{
+                            size:11
+                        }
+                    }
+                },
+
+
+                datalabels: {
+                    display: function(context){
+                        return (
+                            (context.chart.config.type === 'pie' ||
+                            context.chart.config.type === 'doughnut')
+                            &&
+                            context.dataIndex < 5
+                        );
+                    },
+
+                    color:'white',
+                    font:{
+                        weight:'bold',
+                        size:12
+                    },
+
+                    formatter: function(value, context){
+
+                        return context.chart
+                                      .data
+                                      .labels[context.dataIndex];
+                    }
+                },
+            },
+
+            animation:false,
+
+            elements:{
+                arc:{
+                    borderWidth:1
+                }
+            },
+
+
+            scales: tipo === 'bar' ? {
+
+                x: {
+                    position:'top',
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1) + ' M';
+                            }
+                            if (value >= 1000) {
+                                return (value / 1000).toFixed(0) + ' mil';
+                            }
+                            return value;
+                        }
+                    }
+                }
+            } : {}
+        }
+    });
+}
+
+crearGrafico('bar');
+
+document.getElementById('tipoGrafico')
+.addEventListener('change', function(){
+
+    crearGrafico(this.value);
+});
+
+
 </script>
 
 

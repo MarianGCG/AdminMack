@@ -147,6 +147,43 @@ def ver_comprobantes(request):
         sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
     )
 
+
+    # ============================
+    # 📊 GRAFICO ASEGURADORAS
+    # ============================
+
+    grafico = (
+        comprobantes
+        .values("aseguradora__nombre")
+        .annotate(
+
+            subtotal_aseg =
+
+                Coalesce(Sum("neto"), Value(0), output_field=DecimalField())
+
+                +
+
+                Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField())
+
+                +
+
+                Coalesce(Sum("exento"), Value(0), output_field=DecimalField())
+
+        )
+        .order_by("-subtotal_aseg")
+    )
+
+    labels_grafico = [
+        x["aseguradora__nombre"]
+        for x in grafico
+    ]
+
+    datos_grafico = [
+        float(x["subtotal_aseg"])
+        for x in grafico
+    ]
+    
+
     # ============================
     # 🎯 RENDER FINAL
     # ============================
@@ -156,7 +193,9 @@ def ver_comprobantes(request):
         "totales": totales,
         "anio": anio,
         "mes": mes,
-        "aseguradoras": Aseguradoras.objects.all()
+        "aseguradoras": Aseguradoras.objects.all(),
+        "labels_grafico": json.dumps(labels_grafico),
+        "datos_grafico": json.dumps(datos_grafico),
     })
 
 

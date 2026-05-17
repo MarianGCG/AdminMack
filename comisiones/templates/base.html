@@ -136,22 +136,28 @@
             border-collapse: collapse;
             background: white;
             font-size: 13px;
+            table-layout:auto;            
         }
 
 
         .tabla-sistema th {
             background: #244c7a;
             color: white;
-            padding: 6px;
-
             text-align: left;
             font-size: 13px;
+            padding: 4px 6px;
+            font-size: 14px;
+            white-space: nowrap;            
         }
 
         .tabla-sistema td {
-            padding: 5px;
             border-bottom: 1px solid #e5e5e5;
+            padding: 4px 6px;
+            font-size: 14px;
+            white-space: nowrap;            
         }
+
+
 
         .tabla-sistema tr:hover {
             background: #f5f7fb;
@@ -307,6 +313,89 @@
             margin-bottom: 15px;
         }
 
+        .layout-doble{
+            display:flex;
+            align-items:flex-start;
+            gap:60px;
+        }
+
+        .panel-grafico{
+            width:500px;
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+        }
+
+
+
+        .panel-grafico-comprobantes{
+            width:650px;
+            background:white;
+            padding:0px;
+            border-radius:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+                         
+
+        }
+
+        #graficoAseguradoras{
+            height:700px !important;
+        }
+
+        .contenedor-tabla-comprobantes{
+            flex:0 0 auto;
+            width:auto;
+            display:inline-block;
+        }
+
+
+        .tabla-comprobantes{
+            width:auto;
+            table-layout:auto;
+            border-collapse:collapse;
+            background:white;
+        }
+
+        .tabla-comprobantes th{
+            background:#244c7a;
+            color:white;
+            padding:6px;
+            text-align:left;
+            font-size:13px;
+        }
+
+        .tabla-comprobantes td{
+            padding:4px 6px;
+            border-bottom:1px solid #e5e5e5;
+            white-space:nowrap;
+            font-size:16px;
+        }
+
+        .tabla-comprobantes tr:hover{
+            background:#f5f7fb;
+        }
+
+
+        .layout-doble .contenedor-tabla{
+            flex:0 0 auto;
+        }
+
+        .barra-superior-grafico{
+
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+
+            margin-bottom:10px;
+        }
+
+        .barra-superior-grafico h3{
+
+            margin:0;
+            font-size:20px;
+            color:#0b7a0b;
+        }
 
     </style>
 
