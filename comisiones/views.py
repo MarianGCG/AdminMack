@@ -27,6 +27,7 @@ import base64
 def ver_comprobantes(request):
 
     from .models import Aseguradoras
+    from django.db.models import F
 
     anio = request.GET.get("anio")
     mes = request.GET.get("mes")
@@ -92,6 +93,26 @@ def ver_comprobantes(request):
     comprobantes = comprobantes.annotate(
         numero_int=Cast("numero_comprobante", IntegerField())
     )
+    comprobantes = comprobantes.annotate(
+        subtotal=
+            Coalesce(
+                F("neto"),
+                Value(0),
+                output_field=DecimalField()
+            )
+            +
+            Coalesce(
+                F("no_gravado"),
+                Value(0),
+                output_field=DecimalField()
+            )
+            +
+            Coalesce(
+                F("exento"),
+                Value(0),
+                output_field=DecimalField()
+            )
+    )
 
     # ============================
     # 🔥 ORDEN POR COLUMNAS
@@ -138,14 +159,34 @@ def ver_comprobantes(request):
     # 📊 TOTALES (🔥 ESTO FALTABA)
     # ============================
 
-    totales = comprobantes.aggregate(
-        sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
-        sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),
-        sum_exento=Coalesce(Sum("exento"), Value(0), output_field=DecimalField()),
-        sum_iva=Coalesce(Sum("iva"), Value(0), output_field=DecimalField()),
-        sum_total=Coalesce(Sum("total"), Value(0), output_field=DecimalField()),
-        sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
-    )
+    totales = {
+
+        "sum_neto":
+            sum(c.neto or 0 for c in comprobantes),
+
+        "sum_no_gravado":
+            sum(c.no_gravado or 0 for c in comprobantes),
+
+        "sum_exento":
+            sum(c.exento or 0 for c in comprobantes),
+
+        "subtotal":
+            sum(
+                (c.neto or 0)
+                + (c.no_gravado or 0)
+                + (c.exento or 0)
+                for c in comprobantes
+            ),
+
+        "sum_iva":
+            sum(c.iva or 0 for c in comprobantes),
+
+        "sum_total":
+            sum(c.total or 0 for c in comprobantes),
+
+        "sum_cobrado":
+            sum(c.cobrado or 0 for c in comprobantes),
+    }
 
 
     # ============================
@@ -204,6 +245,7 @@ def ver_comprobantes(request):
 # =====================================================
 from django.db.models import F, DecimalField, Value
 from django.db.models.functions import Coalesce
+from .models import CobranzasComisiones
 
 def ver_saldos(request):
 
@@ -235,9 +277,19 @@ def ver_saldos(request):
             sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
             sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),
             sum_exento=Coalesce(Sum("exento"), Value(0), output_field=DecimalField()),
+
+            subtotal=(
+                Coalesce(Sum("neto"), Value(0), output_field=DecimalField())
+                +
+                Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField())
+                +
+                Coalesce(Sum("exento"), Value(0), output_field=DecimalField())
+            ),
+
+
             sum_iva=Coalesce(Sum("iva"), Value(0), output_field=DecimalField()),
             sum_total=Coalesce(Sum("total"), Value(0), output_field=DecimalField()),
-            sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
+            
         )
     )
 
@@ -255,6 +307,7 @@ def ver_saldos(request):
         "neto": "sum_neto",
         "total": "sum_total",
         "cobrado": "sum_cobrado",
+
     }
 
     if orden in campo_map:
@@ -276,20 +329,78 @@ def ver_saldos(request):
     else:
         saldos = saldos.order_by("-periodo_anio", "-periodo_mes")
 
-    # ============================
+ 
+    from .models import CotizacionesDolar
+
+
+    for s in saldos:
+
+        dolar = CotizacionesDolar.objects.filter(
+            periodo_anio=s["periodo_anio"],
+            periodo_mes=s["periodo_mes"]
+        ).first()
+
+        if dolar and dolar.valor:
+
+            s["ST_usd"] = s["subtotal"] / dolar.valor
+
+        else:
+
+            s["ST_usd"] = 0
+
+
+        cobrado = CobranzasComisiones.objects.filter(
+            comprobante__periodo_anio=s["periodo_anio"],
+            comprobante__periodo_mes=s["periodo_mes"]
+        ).aggregate(
+
+            total=Coalesce(
+                Sum("importe"),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )
+
+        s["sum_cobrado"] = cobrado["total"]
+
+
+   # ============================
     # TOTALES
     # ============================
 
-    totales = comprobantes.aggregate(
-        total_facturas=Count("id", filter=Q(tipo_comprobante="FACTURA")),
-        total_creditos=Count("id", filter=Q(tipo_comprobante="NOTA_CREDITO")),
-        sum_neto=Coalesce(Sum("neto"), Value(0), output_field=DecimalField()),
-        sum_no_gravado=Coalesce(Sum("no_gravado"), Value(0), output_field=DecimalField()),
-        sum_exento=Coalesce(Sum("exento"), Value(0), output_field=DecimalField()),
-        sum_iva=Coalesce(Sum("iva"), Value(0), output_field=DecimalField()),
-        sum_total=Coalesce(Sum("total"), Value(0), output_field=DecimalField()),
-        sum_cobrado=Coalesce(Sum("cobranzascomisiones__importe"), Value(0), output_field=DecimalField()),
-    )
+    totales = {
+
+        "total_facturas":
+            sum(s["cant_facturas"] for s in saldos),
+
+        "total_creditos":
+            sum(s["cant_creditos"] for s in saldos),
+
+        "sum_neto":
+            sum(s["sum_neto"] for s in saldos),
+
+        "sum_no_gravado":
+            sum(s["sum_no_gravado"] for s in saldos),
+
+        "sum_exento":
+            sum(s["sum_exento"] for s in saldos),
+
+        "subtotal":
+            sum(s["subtotal"] for s in saldos),
+
+        "sum_iva":
+            sum(s["sum_iva"] for s in saldos),
+
+        "sum_total":
+            sum(s["sum_total"] for s in saldos),
+
+        "sum_cobrado":
+            sum(s["sum_cobrado"] for s in saldos),
+            
+    }
+
+
+
 
     return render(request, "ver_saldos.html", {
         "saldos": saldos,

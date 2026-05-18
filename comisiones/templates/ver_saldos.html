@@ -111,6 +111,13 @@
     </span>    
 </th>
 
+<th>
+    Subtotal usd
+</th>
+
+
+
+
 </tr>
 
 {% for s in saldos %}
@@ -131,7 +138,7 @@
     </td>
 
     <td style="text-align:right;">
-        ${{ s.sum_neto|add:s.sum_no_gravado|add:s.sum_exento|default:0|localize }}
+        ${{ s.subtotal|localize }}
     </td>
 
     <td style="text-align:right;">
@@ -146,6 +153,11 @@
     <td style="text-align:right;">
         ${{ s.sum_cobrado|default:0|localize }}
     </td>
+
+    <td style="text-align:right;">
+        {{ s.ST_usd|floatformat:0|localize }} 
+    </td>
+
 
 </tr>
 
@@ -166,7 +178,7 @@
     </td>
 
     <td style="text-align:right;">
-        ${{ totales.sum_neto|add:totales.sum_no_gravado|add:totales.sum_exento|default:0|localize }}
+        ${{ totales.subtotal|localize }}
     </td>
 
     <td style="text-align:right;">

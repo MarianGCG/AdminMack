@@ -9,7 +9,8 @@ from .models import (
     PASAseguradora,
     PASCliente,
     ReglaComision,
-    LiquidacionAseguradora
+    LiquidacionAseguradora,
+    CotizacionesDolar
 )
 
 from .services.dolar_service import importar_cotizaciones_excel

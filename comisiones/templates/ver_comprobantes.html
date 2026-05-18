@@ -113,7 +113,7 @@
     <td class="texto">{{ c.numero_comprobante }}</td>
 
     <td class="numero">
-        ${{ c.neto|add:c.no_gravado|add:c.exento|default:0|localize }}
+        ${{ c.subtotal|localize }}
     </td>
 
     <td class="numero">${{ c.iva|default:0|localize }}</td>
