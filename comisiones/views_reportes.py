@@ -731,6 +731,7 @@ def reporte_comisiones_view(request):
 
     totales_pas = {}
     totales_agente = {}
+    grafico_pass = {}
 
     for f in filas:
 
@@ -742,9 +743,30 @@ def reporte_comisiones_view(request):
         # AGENTE
         totales_agente[pas] = totales_agente.get(pas, 0) + (f["comision_agente"] or 0)
 
+        aseg = f["aseg"] or "Sin Aseg"
+
+        if pas not in grafico_pass:
+            grafico_pass[pas] = {}
+
+        if aseg not in grafico_pass[pas]:
+            grafico_pass[pas][aseg] = 0
+
+        grafico_pass[pas][aseg] += float(
+            f["comision_pas_sin_iva"] or 0
+        )
+
         
     totales_pas = {k: float(v or 0) for k, v in totales_pas.items()}
     totales_agente = {k: float(v or 0) for k, v in totales_agente.items()}
+
+
+    grafico_pass = {
+        pas: {
+            aseg: float(valor)
+            for aseg, valor in datos.items()
+        }
+        for pas, datos in grafico_pass.items()
+    }
 
 
     # ============================
@@ -764,8 +786,8 @@ def reporte_comisiones_view(request):
             "total_comision_pas_sin_iva": total_comision_pas_sin_iva,
             "totales_pas": totales_pas,
             "totales_agente": totales_agente,
-            "ver_grafico": ver_grafico
-                        
+            "ver_grafico": ver_grafico,
+            "grafico_pass": grafico_pass
         }
     )
 
