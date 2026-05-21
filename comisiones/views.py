@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum, Count, Q, DecimalField, Value
 from django.db.models.functions import Coalesce, Cast
 
+
 from django.db import connection
 from .models import ComprobantesComisiones
 import json
@@ -193,7 +194,7 @@ def ver_comprobantes(request):
     # 📊 GRAFICO ASEGURADORAS
     # ============================
 
-    grafico = (
+    grafico_neto = (
         comprobantes
         .values("aseguradora__nombre")
         .annotate(
@@ -214,16 +215,46 @@ def ver_comprobantes(request):
         .order_by("-subtotal_aseg")
     )
 
-    labels_grafico = [
+
+
+    grafico_cobrado = (
+        comprobantes
+        .values("aseguradora__nombre")
+        .annotate(
+
+            cobrado_aseg =
+
+                Coalesce(
+                    Sum("cobranzascomisiones__importe"),
+                    Value(0),
+                    output_field=DecimalField()
+                )
+
+        )
+        .order_by("-cobrado_aseg")
+    )
+
+    labels_neto = [
         x["aseguradora__nombre"]
-        for x in grafico
+        for x in grafico_neto
     ]
 
-    datos_grafico = [
+    datos_neto = [
         float(x["subtotal_aseg"])
-        for x in grafico
+        for x in grafico_neto
     ]
-    
+
+
+
+    labels_cobrado = [
+        x["aseguradora__nombre"]
+        for x in grafico_cobrado
+    ]
+
+    datos_cobrado = [
+        float(x["cobrado_aseg"])
+        for x in grafico_cobrado
+    ]
 
     # ============================
     # 🎯 RENDER FINAL
@@ -235,8 +266,11 @@ def ver_comprobantes(request):
         "anio": anio,
         "mes": mes,
         "aseguradoras": Aseguradoras.objects.all(),
-        "labels_grafico": json.dumps(labels_grafico),
-        "datos_grafico": json.dumps(datos_grafico),
+        "labels_neto": json.dumps(labels_neto),
+        "datos_neto": json.dumps(datos_neto),
+        "labels_cobrado": json.dumps(labels_cobrado),
+        "datos_cobrado": json.dumps(datos_cobrado),
+
     })
 
 
@@ -396,7 +430,10 @@ def ver_saldos(request):
 
         "sum_cobrado":
             sum(s["sum_cobrado"] for s in saldos),
-            
+
+        "total_usd":
+            sum(s["ST_usd"] for s in saldos),
+                        
     }
 
 

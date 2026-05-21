@@ -83,7 +83,7 @@
     </th>
 
     <th class="numero" onclick="ordenar('neto')" style="cursor:pointer;width:100px;">
-        Subtotal ▲▼
+        Neto ▲▼
     </th>
 
     <th class="numero" style="width:80px;">IVA</th>
@@ -153,7 +153,25 @@
 
     <div class="barra-superior-grafico">
 
-        <h3>Subtotal por aseguradora</h3>
+
+        <h3 id="tituloGrafico">
+            Neto por aseguradora
+        </h3>
+
+
+        <select id="datoGrafico">
+
+            <option value="neto">
+                Neto
+            </option>
+
+            <option value="cobrado">
+                Cobrado
+            </option>
+
+        </select>
+
+
 
         <select id="tipoGrafico">
             <option value="bar">Barras</option>
@@ -206,8 +224,15 @@ function ordenar(campo){
     window.location.href = url.toString()
 }
 
-
 const ctx = document.getElementById('graficoAseguradoras');
+
+
+const labelsNeto = {{ labels_neto|safe }};
+const datosNeto = {{ datos_neto|safe }};
+
+const labelsCobrado = {{ labels_cobrado|safe }};
+const datosCobrado = {{ datos_cobrado|safe }};
+
 
 let grafico;
 
@@ -229,10 +254,25 @@ function crearGrafico(tipo){
         type: tipo,
         plugins:[ChartDataLabels],
         data: {
-            labels: {{ labels_grafico|safe }},
+
+            labels:
+                document.getElementById('datoGrafico').value === 'cobrado'
+                ? labelsCobrado
+                : labelsNeto,
+                            
             datasets: [{
-                label: 'Subtotal por aseguradora',
-                data: {{ datos_grafico|safe }},
+
+                label:
+                    document.getElementById('datoGrafico').value === 'cobrado'
+                    ? 'Cobrado por aseguradora'
+                    : 'Neto por aseguradora',
+                    
+                data:
+                    document.getElementById('datoGrafico').value === 'cobrado'
+                    ? datosCobrado
+                    : datosNeto,
+                    
+
 
                 radius:
                     (tipo === 'pie' || tipo === 'doughnut')
@@ -352,6 +392,21 @@ document.getElementById('tipoGrafico')
 .addEventListener('change', function(){
 
     crearGrafico(this.value);
+});
+
+document.getElementById('datoGrafico')
+.addEventListener('change', function(){
+
+    const titulo =
+        this.value === 'cobrado'
+        ? 'Cobrado por aseguradora'
+        : 'Neto por aseguradora';
+
+    document.getElementById('tituloGrafico').innerText = titulo;
+
+    crearGrafico(
+        document.getElementById('tipoGrafico').value
+    );
 });
 
 

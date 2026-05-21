@@ -81,13 +81,13 @@
 
         .tabla th {
             padding:4px 4px;
-            font-size:12px;
+            font-size:16px;
         
         }
 
         .tabla td {
             padding:1px 1px;
-            font-size:12px;
+            font-size:16px;
         }
 
         .tabla-grande td,
@@ -106,13 +106,13 @@
             color:white;
             padding:8px;
             text-align:left;
-            font-size:14px;
+            font-size:16px;
         }
 
         .tabla-listado td{
             padding:6px;
             border-bottom:1px solid #e5e5e5;
-            font-size:14px;
+            font-size:16px;
         }
 
         .tabla-listado tr:hover{
@@ -135,7 +135,7 @@
             min-width: 1200px;
             border-collapse: collapse;
             background: white;
-            font-size: 13px;
+            font-size: 16px;
             table-layout:auto;            
         }
 
@@ -144,7 +144,7 @@
             background: #244c7a;
             color: white;
             text-align: left;
-            font-size: 13px;
+            font-size: 16px;
             padding: 4px 6px;
             font-size: 14px;
             white-space: nowrap;            
@@ -153,7 +153,7 @@
         .tabla-sistema td {
             border-bottom: 1px solid #e5e5e5;
             padding: 4px 6px;
-            font-size: 14px;
+            font-size: 16px;
             white-space: nowrap;            
         }
 
@@ -166,7 +166,7 @@
         .tabla-sistema th .flechas {
             opacity: 0.4;   /* 👈 opacas */
             margin-left: 4px;
-            font-size: 11px;
+            font-size: 16px;
         }
 
         .tabla-sistema th.activo .flechas {
@@ -204,7 +204,7 @@
             text-decoration: none;
             padding: 10px 0;
             display: inline-block;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .dropdown-content {
@@ -225,7 +225,7 @@
             padding: 10px 14px;
             text-decoration: none;
             display: block;
-            font-size: 14px;
+            font-size: 18px;
         }
 
         .dropdown-content a:hover {
@@ -343,6 +343,21 @@
             height:700px !important;
         }
 
+        .contenedor-tabla-saldos{
+            flex:0 0 auto;
+            width:auto;
+            display:inline-block;
+        }
+
+
+        .tabla-saldos{
+            width:auto;
+            table-layout:auto;
+            border-collapse:collapse;
+            background:white;
+        }
+
+
         .contenedor-tabla-comprobantes{
             flex:0 0 auto;
             width:auto;
@@ -427,7 +442,7 @@
 
                     <div class="dropdown-content">
                         <a href="/comprobantes/">Comprobantes</a>
-                        <a href="/saldos/">Saldos</a>
+                        <a href="/saldos/">Totales</a>
                     </div>
                 </div>
 
@@ -481,8 +496,7 @@
                 <a href="/graficos01/">Evolución U$S</a>
                 <a href="/graficos22/">Top N Participación</a>
                 <a href="/grafico-indice-mensual/">Índice Interanual Mensual</a>
-                <a href="/calculadora/">calculadora</a>
-                <a href="/simulacion/">simulacion</a>                
+            
 
             </div>
         </div>

@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="titulo-grafico">
-    Resumen por Período
+    Totales por Período
 </div>
 
 
@@ -33,14 +33,14 @@
 </div>
 
 
+<div class="layout-doble">
+<div class="contenedor-tabla-saldos">
 
-<div class="contenedor-tabla">
-
-<table class="tabla-sistema">
+<table class="tabla-comprobantes">
 
 <tr>
 
-<th onclick="ordenar('periodo')">
+<th onclick="ordenar('periodo')" style="width:50px;">
     Periodo 
     <span class="flechas">     
         {% if request.GET.orden == 'periodo' %}
@@ -51,7 +51,7 @@
     </span>    
 </th>
 
-<th onclick="ordenar('fact')">
+<th onclick="ordenar('fact')" style="width:60px;">
     Fact 
     <span class="flechas">     
         {% if request.GET.orden == 'fact' %}
@@ -62,7 +62,7 @@
     </span>    
 </th>
 
-<th onclick="ordenar('cred')">
+<th onclick="ordenar('cred')" style="width:60px;">
     Cred 
     <span class="flechas"> 
         {% if request.GET.orden == 'cred' %}
@@ -75,8 +75,8 @@
 
 
 
-<th onclick="ordenar('neto')">
-    Subtotal 
+<th onclick="ordenar('neto')" style="width:100px;">
+    Neto 
     <span class="flechas">    
         {% if request.GET.orden == 'neto' %}
             {% if request.GET.dir == 'asc' %}▲{% else %}▼{% endif %}
@@ -87,9 +87,9 @@
 
 </th>
 
-<th>IVA</th>
+<th style="width:100px;">IVA</th>
 
-<th onclick="ordenar('total')">
+<th onclick="ordenar('total')" style="width:100px;">
     Total 
     <span class="flechas">     
         {% if request.GET.orden == 'total' %}
@@ -100,7 +100,7 @@
     </span>    
 </th>
 
-<th onclick="ordenar('cobrado')">
+<th onclick="ordenar('cobrado')" style="width:100px;">
     Cobrado 
     <span class="flechas">     
         {% if request.GET.orden == 'cobrado' %}
@@ -111,8 +111,8 @@
     </span>    
 </th>
 
-<th>
-    Subtotal usd
+<th style="width:100px;">
+    Neto usd
 </th>
 
 
@@ -192,6 +192,11 @@
     <td style="text-align:right;">
         ${{ totales.sum_cobrado|default:0|localize }}
     </td>
+    
+    <td class="numero">
+        {{ totales.total_usd|floatformat:0|localize }}
+    </td>
+
 
 </tr>
 
@@ -199,7 +204,7 @@
 </table>
 
 </div>
-
+</div>
 
 <p style="margin-top:10px; font-size:13px; color:#444;">
     <strong>Cantidad de períodos:</strong>

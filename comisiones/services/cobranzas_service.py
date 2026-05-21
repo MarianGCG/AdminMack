@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from django.db.models import Q
 from ..models import (
     Aseguradoras,
@@ -37,6 +38,25 @@ def limpiar_importe(valor):
 
 
 def importar_cobranzas_excel(archivo):
+
+    # ===================================
+    # 🔥 BORRAR COBRANZAS DEL PERIODO
+    # ===================================
+
+    nombre_archivo = archivo.name
+
+    match = re.match(r"(\d{4})-(\d{2})", nombre_archivo)
+
+    if match:
+
+        anio = int(match.group(1))
+        mes = int(match.group(2))
+
+        CobranzasComisiones.objects.filter(
+            comprobante__periodo_anio=anio,
+            comprobante__periodo_mes=mes
+        ).delete()
+
 
     df = pd.read_excel(archivo)
     df.columns = df.columns.str.strip().str.lower()
