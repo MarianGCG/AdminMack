@@ -432,10 +432,6 @@ def reporte_comisiones_view(request):
             
         # 🔥 DEBUG
 
-        if descuento_adelanto != 0:
-
-
-
 
         filas.append({
             "fecha": d.fecha_liquidacion,
