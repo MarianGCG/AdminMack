@@ -380,6 +380,22 @@ def reporte_comisiones_view(request):
 
 
 
+        # 🔥 HEREDAR SIGNO DE COMISION AGENTE
+
+        if comision_agente < 0:
+
+            comision_pas = -abs(comision_pas)
+            comision_pas_sin_iva = -abs(comision_pas_sin_iva)
+
+        else:
+
+            comision_pas = abs(comision_pas)
+            comision_pas_sin_iva = abs(comision_pas_sin_iva)
+
+            
+
+
+
         # 🔥 recién acá redondeás
         comision_pas = round(comision_pas, 2)
         comision_pas_sin_iva = round(comision_pas_sin_iva, 2)
@@ -408,6 +424,18 @@ def reporte_comisiones_view(request):
         except:
             meses = 0
             
+        # 🔥 DEBUG
+
+        if descuento_adelanto != 0:
+
+            print(
+                "CLIENTE:", d.cliente,
+                "AGENTE:", comision_agente,
+                "DESC:", descuento_adelanto,
+                "PAS:", comision_pas,
+                "PAS_SIN_IVA:", comision_pas_sin_iva
+            )
+
 
 
         filas.append({
