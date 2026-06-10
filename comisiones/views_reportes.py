@@ -164,6 +164,8 @@ def reporte_comisiones_view(request):
     filas = []
 
     for d in datos:
+        # 🔥 NUEVO
+        concepto_claro = d.ramo
 
         # 🔹 porcentaje de la liquidación (SIEMPRE)
         porcentaje = d.porcentaje
@@ -270,8 +272,12 @@ def reporte_comisiones_view(request):
                     ).first()
 
 
-
+                concepto_claro = d.ramo
                 if regla:
+
+                    if regla.conceptoclaro:
+                        concepto_claro = regla.conceptoclaro
+
                     porcentaje_pas = regla.porcentaje
 
                     
@@ -428,13 +434,6 @@ def reporte_comisiones_view(request):
 
         if descuento_adelanto != 0:
 
-            print(
-                "CLIENTE:", d.cliente,
-                "AGENTE:", comision_agente,
-                "DESC:", descuento_adelanto,
-                "PAS:", comision_pas,
-                "PAS_SIN_IVA:", comision_pas_sin_iva
-            )
 
 
 
@@ -444,6 +443,7 @@ def reporte_comisiones_view(request):
             "aseg": d.aseguradora.nombre,
             "cliente": d.cliente,
             "ramo": d.ramo,
+            "concepto_claro": concepto_claro,
             "poliza": d.poliza,
             "endoso": d.endoso,
             "moneda": d.moneda,
@@ -624,7 +624,8 @@ def reporte_comisiones_view(request):
 
             formato_moneda = workbook.add_format({
                 'num_format': '$ #,##0.00',
-                'border': 1,
+                'border': 2,
+                'bold': True ,               
                 'align': 'right'
             })
 
@@ -637,13 +638,7 @@ def reporte_comisiones_view(request):
             # 🧾 TÍTULO CON MERGE
             # ============================
 
-            worksheet.merge_range(
-                fila_inicio, col_inicio,
-                fila_inicio, col_inicio + 1,
-                "Monotributo",
-                formato_titulo_caja
-            )
-
+          
             # ============================
             # 📊 CUADRO
             # ============================
@@ -654,15 +649,19 @@ def reporte_comisiones_view(request):
             # ==worksheet.write(fila_inicio+2, col_inicio, "IVA", formato_label)
             # ==worksheet.write(fila_inicio+2, col_inicio+1, "-", formato_label)
 
-            worksheet.write(fila_inicio+1, col_inicio, "A facturar", formato_label)
+            worksheet.write(fila_inicio+1, col_inicio, "Total Comisión", formato_label)
             worksheet.write(fila_inicio+1, col_inicio+1, total_neto, formato_moneda)
 
-            worksheet.write(fila_inicio+2, col_inicio, "Desc. (Imp.)", formato_label)
+            worksheet.write(fila_inicio+2, col_inicio, "Desc.Impuestos", formato_label)
             worksheet.write(fila_inicio+2, col_inicio+1, descuento, formato_porcentaje)
 
-            worksheet.write(fila_inicio+3, col_inicio, "Pago", formato_label)
+            worksheet.write(fila_inicio+3, col_inicio, "Neto Comisión", formato_label)
             worksheet.write(fila_inicio+3, col_inicio+1, pago, formato_moneda)
 
+            worksheet.merge_range(fila_inicio+4, col_inicio, fila_inicio+4, col_inicio + 1,"Monotributo", formato_titulo_caja )
+
+            worksheet.write(fila_inicio+5, col_inicio, "A Facturar y Pago", formato_label)
+            worksheet.write(fila_inicio+5, col_inicio+1, pago, formato_moneda)
 
             # =========================
             # ENCABEZADO

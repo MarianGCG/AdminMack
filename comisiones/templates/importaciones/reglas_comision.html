@@ -267,10 +267,9 @@ font-size:20px;
     background:white;
     padding:15px;
     border-radius:6px;
-    width:900px;
+    width:calc(100vw - 450px);
     box-shadow:0 1px 3px rgba(0,0,0,0.1);
 }
-
 
 .panel-edicion{
     position:fixed;
@@ -352,7 +351,8 @@ font-size:20px;
 
 .titulo-arbol{
     display:grid;
-    grid-template-columns: 120px 180px 90px 70px 110px 70px 90px 90px;
+    grid-template-columns: 180px 300px 80px 70px 120px 70px 90px 90px;
+   
     gap:10px;
 }
 
@@ -360,7 +360,7 @@ font-size:20px;
 
 .grid-reglas{
     display:grid;
-    grid-template-columns:  300px 90px 70px 110px 70px 90px 90px;
+    grid-template-columns: 180px 300px 80px 70px 120px 70px 90px 90px;
     gap:10px;
     align-items:center;
 }
@@ -392,6 +392,7 @@ font-size:20px;
 
 <div class="titulo-arbol grid-reglas">
     <div>Concepto</div>   <!-- 👈 antes Aseguradora/Ramo -->
+    <div>Concepto Claro</div>
     <div>Moneda</div>
     <div>Nivel</div>
     <div>Rango</div>
@@ -432,7 +433,9 @@ font-size:20px;
                     <div class="arbol-col">
                         {{r.producto}}
                     </div>
-
+                    <div>
+                        {{r.conceptoclaro|default:"-"}}
+                    </div>
                     <!-- 📊 DATOS -->
                     <div>{{r.moneda}}</div>
                     <div class="numero">{{r.nivel}}</div>
@@ -486,6 +489,9 @@ font-size:20px;
 <label>Producto</label>
 <input id="edit_producto">
 
+<label>Concepto Claro</label>
+<input id="edit_conceptoclaro">
+
 <label>Moneda</label>
 <input id="edit_moneda">
 
@@ -537,6 +543,7 @@ function nuevoRegistro(){
     document.getElementById("edit_aseguradora").value = valor
 
     document.getElementById("edit_producto").value = ""
+    document.getElementById("edit_conceptoclaro").value = ""    
     document.getElementById("edit_moneda").value = ""
     document.getElementById("edit_nivel").value = ""
     document.getElementById("edit_rango").value = ""
@@ -582,6 +589,7 @@ function guardarEdicion(){
         id: "",
         aseguradora: document.getElementById("edit_aseguradora").value,
         producto: document.getElementById("edit_producto").value,
+        conceptoclaro: document.getElementById("edit_conceptoclaro").value,        
         moneda: document.getElementById("edit_moneda").value,
         nivel: parseInt(document.getElementById("edit_nivel").value || 0),
         anio: parseInt(document.getElementById("edit_anio").value || 0),

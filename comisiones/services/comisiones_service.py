@@ -263,6 +263,28 @@ COLUMNAS_EQUIVALENTES = {
         "FECHACOBRO"
     ],
 
+
+    "nivel": [
+        "nivel"
+    ],
+
+    "anio_poliza": [
+        "anio_poliza",
+        "anio poliza",
+        "año poliza"
+    ],
+
+    "base_comision": [
+        "base comision",
+        "base comisión"
+    ],
+
+    "concepto_claro": [
+        "concepto_claro",
+        "concepto claro"
+    ],
+
+
 }
 
 def detectar_columnas(columnas_excel):

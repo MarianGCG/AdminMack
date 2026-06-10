@@ -296,6 +296,14 @@ class ReglaComision(models.Model):
 
     producto = models.CharField(max_length=50)
 
+    conceptoclaro = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True
+    )
+
+
+
     nivel = models.IntegerField()
 
     anio_poliza = models.IntegerField(

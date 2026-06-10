@@ -739,6 +739,7 @@ def guardar_regla_comision(request):
             # 🔹 SOLO NUEVA
             regla.aseguradora_id = data["aseguradora"]
             regla.producto = data["producto"]
+            regla.conceptoclaro = data.get("conceptoclaro")
             regla.moneda = data["moneda"]
 
      
@@ -751,7 +752,7 @@ def guardar_regla_comision(request):
         regla.porcentaje = float(data.get("porcentaje") or 0)
         regla.rango = data.get("rango") or None
         regla.base_comision = data.get("base_comision", "Prima")
-
+        regla.conceptoclaro = data.get("conceptoclaro")
         regla.save()
 
         print("DESPUES:", regla.nivel, regla.rango, regla.anio_poliza, regla.porcentaje)
@@ -763,6 +764,7 @@ def guardar_regla_comision(request):
                 "aseguradora": regla.aseguradora.nombre,
                 "aseguradora_id": regla.aseguradora.id,
                 "producto": regla.producto,
+                "conceptoclaro": regla.conceptoclaro,
                 "moneda": regla.moneda,
                 "nivel": regla.nivel,
                 "rango": regla.rango,

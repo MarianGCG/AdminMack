@@ -102,6 +102,18 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             if producto == "" or producto.lower() == "nan":
                 producto = None
 
+
+            # ------------------------
+            # CONCEPTO CLARO
+            # ------------------------
+
+            conceptoclaro = row.get("concepto_claro")
+
+            if pd.isna(conceptoclaro):
+                conceptoclaro = None
+            else:
+                conceptoclaro = str(conceptoclaro).strip()
+
                 
             # ------------------------
             # NIVEL
@@ -112,7 +124,8 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
 
             try:
                 nivel = int(float(nivel))
-            except:
+            except Exception as e:
+                print("ERROR FILA", i, ":", e)
                 errores += 1
                 continue
 
@@ -199,9 +212,11 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
                     .replace("%", "")
                     .replace(",", ".")
                 )
-            except:
+            except Exception as e:
+                print("ERROR FILA", i, ":", e)
                 errores += 1
                 continue
+
 
             # ------------------------
             # BASE COMISION
@@ -237,7 +252,8 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
 
                 defaults={
                     "porcentaje": porcentaje,
-                    "base_comision": base_comision   # 🔥 NUEVO                    
+                    "base_comision": base_comision,
+                    "conceptoclaro": conceptoclaro
                 }
 
             )
@@ -245,7 +261,8 @@ def importar_reglas_comision_excel(archivo, aseguradora_id):
             registros += 1
 
         except:
+            print("ERROR FILA", i, ":", e)
             errores += 1
-
+            
 
     return f"{registros} reglas importadas - {errores} errores"

@@ -257,7 +257,7 @@ th {
     <th>Aseg</th>
     <th>Pas</th>
     <th class="texto">Cliente</th>
-    <th>Ramo</th>
+    <th>Concepto</th>
     <th>Poliza</th>
     <th>Endoso</th>
     <th>Moneda</th>
@@ -283,7 +283,7 @@ th {
 
 
     {% for d in datos %}
-
+    
     <tr>
     <td class="texto">{{d.fecha|date:"d/m/y"}}</td>
 
@@ -306,8 +306,7 @@ th {
 
     <td class="col-cliente">{{d.cliente}}</td>
 
-    <td>{{ d.ramo|default_if_none:""|default:""|truncatechars:20  }}</td>
-
+    <td>{{ d.concepto_claro|default_if_none:""|default:""|truncatechars:40 }}</td>
 
     <td>{{d.poliza}}</td>
 
