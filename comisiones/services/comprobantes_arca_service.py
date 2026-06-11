@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime
-from ..models import Aseguradoras, ComprobantesComisiones
+from ..models import ( ComprobantesComisiones,  CobranzasComisiones,  Aseguradoras)
+
 from io import BytesIO
 
 
@@ -93,9 +94,35 @@ def importar_comprobantes_arca(archivo):
             "no_encontrados": 0,
             "error": str(e)
         }
-    print(df.columns.tolist())
+
     # limpiar nombres columnas
     df.columns = df.columns.astype(str).str.strip()
+
+    # ================================
+    # AÑOMES IMPORTACION
+    # ================================
+
+    aniomes_importacion = archivo.name[:6]
+
+    if not aniomes_importacion.isdigit():
+        raise Exception(
+            "El nombre del archivo debe comenzar con AAAAMM. Ej: 202605_ARCA.xlsx"
+        )
+
+
+    # borrar importación anterior del mismo archivo
+
+    comprobantes = ComprobantesComisiones.objects.filter(
+        aniomes_importacion=aniomes_importacion
+    )
+
+    CobranzasComisiones.objects.filter(
+        comprobante__in=comprobantes
+    ).delete()
+
+    comprobantes.delete()
+
+
 
     # ================================
     # CONTADORES
@@ -200,7 +227,10 @@ def importar_comprobantes_arca(archivo):
                 "exento": exento,
                 "iva": iva,
                 "total": total,
+                "aniomes_importacion": aniomes_importacion,
             }
+
+
         )
 
         if created:

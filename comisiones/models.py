@@ -66,6 +66,12 @@ class ComprobantesComisiones(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
     codigo_interno = models.CharField(max_length=20, blank=True, null=True)
     no_gravado = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    # 🔥 NUEVO
+    aniomes_importacion = models.CharField(
+        max_length=6,
+        blank=True,
+        null=True
+    )
 
     def __str__(self):
         return f"{self.numero_comprobante}"
