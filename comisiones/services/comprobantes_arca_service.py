@@ -156,15 +156,13 @@ def importar_comprobantes_arca(archivo):
             omitidos += 1
             continue
 
-        # ================================
-        # PERIODO = MES ANTERIOR
-        # ================================
-        periodo_mes = fecha.month - 1
-        periodo_anio = fecha.year
 
-        if periodo_mes == 0:
-            periodo_mes = 12
-            periodo_anio -= 1
+        # ================================
+        # PERIODO = LOTE DE PRODUCCION
+        # ================================
+        periodo_anio = int(aniomes_importacion[:4])
+        periodo_mes = int(aniomes_importacion[4:6])
+
 
         # ================================
         # IMPORTES
