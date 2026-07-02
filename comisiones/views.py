@@ -517,7 +517,7 @@ def graficos01(request):
             cursor.execute("""
                 SELECT
                     c.periodo_anio,
-                    ((c.periodo_mes-1)/3+1)::int,
+                    CAST(((c.periodo_mes - 1) / 3 + 1) AS INTEGER) AS trimestre,
                     a.nombre,
                     COALESCE(a.color,'#2c78be'),
 
@@ -746,7 +746,7 @@ def graficos02(request):
         cursor.execute("""
             SELECT
                 c.periodo_anio,
-                ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
+                CAST(((c.periodo_mes - 1) / 3 + 1) AS INTEGER) AS trimestre,
                 a.nombre,
                 COALESCE(a.color, '#3366cc') AS color,
                 SUM((c.neto + c.no_gravado + c.exento) / d.valor) AS total_usd
@@ -1082,10 +1082,32 @@ def grafico_indice_mensual(request):
 
             anio_base = int(anio_base_param)
 
+                    
         else:
 
-            anio_base = anios_disponibles[0]
+            anio_base_param = get_parametro("ANIO_BASE_INDICE")
+
+            if anio_base_param is not None:
+
+                anio_base = int(anio_base_param)
+
+            elif anios_disponibles:
+
+                anio_base = anios_disponibles[0]
+
+            else:
+
+                anio_base = None
+
                 
+
+    if not anios_seleccionados:
+        return render(request, "grafico_indice_mensual.html", {
+            "grafico": "",
+            "anios_disponibles": anios_disponibles,
+            "anios_seleccionados": [],
+            "anio_base": anio_base,
+        })
 
     # ===============================
     # Query
@@ -1353,7 +1375,7 @@ def graficos22(request):
         tope = 100.0
 
 
-    # ===============================
+    # ===============================F
     # QUERY
     # ===============================
 
@@ -1362,7 +1384,7 @@ def graficos22(request):
         cursor.execute("""
             SELECT
                 c.periodo_anio,
-                ((c.periodo_mes - 1) / 3 + 1)::int AS trimestre,
+                CAST(((c.periodo_mes - 1) / 3 + 1) AS INTEGER) AS trimestre,
                 a.nombre,
                 COALESCE(a.color, '#3366cc') AS color,
                 SUM((c.neto + c.no_gravado + c.exento) / d.valor) AS total_usd

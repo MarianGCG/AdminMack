@@ -81,26 +81,24 @@ WSGI_APPLICATION = 'adminmack.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
-
 import dj_database_url
 import os
 
-# TRABAJAR LOCALMENTE
-#DATABASES = {
-#    'default': dj_database_url.config(
-#        default='postgresql://postgres:@localhost:5432/MACKINLAY',
-#        conn_max_age=600
-#    )
-#}
+if os.getenv("DATABASE_URL"):
+    # Render (PostgreSQL)
+    DATABASES = {
+        "default": dj_database_url.config(conn_max_age=600)
+    }
+else:
+    # Notebook (SQLite)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
-
-# TRABAJAR RENDER
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://postgres:@localhost:5432/MACKINLAY'),
-        conn_max_age=600
-    )
-}
+    
 
 
 
