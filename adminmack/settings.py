@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'comisiones',
     'django.contrib.humanize',
     'calculadora',
+    'finanzas',
     'simulacion'
 ]
 

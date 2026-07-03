@@ -14,4 +14,5 @@ urlpatterns = [
     path('', include('comisiones.urls')),
     path('calculadora/', include('calculadora.urls')),
     path('simulacion/', include('simulacion.urls')),
+    path("finanzas/", include("finanzas.urls")),
 ]
