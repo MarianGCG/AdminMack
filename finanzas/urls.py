@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_importaciones
 
 urlpatterns = [
   
@@ -12,8 +13,13 @@ urlpatterns = [
     path( "personas/",                      views.personas,             name="personas"),
     path( "persona-guardar/",               views.persona_guardar,      name="persona_guardar"),
     path( "persona-eliminar/<int:id>/",     views.persona_eliminar,     name="persona_eliminar"),
-    path( "medios_pago/",                   views.medios_pago,          name="medios_pago"),
-    path( "medio_pago-guardar/",            views.medio_pago_guardar,   name="medio_pago_guardar"),
-    path( "medio_pago-eliminar/<int:id>/",  views.medio_pago_eliminar,  name="medio_pago_eliminar"),
+    path("reglas/",                         views.reglas,               name="reglas"),
+    path("regla-guardar/",                  views.regla_guardar,        name="regla_guardar"),
+    path("regla-eliminar/<int:id>/",        views.regla_eliminar,       name="regla_eliminar"),
+    path("movimientos/",                    views.movimientos,          name="movimientos"    ),
+    path("movimiento-guardar/",             views.movimiento_guardar,   name="movimiento_guardar"    ),
+    path("movimiento-eliminar/<int:id>/",   views.movimiento_eliminar,  name="movimiento_eliminar"    ),
+    path("movimiento-importar/",            views_importaciones.importar_movimientos_view,   name="movimiento_importar"),
+    path("movimiento-actualizar/",          views.movimiento_actualizar,name="movimiento_actualizar" ),
 
 ]

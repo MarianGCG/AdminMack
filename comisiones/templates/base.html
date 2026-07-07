@@ -417,8 +417,9 @@
 </head>
 <body>
 
-<div class="navbar">
 
+{% if not popup %}
+<div class="navbar">
 
 {% load static %}
 
@@ -521,20 +522,16 @@
                     Personas
                 </a>
 
-                <a href="{% url 'medios_pago' %}">
-                    Medios de Pago
-                </a>
 
                 <hr>
 
-                <a href="#">
+                <a href="{% url 'movimientos' %}">
                     Movimientos
                 </a>
 
-                <a href="#">
+                <a href="{% url 'reglas' %}">
                     Reglas de Clasificación
                 </a>
-
                 <hr>
 
                 <a href="#">
@@ -557,10 +554,15 @@
 
 
     </div> <!-- menu -->
-    </div> <!-- navbar -->
+</div> <!-- navbar -->
+{% endif %}
 
 
-<div class="contenido">
+<div class="contenido"
+{% if popup %}
+    style="padding:8px 12px;"
+{% endif %}
+>
     {% block content %}
     {% endblock %}
 </div>
