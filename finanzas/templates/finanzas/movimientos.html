@@ -49,9 +49,20 @@
     background:#f4f8fc;
 }
 
+.panel-filtros2{
+    display: inline-block;     /* El marco ocupa solo el contenido */
+    background: #fff;
+    padding: 14px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    margin-bottom: 18px;
+    width:100%;
+    min-width:1800px;
+}
 </style>
 
 <h2>MOVIMIENTOS</h2>
+<div class="panel-filtros2">
 
 <div style="margin-bottom:12px;">
 
@@ -62,22 +73,36 @@
     accept=".pdf,.xls,.xlsx"
     onchange="importarExcel()">
 
-<button
+<button  id="btnImportar" 
     onclick="document.getElementById('archivoExcel').click()"
-    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;">
+    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;min-width:170px">
 
     📥 Importar Resumen/Extracto
 
 </button>
 
 
-<button
+<button id="btnEliminar"
+    onclick="location.href='{% url 'movimientos' %}?eliminar=1'"
+    style="padding:6px 14px;
+           background:#c0392b;
+           color:white;
+           border:none;
+           border-radius:6px;
+           margin-left:8px;">
+
+    🗑 Eliminar Importación
+
+</button>
+
+
+<button id="btnReaplicar"
     onclick="location.href='{% url 'movimiento_actualizar' %}'"
-    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;margin-left:8px;">
+    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;margin-left:8px;min-width:170px">
 🔄 Reaplicar Reglas
 </button>
 
-<button
+<button  id="btnReglas"
     type="button"
     onclick="abrirReglas()"
     style="padding:6px 14px;
@@ -85,11 +110,27 @@
            color:white;
            border:none;
            border-radius:6px;
-           margin-left:8px;">
+           margin-left:8px;min-width:170px">
 
     📚 Reglas
 
 </button>
+
+
+
+<button id="btnExportar"
+        onclick="location.href='{% url 'movimientos_exportar_excel' %}'"
+        style="padding:6px 14px;
+               background:#198754;
+               color:white;
+               border:none;
+               border-radius:6px;
+               margin-left:8px;">
+
+    📊 Exportar Excel
+
+</button>
+
 
 <form method="get" style="margin:15px 0;">
 
@@ -204,14 +245,15 @@ Período
     </button>
 
 </form>
-
-
+</div>
+</div>
 
 
 
     <table class="tabla-resumen">
         <thead>
             <tr>
+                <th style="width:90px;">Período</th>
                 <th style="width:220px;">Origen</th>
                 <th style="width:90px;text-align:right;">Registros</th>
                 <th style="width:160px;text-align:right;">Importe</th>
@@ -226,7 +268,9 @@ Período
 
             <tr>
 
-
+                <td>
+                    {{ r.periodo }}
+                </td>
                 <td style="
                     width:210px;
                     white-space:nowrap;
@@ -250,6 +294,7 @@ Período
         {% endfor %}
 
             <tr style="font-weight:bold;background:#eef3fa;">
+                <td></td>
                 <td>TOTAL</td>
                 <td style="text-align:right;">{{ totales.cantidad }}</td>
                 <td style="text-align:right;">{{ totales.total|floatformat:2 }}</td>
@@ -265,45 +310,46 @@ Período
 
     <tr>
 
-        <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'periodo' %}-periodo{% else %}periodo{% endif %}">
+        <th style="width:90px;">
+            <a style="color:white;text-decoration:none;" href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'periodo' %}-periodo{% else %}periodo{% endif %}">
                 {% if orden == 'periodo' %}▼{% else %}▲{% endif %} Período
             </a>
         </th>
 
         <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'fecha' %}-fecha{% else %}fecha{% endif %}">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'fecha' %}-fecha{% else %}fecha{% endif %}">
                 {% if orden == 'fecha' %}▼{% else %}▲{% endif %} Fecha
             </a>
         </th>
 
         <th style="width:420px;">Descripción</th>
+
         <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'importe' %}-importe{% else %}importe{% endif %}">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'importe' %}-importe{% else %}importe{% endif %}">
                 {% if orden == 'importe' %}▼{% else %}▲{% endif %} Importe
             </a>
         </th>
 
-        <th style="width:260px;">
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'origen' %}-origen{% else %}origen{% endif %}">
+        <th style="width:260px;color:white;">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'origen' %}-origen{% else %}origen{% endif %}">
                 {% if orden == 'origen' %}▼{% else %}▲{% endif %} Origen
             </a>
         </th>
 
         <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'categoria__nombre' %}-categoria__nombre{% else %}categoria__nombre{% endif %}">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'categoria__nombre' %}-categoria__nombre{% else %}categoria__nombre{% endif %}">
                 {% if orden == 'categoria__nombre' %}▼{% else %}▲{% endif %} Categoría
             </a>
         </th>
 
         <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'finalidad__nombre' %}-finalidad__nombre{% else %}finalidad__nombre{% endif %}">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'finalidad__nombre' %}-finalidad__nombre{% else %}finalidad__nombre{% endif %}">
                 {% if orden == 'finalidad__nombre' %}▼{% else %}▲{% endif %} Finalidad
             </a>
         </th>
 
         <th>
-            <a href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'persona__nombre' %}-persona__nombre{% else %}persona__nombre{% endif %}">
+            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'persona__nombre' %}-persona__nombre{% else %}persona__nombre{% endif %}">
                 {% if orden == 'persona__nombre' %}▼{% else %}▲{% endif %} Persona
             </a>
         </th>
@@ -376,24 +422,36 @@ Período
         </tr>
 
     {% endfor %}
-
+ 
     </tbody>
 
 </table>
 <script>
 
+
 function importarExcel(){
 
     let archivo = document.getElementById("archivoExcel").files[0];
+        if(!archivo){
+            return;
+        }
 
-    if(!archivo)
-        return;
+        console.log("archivo:", archivo);
+        document.getElementById("btnImportar").disabled = true;
+        document.getElementById("btnEliminar").disabled = true;
+        document.getElementById("btnReaplicar").disabled = true;
+        document.getElementById("btnReglas").disabled = true;
+
+        document.getElementById("btnImportar").innerHTML = "⏳ Importando...";
+
+
+ 
 
     let datos = new FormData();
 
     datos.append("archivo", archivo);
 
-    fetch("{% url 'movimiento_importar' %}",{
+    fetch("{% url 'movimiento_importar' %}", {
 
         method:"POST",
 
@@ -405,9 +463,9 @@ function importarExcel(){
 
     })
 
-    .then(r=>r.json())
+    .then(r => r.json())
 
-    .then(data=>{
+    .then(data => {
 
         if(data.ok){
 
@@ -419,11 +477,27 @@ function importarExcel(){
 
         }
 
+    })
+
+    .catch(error => {
+
+        alert(error);
+
+    })
+
+    .finally(() => {
+
+        document.getElementById("btnImportar").disabled = false;
+        document.getElementById("btnEliminar").disabled = false;
+        document.getElementById("btnReaplicar").disabled = false;
+        document.getElementById("btnReglas").disabled = false;
+
+        document.getElementById("btnImportar").innerHTML =
+            "📥 Importar Resumen/Extracto";
+
     });
 
 }
-
-
 
 
 function abrirReglas(){

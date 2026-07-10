@@ -7,7 +7,22 @@ import json
 from django.views.decorators.http import require_GET
 from .services.movimientos_service import importar_movimientos,  buscar_regla, actualizar_movimientos
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
+from django.db.models.functions import Coalesce
+from django.db.models import DecimalField
+from django.contrib import messages
+
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+
+from .models import Movimiento
+
+from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.auth.decorators import login_required
+
+
 @require_GET
 def categoria_eliminar(request, id):
 
@@ -15,7 +30,7 @@ def categoria_eliminar(request, id):
 
     return JsonResponse({"ok": True})
 
-
+@login_required
 def categorias(request):
     categorias = Categoria.objects.order_by("nombre")
 
@@ -52,7 +67,7 @@ def categoria_guardar(request):
 
     return JsonResponse({"ok": True})
 
-
+@login_required
 def finalidades(request):
 
     finalidades = Finalidad.objects.order_by("nombre")
@@ -96,7 +111,7 @@ def finalidad_eliminar(request, id):
 
 
 
-
+@login_required
 def personas(request):
 
     personas = Persona.objects.order_by("nombre")
@@ -148,7 +163,7 @@ def persona_eliminar(request, id):
 
 
 
-
+@login_required
 def reglas(request):
 
     reglas = Regla.objects.order_by("texto")
@@ -219,7 +234,7 @@ def regla_eliminar(request, id):
 # ==========================================
 # MOVIMIENTOS
 # ==========================================
-
+@login_required
 def movimientos(request):
 
     movimientos = Movimiento.objects.select_related(
@@ -284,19 +299,23 @@ def movimientos(request):
         .order_by("-periodo")
     )
 
+
+
     # =====================================
-    # RESUMEN POR ORIGEN
+    # RESUMEN POR PERIODO / ORIGEN
     # =====================================
 
     resumen_origen = (
         movimientos
-        .values("origen")
+        .values("periodo", "origen")
         .annotate(
             cantidad=Count("id"),
             total=Sum("importe")
         )
-        .order_by("origen")
+        .order_by("periodo", "origen")
     )
+
+
 
     totales = movimientos.aggregate(
         cantidad=Count("id"),
@@ -374,3 +393,338 @@ def movimiento_actualizar(request):
     actualizar_movimientos()
 
     return redirect("movimientos")
+
+#############################################################################################################
+# DASHBOARD
+#############################################################################################################
+@login_required
+def dashboard(request):
+
+    periodo_actual = request.GET.get("periodo")
+
+    if not periodo_actual:
+
+        periodo_actual = (
+            Movimiento.objects
+            .order_by("-periodo")
+            .values_list("periodo", flat=True)
+            .first()
+        )
+
+    movimientos = Movimiento.objects.filter(
+        periodo=periodo_actual
+    )
+
+    #==========================
+    # KPIs
+    #==========================
+
+    total_gastos = movimientos.aggregate(
+
+        total=Coalesce(
+
+            Sum("importe"),
+
+            0,
+
+            output_field=DecimalField()
+
+        )
+
+    )["total"]
+
+
+    cantidad_movimientos = movimientos.count()
+
+
+    ticket_promedio = movimientos.aggregate(
+
+        promedio=Coalesce(
+
+            Avg("importe"),
+
+            0,
+
+            output_field=DecimalField()
+
+        )
+
+    )["promedio"]
+
+
+    cantidad_categorias = (
+        movimientos
+        .values("categoria")
+        .distinct()
+        .count()
+    )
+
+
+
+    #==========================
+    # GASTOS POR CATEGORIA
+    #==========================
+
+    gastos_categoria = (
+
+        movimientos
+
+        .values("categoria__nombre")
+
+        .annotate(
+
+            total=Sum("importe")
+
+        )
+
+        .order_by("-total")
+
+    )
+
+
+
+    #==========================
+    # PERSONAS
+    #==========================
+
+    gastos_persona = (
+
+        movimientos
+
+        .values("persona__nombre")
+
+        .annotate(
+
+            total=Sum("importe")
+
+        )
+
+        .order_by("-total")
+
+    )
+
+
+
+    #==========================
+    # FINALIDAD
+    #==========================
+
+    gastos_finalidad = (
+
+        movimientos
+
+        .values("finalidad__nombre")
+
+        .annotate(
+
+            total=Sum("importe")
+
+        )
+
+        .order_by("-total")
+
+    )
+
+
+
+    #==========================
+    # ORIGEN
+    #==========================
+
+    gastos_origen = (
+
+        movimientos
+
+        .values("origen")
+
+        .annotate(
+
+            total=Sum("importe")
+
+        )
+
+        .order_by("-total")
+
+        )
+
+    ultimos_movimientos = movimientos[:20]
+
+    datos_dashboard = []
+
+    for m in movimientos.select_related(
+        "categoria",
+        "finalidad",
+        "persona",
+    ):
+
+        datos_dashboard.append({
+
+            "fecha": m.fecha,
+            "periodo": m.periodo,
+            "descripcion": m.descripcion,
+            "importe": float(m.importe),
+            "categoria": m.categoria.nombre if m.categoria else "Sin clasificar",
+            "finalidad": m.finalidad.nombre if m.finalidad else "Sin clasificar",
+            "persona": m.persona.nombre if m.persona else "Sin asignar",
+            "origen": m.origen,
+            "archivo": m.nombre_archivo,
+            "tipo": m.get_tipo_display(),
+
+        })
+        
+
+
+
+    periodos = (
+
+        Movimiento.objects
+
+        .values("periodo")
+
+        .distinct()
+
+        .order_by("-periodo")
+
+    )
+
+
+
+    contexto = {
+
+        "periodo_actual": periodo_actual,
+
+        "periodos": periodos,
+
+        "total_gastos": total_gastos,
+
+        "cantidad_movimientos": cantidad_movimientos,
+
+        "ticket_promedio": ticket_promedio,
+
+        "cantidad_categorias": cantidad_categorias,
+
+        "ultimos_movimientos": ultimos_movimientos,
+
+        "gastos_categoria": list(gastos_categoria),
+
+        "gastos_persona": list(gastos_persona),
+
+        "gastos_finalidad": list(gastos_finalidad),
+
+        "gastos_origen": list(gastos_origen),
+
+        "datos_json": json.dumps(
+            datos_dashboard,
+            cls=DjangoJSONEncoder
+        ),
+    }
+
+    return render(
+
+        request,
+
+        "finanzas/dashboard.html",
+
+        contexto
+
+    )
+
+
+def eliminar_resumen(request):
+
+    if request.method == "POST":
+
+        nombre_archivo = request.POST.get("nombre_archivo")
+
+        cantidad = Movimiento.objects.filter(
+            nombre_archivo=nombre_archivo
+        ).count()
+
+        Movimiento.objects.filter(
+            nombre_archivo=nombre_archivo
+        ).delete()
+
+        messages.success(
+            request,
+            f"Se eliminaron {cantidad} movimientos."
+        )
+
+        return redirect("movimientos")
+
+
+@login_required
+def movimientos_exportar_excel(request):
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Movimientos"
+
+    encabezados = [
+        "Fecha",
+        "Período",
+        "Tipo",
+        "Descripción",
+        "Importe",
+        "Categoría",
+        "Finalidad",
+        "Persona",
+        "Origen",
+        "Grupo",
+        "Observación",
+        "Archivo"
+    ]
+
+    ws.append(encabezados)
+
+    # Encabezados en negrita
+    for celda in ws[1]:
+        celda.font = Font(bold=True)
+
+    movimientos = (
+        Movimiento.objects
+        .select_related(
+            "categoria",
+            "finalidad",
+            "persona"
+        )
+        .order_by("-fecha", "-id")
+    )
+
+    for m in movimientos:
+
+        ws.append([
+            m.fecha,
+            m.periodo,
+            m.get_tipo_display(),
+            m.descripcion,
+            float(m.importe),
+            m.categoria.nombre if m.categoria else "",
+            m.finalidad.nombre if m.finalidad else "",
+            m.persona.nombre if m.persona else "",
+            m.origen,
+            m.grupo,
+            m.observacion,
+            m.nombre_archivo,
+        ])
+
+    # Formato de columnas
+    for fila in ws.iter_rows(min_row=2):
+        fila[0].number_format = "dd/mm/yyyy"   # Fecha
+        fila[4].number_format = '#,##0.00'     # Importe
+
+    # Ajustar ancho automáticamente
+    for columna in ws.columns:
+        largo = max(len(str(celda.value or "")) for celda in columna)
+        ws.column_dimensions[get_column_letter(columna[0].column)].width = min(largo + 3, 50)
+
+    # Filtro automático
+    ws.auto_filter.ref = ws.dimensions
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="Movimientos.xlsx"'
+
+    wb.save(response)
+
+    return response

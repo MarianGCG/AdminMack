@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+
+.contenedor{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.panel-derecha{
+    width:360px;
+    background:#fff;
+    border-left:1px solid #ddd;
+    padding:20px;
+    min-height:520px;
+    box-sizing:border-box;
+}
+
+.panel-derecha h3{
+    margin-top:0;
+    margin-bottom:25px;
+}
+
+.panel-derecha label{
+    display:block;
+    margin-bottom:6px;
+    font-weight:bold;
+}
+
+.panel-derecha select{
+    width:100%;
+    padding:6px;
+    margin-bottom:25px;
+}
+
+</style>
+
+
+<div class="contenedor">
+
+    <div class="panel-derecha">
+
+        <h3>Eliminar Importación</h3>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <label>Archivo</label>
+
+            <select name="nombre_archivo">
+
+                {% for a in archivos %}
+
+                    <option value="{{ a.nombre_archivo }}">
+                        {{ a.nombre_archivo }} ({{ a.cantidad }} movimientos)
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+            <button
+                type="submit"
+                style="
+                    padding:8px 18px;
+                    background:#c0392b;
+                    color:white;
+                    border:none;
+                    border-radius:6px;">
+
+                🗑 Eliminar Importación
+
+            </button>
+
+            <button
+                type="button"
+                onclick="history.back()"
+                style="padding:8px 18px;margin-left:10px;">
+
+                Cancelar
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

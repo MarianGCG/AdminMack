@@ -6,7 +6,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from ..models import Movimiento, Regla
 import re
-
+print("******** CARGUE movimientos_service.py ********")
 MESES_CORTOS = {
     "ENE": "01",
     "FEB": "02",
@@ -23,29 +23,6 @@ MESES_CORTOS = {
 }
 
 
-def obtener_periodo_pdf(texto):
-
-    texto = texto.upper()
-
-    m = re.search(
-        r"CIERRE.*?(\d{2})\s+([A-Z]{3})\s+(\d{2})",
-        texto,
-        re.DOTALL
-    )
-
-    if not m:
-        print("NO ENCONTRE EL PERIODO")
-        return ""
-
-    dia = m.group(1)
-    mes = m.group(2)
-    anio = m.group(3)
-
-    periodo = "20" + anio + MESES_CORTOS.get(mes, "00")
-
-    print("PERIODO DETECTADO:", periodo)
-
-    return periodo
 
 
 def obtener_origen_pdf(texto):
@@ -73,6 +50,7 @@ def obtener_datos_nombre_archivo(nombre_archivo):
     nombre = os.path.splitext(os.path.basename(nombre_archivo))[0]
 
     partes = nombre.split("-")
+    print("ARCHIVO =", nombre)
 
     if len(partes) < 5:
         raise Exception(
@@ -104,7 +82,6 @@ def buscar_regla(descripcion):
     return None
 
 
-
 def importar_movimientos(archivo):
 
     datos = obtener_datos_nombre_archivo(archivo.name)
@@ -113,7 +90,50 @@ def importar_movimientos(archivo):
 
     if extension == ".pdf":
 
-        return importar_pdf_movimientos(archivo)
+        # ======================================================
+        # VISA ICBC ANDRES
+        # ======================================================
+        if (
+            datos["tipo"] == "TC"
+            and datos["marca"] == "VISA"
+            and datos["banco"] == "ICBC"
+            and datos["alias"] == "ANDRES"
+        ):
+
+            return importar_pdf_tc_icbc_andres(
+                archivo,
+                datos
+            )
+
+        # VISA GALICIA NUEVO
+        elif (
+            datos["tipo"] == "TC"
+            and datos["marca"] == "VISA"
+            and datos["banco"] == "GALI"
+        ):
+
+            return importar_pdf_tc_galicia(
+                archivo,
+                datos
+            )
+
+        # AMEX GALICIA
+        elif (
+            datos["tipo"] == "TC"
+            and datos["marca"] == "AMEX"
+            and datos["banco"] == "GALI"
+        ):
+
+            return importar_pdf_tc_amex_galicia(
+                archivo,
+                datos
+            )
+
+        # RESTO DE LOS PDF
+        else:
+
+            return importar_pdf_movimientos(archivo)
+
 
     elif extension == ".csv":
 
@@ -182,6 +202,8 @@ def importar_movimientos(archivo):
 
         Movimiento.objects.create(
 
+            nombre_archivo=archivo.name,
+
             fecha=fecha,
             periodo=periodo,
             origen=origen,
@@ -208,7 +230,7 @@ def importar_movimientos(archivo):
 
     
 def importar_pdf_movimientos(archivo):
-
+    print("********** ENTRE A IMPORTADOR GENERICO ****importar_pdf_movimientos******")
     movimientos = []
 
     leyendo = False
@@ -234,10 +256,6 @@ def importar_pdf_movimientos(archivo):
         periodo = datos["periodo"]
 
 
-
-
-        periodo = obtener_periodo_pdf(texto_caratula)
-
         print("PERIODO:", periodo)
         print()
         print("ORIGEN DETECTADO:", origen)
@@ -247,7 +265,8 @@ def importar_pdf_movimientos(archivo):
         for pagina in pdf.pages:
 
             texto = pagina.extract_text()
-
+            print("=" * 80)
+            print(texto[:3000])
             if not texto:
                 continue
 
@@ -358,11 +377,10 @@ def importar_pdf_movimientos(archivo):
 
     # SOLO MIENTRAS HACEMOS PRUEBAS
     Movimiento.objects.filter(
-        periodo=periodo,
-        origen=origen,
+        nombre_archivo=archivo.name
     ).delete()
 
-
+    print("TOTAL MOVIMIENTOS LEIDOS =", len(movimientos))
     for mov in movimientos:
 
         regla = buscar_regla(mov["descripcion"])
@@ -406,9 +424,11 @@ def importar_pdf_movimientos(archivo):
         if importe.endswith("-"):
             importe = "-" + importe[:-1]
         print("PERIODO =", periodo)
-
+        print("GUARDANDO  de importar_pdf_movimientos   :", archivo.name)
+        print("ARCHIVO =", archivo.name)
         Movimiento.objects.create(
 
+            nombre_archivo=archivo.name,
 
             fecha=fecha,
             descripcion=mov["descripcion"],
@@ -424,7 +444,7 @@ def importar_pdf_movimientos(archivo):
 
             regla_aplicada=regla,
         )
-
+        print("GUARDADO")
         leidos += 1
 
     return (
@@ -482,6 +502,8 @@ def importar_pdf_cuenta_corriente(archivo, datos):
         for pagina in pdf.pages:
 
             texto = pagina.extract_text()
+            print("=" * 80)
+            print(texto[:3000])
 
             if not texto:
                 continue
@@ -564,10 +586,7 @@ def importar_pdf_cuenta_corriente(archivo, datos):
     print("================================")
 
     Movimiento.objects.filter(
-
-        periodo=datos["periodo"],
-        origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}"
-
+        nombre_archivo=archivo.name
     ).delete()
 
     for mov in movimientos:
@@ -596,6 +615,8 @@ def importar_pdf_cuenta_corriente(archivo, datos):
                 persona = regla.persona
 
         Movimiento.objects.create(
+
+            nombre_archivo=archivo.name,
 
             periodo=datos["periodo"],
 
@@ -632,8 +653,7 @@ def importar_csv_icbc(archivo, datos):
     )
 
     Movimiento.objects.filter(
-        periodo=datos["periodo"],
-        origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}"
+        nombre_archivo=archivo.name
     ).delete()
 
     leidos = 0
@@ -680,6 +700,7 @@ def importar_csv_icbc(archivo, datos):
                 persona = regla.persona
 
         Movimiento.objects.create(
+            nombre_archivo=archivo.name,
 
             periodo=datos["periodo"],
 
@@ -706,17 +727,21 @@ def importar_csv_icbc(archivo, datos):
 
 def importar_excel_galicia(archivo, datos):
 
+
+    print(">>> GUARDANDO ARCHIVO:", archivo.name)
     df = pd.read_excel(
         archivo,
         skiprows=5
     )
+
+    df.columns = [c.strip().replace("é", "e").replace("É", "E") for c in df.columns]
+
     print(df.columns.tolist())
     print(df.head())
     Movimiento.objects.filter(
-        periodo=datos["periodo"],
-        origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}"
+        nombre_archivo=archivo.name
     ).delete()
-
+    
     leidos = 0
 
     for _, row in df.iterrows():
@@ -783,6 +808,7 @@ def importar_excel_galicia(archivo, datos):
                 persona = regla.persona
 
         Movimiento.objects.create(
+            nombre_archivo=archivo.name,
 
             periodo=datos["periodo"],
 
@@ -812,17 +838,17 @@ from datetime import datetime
 
 
 def importar_pdf_tc_galicia(archivo, datos):
-
+    print("********** ENTRE A GALICIA *******importar_pdf_tc_galicia***")
     Movimiento.objects.filter(
-        periodo=datos["periodo"],
-        origen__startswith=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}"
+
+        nombre_archivo=archivo.name
     ).delete()
 
     origen = (
         f"{datos['tipo']}-"
         f"{datos['marca']}-"
         f"{datos['banco']}-"
-        f"{datos['titular']}"
+        f"{datos['alias']}"
     )
 
     leyendo = False
@@ -837,7 +863,8 @@ def importar_pdf_tc_galicia(archivo, datos):
         for pagina in pdf.pages:
 
             texto = pagina.extract_text()
-
+            print("=" * 80)
+            print(texto[:3000])
             if not texto:
                 continue
 
@@ -903,25 +930,17 @@ def importar_pdf_tc_galicia(archivo, datos):
                         persona = regla.persona
 
                 Movimiento.objects.create(
+                    nombre_archivo=archivo.name,
 
                     periodo=datos["periodo"],
-
                     origen=origen,
-
                     fecha=fecha,
-
                     descripcion=descripcion,
-
                     importe=importe,
-
                     categoria=categoria,
-
                     finalidad=finalidad,
-
                     persona=persona,
-
                     grupo=grupo,
-
                     regla_aplicada=regla,
 
                 )
@@ -929,3 +948,368 @@ def importar_pdf_tc_galicia(archivo, datos):
                 leidos += 1
 
     return f"Importados {leidos} movimientos."
+
+def importar_pdf_tc_icbc_andres(archivo, datos):
+
+    print("********** IMPORTADOR TC ICBC ANDRES **********")
+
+    movimientos = []
+
+    leyendo = False
+
+    with pdfplumber.open(archivo) as pdf:
+
+        texto_caratula = pdf.pages[0].extract_text()
+
+        titular = datos["alias"]
+
+        origen = (
+            f"{datos['tipo']}-"
+            f"{datos['marca']}-"
+            f"{datos['banco']}-"
+            f"{titular}"
+        )
+        # EL PERIODO SIEMPRE DEL NOMBRE DEL ARCHIVO
+        periodo = datos["periodo"]
+
+        print("PERIODO:", periodo)
+        print("ORIGEN:", origen)
+
+        patron = re.compile(
+            r"^(\d{2}/\d{2}/\d{2})\s+(.+?)\s+([-\d.,]+)$"
+        )
+
+        for pagina in pdf.pages:
+
+            texto = pagina.extract_text()
+            print("=" * 80)
+            print(texto[:3000])
+            if not texto:
+                continue
+
+            for linea in texto.split("\n"):
+
+                linea = linea.strip()
+
+                # Empieza a leer después del saldo anterior
+                if "SALDO ANTERIOR" in linea:
+                    leyendo = True
+                    continue
+
+                if not leyendo:
+                    continue
+
+                # Termina cuando empiezan los intereses o Plan V
+                if (
+                    "INTERESES FINANCIACION" in linea
+                    or "Plan V" in linea
+                    or "TOTAL TARJETA" in linea
+                ):
+                    leyendo = False
+                    break
+
+                m = patron.match(linea)
+
+                if not m:
+                    continue
+
+                fecha_txt = m.group(1)
+                descripcion = m.group(2).strip()
+                importe = m.group(3)
+
+                # Ignorar pagos
+                if "SU PAGO" in descripcion.upper():
+                    continue
+
+                # Ignorar transferencias
+                if "TRANSFERENCIA" in descripcion.upper():
+                    continue
+
+                movimientos.append({
+
+                    "fecha": fecha_txt,
+                    "descripcion": descripcion,
+                    "importe": importe,
+
+                })
+
+    print(len(movimientos))
+    leidos = 0
+    clasificados = 0
+    pendientes = 0
+    ignorados = 0
+
+    Movimiento.objects.filter(
+        nombre_archivo=archivo.name
+    ).delete()
+    print("MOVIMIENTOS =", len(movimientos))
+    for mov in movimientos:
+
+        regla = buscar_regla(mov["descripcion"])
+
+        categoria = None
+        finalidad = None
+        persona = None
+        grupo = ""
+
+        if regla:
+
+            if regla.accion == "I":
+                ignorados += 1
+                continue
+
+            elif regla.accion == "C":
+                categoria = regla.categoria
+                finalidad = regla.finalidad
+                persona = regla.persona
+                clasificados += 1
+
+            elif regla.accion == "A":
+                grupo = regla.grupo
+                persona = regla.persona
+                clasificados += 1
+
+        else:
+            pendientes += 1
+
+        fecha = datetime.strptime(
+            mov["fecha"],
+            "%d/%m/%y"
+        ).date()
+
+        importe = mov["importe"].replace(".", "").replace(",", ".")
+
+        if importe.endswith("-"):
+            importe = "-" + importe[:-1]
+
+        Movimiento.objects.create(
+            nombre_archivo=archivo.name,
+
+            fecha=fecha,
+            descripcion=mov["descripcion"],
+            importe=importe,
+
+            periodo=periodo,
+            origen=origen,
+
+            categoria=categoria,
+            finalidad=finalidad,
+            persona=persona,
+            grupo=grupo,
+
+            regla_aplicada=regla,
+
+        )
+
+        leidos += 1
+
+
+    print("Leídos:", leidos)
+
+    print(
+        Movimiento.objects.filter(
+            nombre_archivo=archivo.name
+        ).count()
+    )
+
+    print(
+        Movimiento.objects.filter(
+            origen=origen,
+            periodo=periodo
+        ).count()
+    )
+
+
+
+
+    return (
+        f"Leídos: {leidos} - "
+        f"Clasificados: {clasificados} - "
+        f"Pendientes: {pendientes} - "
+        f"Ignorados: {ignorados}"
+    )
+
+
+def importar_pdf_tc_amex_galicia(archivo, datos):
+
+    print("********** IMPORTADOR AMEX GALICIA **********")
+
+    movimientos = []
+
+    leyendo = False
+
+    with pdfplumber.open(archivo) as pdf:
+
+        texto_caratula = pdf.pages[0].extract_text()
+
+        titular = datos["alias"]
+
+        origen = (
+            f"{datos['tipo']}-"
+            f"{datos['marca']}-"
+            f"{datos['banco']}-"
+            f"{titular}"
+        )
+
+        periodo = datos["periodo"]
+
+        print("ARCHIVO =", archivo.name)
+        print("PERIODO =", periodo)
+        print("ORIGEN =", origen)
+
+
+        patron = re.compile(
+            r"^(\d{2}-\d{2}-\d{2})\s+\*\s+(.+)\s+([\d.,]+)$"
+        )
+
+
+        for pagina in pdf.pages:
+
+            texto = pagina.extract_text()
+
+            if not texto:
+                continue
+
+            for linea in texto.split("\n"):
+
+                linea = linea.strip()
+
+                # ===============================
+                # Empieza después del encabezado
+                # ===============================
+
+                if "DETALLE DEL CONSUMO" in linea:
+                    leyendo = True
+                    continue
+
+                if not leyendo:
+                    continue
+
+                # ===============================
+                # Termina al llegar al total
+                # ===============================
+
+                if "Total Consumos" in linea:
+                    leyendo = False
+                    break
+
+
+                print("LINEA:", linea)
+                m = patron.match(linea)
+                if not m:
+                    print("NO COINCIDE")
+                    continue
+                print("COINCIDE")
+
+                fecha_txt = m.group(1)
+                descripcion = m.group(2).strip()
+                importe = m.group(3)
+
+                movimientos.append({
+
+                    "fecha": fecha_txt,
+                    "descripcion": descripcion,
+                    "importe": importe,
+
+                })
+
+    print("TOTAL MOVIMIENTOS LEIDOS =", len(movimientos))
+
+    leidos = 0
+    clasificados = 0
+    pendientes = 0
+    ignorados = 0
+
+    Movimiento.objects.filter(
+        nombre_archivo=archivo.name
+    ).delete()
+    print("MOVIMIENTOS =", len(movimientos))
+    for mov in movimientos:
+
+        regla = buscar_regla(mov["descripcion"])
+
+        categoria = None
+        finalidad = None
+        persona = None
+        grupo = ""
+
+        if regla:
+
+            if regla.accion == "I":
+                ignorados += 1
+                continue
+
+            elif regla.accion == "C":
+                categoria = regla.categoria
+                finalidad = regla.finalidad
+                persona = regla.persona
+                clasificados += 1
+
+            elif regla.accion == "A":
+                grupo = regla.grupo
+                persona = regla.persona
+                clasificados += 1
+
+        else:
+            pendientes += 1
+
+
+
+        fecha = datetime.strptime(
+            mov["fecha"],
+            "%d-%m-%y"
+        ).date()
+
+
+        importe = mov["importe"].replace(".", "").replace(",", ".")
+
+        if importe.endswith("-"):
+            importe = "-" + importe[:-1]
+
+        Movimiento.objects.create(
+            nombre_archivo=archivo.name,
+
+            fecha=fecha,
+            descripcion=mov["descripcion"],
+            importe=importe,
+
+            periodo=periodo,
+            origen=origen,
+
+            categoria=categoria,
+            finalidad=finalidad,
+            persona=persona,
+            grupo=grupo,
+
+            regla_aplicada=regla,
+
+        )
+
+        leidos += 1
+
+
+    print("Leídos:", leidos)
+
+    print(
+        Movimiento.objects.filter(
+            nombre_archivo=archivo.name
+        ).count()
+    )
+
+    print(
+        Movimiento.objects.filter(
+            origen=origen,
+            periodo=periodo
+        ).count()
+    )
+
+
+
+
+    return (
+        f"Leídos: {leidos} - "
+        f"Clasificados: {clasificados} - "
+        f"Pendientes: {pendientes} - "
+        f"Ignorados: {ignorados}"
+    )
+

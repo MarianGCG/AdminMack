@@ -47,13 +47,15 @@
         /* CONTENIDO */
         .contenido {
             padding: 10px 20px 15px 20px;
-            max-width: 1800px;
+            max-width: 3000px;
             margin: 0 auto;
             overflow-x: auto;
               
         }
 
-
+        .contenido.dashboard-full{
+            max-width:3000px;      /* o 2200px si querés */
+        }
 
         /* TITULOS */
         .titulo-grafico {
@@ -534,7 +536,7 @@
                 </a>
                 <hr>
 
-                <a href="#">
+                <a href="{% url 'dashboard' %}">
                     Dashboard
                 </a>
 
@@ -552,9 +554,31 @@
             </div>
         </div>
 
+        {% if user.is_authenticated %}
+        <li style="margin-left:auto;">
+            <span style="color:white; margin-right:15px;">
+                👤 {{ user.username }}
+            </span>
+
+            <a href="{% url 'logout' %}"
+            style="color:white; text-decoration:none; font-weight:bold;">
+                Cerrar sesión
+            </a>
+        </li>
+        {% endif %}
+
+
+
+
+
+
+
 
     </div> <!-- menu -->
 </div> <!-- navbar -->
+
+
+
 {% endif %}
 
 

@@ -162,8 +162,6 @@ class Movimiento(models.Model):
 
     fecha = models.DateField()
 
-
-
     periodo = models.CharField(
         max_length=6,
         blank=True,
@@ -224,7 +222,21 @@ class Movimiento(models.Model):
         default=""
     )
 
-    
+    tipo = models.CharField(
+        max_length=1,
+        choices=[
+            ("I", "Ingreso"),
+            ("G", "Gasto"),
+        ],
+        default="G"
+    )   
+
+    nombre_archivo = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        db_index=True
+    ) 
 
     class Meta:
         db_table = "fin_movimientos"

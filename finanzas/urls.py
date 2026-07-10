@@ -21,5 +21,12 @@ urlpatterns = [
     path("movimiento-eliminar/<int:id>/",   views.movimiento_eliminar,  name="movimiento_eliminar"    ),
     path("movimiento-importar/",            views_importaciones.importar_movimientos_view,   name="movimiento_importar"),
     path("movimiento-actualizar/",          views.movimiento_actualizar,name="movimiento_actualizar" ),
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("eliminar_resumen/",  views.eliminar_resumen,   name="eliminar_resumen",),
+    path(
+    "movimientos/exportar_excel/",
+    views.movimientos_exportar_excel,
+    name="movimientos_exportar_excel",
+),
 
 ]

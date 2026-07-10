@@ -23,8 +23,9 @@ import io
 import base64
 
 
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def ver_comprobantes(request):
 
     from .models import Aseguradoras
@@ -280,7 +281,7 @@ def ver_comprobantes(request):
 from django.db.models import F, DecimalField, Value
 from django.db.models.functions import Coalesce
 from .models import CobranzasComisiones
-
+@login_required
 def ver_saldos(request):
 
     anio = request.GET.get("anio")
@@ -475,7 +476,7 @@ def calcular_tendencia_lineal(valores):
 # =====================================================
 # GRAFICOS 01 (ANUAL / TRIMESTRAL / MENSUAL)
 # =====================================================
-
+@login_required
 def graficos01(request):
 
     import json
@@ -709,7 +710,7 @@ def graficos01(request):
     })
 
 
-
+@login_required
 def graficos02(request):
 
     import io
@@ -1018,7 +1019,7 @@ def actualizar_iva_aseguradora(request, id):
     return redirect("aseguradoras")
 
 
-
+@login_required
 def grafico_indice_mensual(request):
 
     import io
@@ -1353,7 +1354,7 @@ def parametro_eliminar_view(request, id):
 
 
 
-
+@login_required
 def graficos22(request):
 
     import json

@@ -12,7 +12,11 @@ from .models import (
     Aseguradoras,
     PASAseguradora
 ) 
+from django.contrib.auth.decorators import login_required
 
+
+
+@login_required
 def reporte_comisiones_view(request):
 
 

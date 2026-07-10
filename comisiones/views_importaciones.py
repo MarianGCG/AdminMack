@@ -25,6 +25,7 @@ from django.http import JsonResponse
 import json
 from .services.reglas_comision_service import importar_reglas_comision_excel
 from .models import ReglaComision
+from django.contrib.auth.decorators import login_required
 
     
 # ================================
@@ -84,6 +85,7 @@ def listar_aseguradoras_view(request):
 # ================================
 # IMPORTAR COMPROBANTES ARCA
 # ================================
+@login_required
 def importar_comprobantes_arca_view(request):
 
     resultado = None
@@ -107,6 +109,7 @@ def importar_comprobantes_arca_view(request):
 # ================================
 # IMPORTAR COBRANZAS
 # ================================
+@login_required
 def importar_cobranzas_view(request):
 
     resultado = None
@@ -130,6 +133,7 @@ def importar_cobranzas_view(request):
 # ================================
 # ASEGURADORAS
 # ================================
+@login_required
 def aseguradoras_view(request):
 
     resultado = None
@@ -269,6 +273,7 @@ def obtener_historial_importaciones():
 # ================================
 # IMPORTAR LIQUIDACIONES
 # ================================
+@login_required
 def importar_liquidaciones_view(request):
 
     resultado = None
@@ -328,7 +333,7 @@ def importar_liquidaciones_view(request):
 
 
 
-
+@login_required
 def importar_comisiones_view(request):
 
     resultado = None
@@ -438,7 +443,7 @@ def eliminar_importacion(request, id):
 
 
 
-
+@login_required
 def productores_view(request):
 
     resultado = None
@@ -500,6 +505,7 @@ def productor_editar(request, codigo):
 # ================================
 # PAS - ASEGURADORAS
 # ================================
+@login_required
 def pas_aseguradoras_view(request):
 
     datos = (
@@ -558,7 +564,7 @@ def pas_aseguradora_editar(request, id):
 # PAS - CLIENTES
 # ================================
 
-
+@login_required
 def pas_clientes_view(request):
 
     resultado = None
@@ -692,7 +698,7 @@ def pas_cliente_eliminar(request, id):
 
     return redirect("pas_clientes")
 
-
+@login_required
 def importar_pas_clientes_view(request):
 
     resultado = None
@@ -803,7 +809,7 @@ def eliminar_regla_comision(request, id):
     except:
         return JsonResponse({"ok": False})
 
-
+@login_required
 def reglas_comision_view(request):
 
     resultado = None

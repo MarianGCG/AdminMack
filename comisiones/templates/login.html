@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>AdminMack</title>
+
+<style>
+
+body{
+
+    background:#f2f4f8;
+
+    font-family:Arial;
+
+}
+
+.login{
+
+    width:380px;
+
+    margin:100px auto;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:10px;
+
+    box-shadow:0 0 15px rgba(0,0,0,.15);
+
+}
+
+h2{
+
+    text-align:center;
+
+    color:#174a7c;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:10px;
+
+    margin-top:10px;
+
+    margin-bottom:15px;
+
+    box-sizing:border-box;
+
+}
+
+button{
+
+    width:100%;
+
+    padding:12px;
+
+    background:#174a7c;
+
+    color:white;
+
+    border:none;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login">
+
+<h2>AdminMack</h2>
+
+<form method="post">
+
+{% csrf_token %}
+
+{{ form.as_p }}
+
+<button type="submit">
+
+Ingresar
+
+</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
