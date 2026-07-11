@@ -488,7 +488,7 @@ let openCombo = null;
 function comboCardHTML(id, label, list, field){
   const top = list[0];
   const rest = list.slice(1);
-  list = [...list].sort((a,b)=>a[0].localeCompare(b[0],'es'));
+  // list = [...list].sort((a,b)=>a[0].localeCompare(b[0],'es'));
   const rowsHtml = list.map((c,i)=>`
     <div class="drow" data-val="${c[0]}" data-field="${field}">
       <span><span class="rank">${i+1}.</span>${c[0]}</span>
