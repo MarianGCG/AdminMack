@@ -320,6 +320,20 @@ def movimientos(request):
         )
 
   
+
+    descripcion = request.GET.get("descripcion", "").strip()
+
+    if descripcion:
+        movimientos = movimientos.filter(
+            descripcion__icontains=descripcion
+        )
+
+
+
+
+
+
+  
     # ---------------------------------------
     # PANEL ELIMINAR IMPORTACIÓN
     # ---------------------------------------
