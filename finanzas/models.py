@@ -7,7 +7,7 @@ from django.db import models
 class Categoria(models.Model):
 
     codigo = models.CharField(
-        max_length=10,
+        max_length=50,
         unique=True
     )
 
@@ -31,7 +31,7 @@ class Categoria(models.Model):
 class Finalidad(models.Model):
 
     codigo = models.CharField(
-        max_length=20,
+        max_length=50,
         unique=True
     )
 

@@ -21,7 +21,7 @@ from .models import Movimiento
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.decorators import login_required
-
+from django.db import DataError, IntegrityError
 
 @require_GET
 def categoria_eliminar(request, id):
@@ -63,9 +63,34 @@ def categoria_guardar(request):
     categoria.color = datos.get("color")
     categoria.activo = datos.get("activo")
 
-    categoria.save()
+    try:
 
-    return JsonResponse({"ok": True})
+        categoria.save()
+
+        return JsonResponse({
+            "ok": True
+        })
+
+    except DataError:
+
+        return JsonResponse({
+            "ok": False,
+            "error": "El código es demasiado largo."
+        })
+
+    except IntegrityError:
+
+        return JsonResponse({
+            "ok": False,
+            "error": "Ya existe una categoría con ese código."
+        })
+
+    except Exception as e:
+
+        return JsonResponse({
+            "ok": False,
+            "error": str(e)
+        })
 
 @login_required
 def finalidades(request):

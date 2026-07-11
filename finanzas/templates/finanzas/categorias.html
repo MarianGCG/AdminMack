@@ -349,15 +349,18 @@ function guardarRegistro(){
     })
 
     .then(response => response.json())
+
+
     .then(data => {
 
         if(data.ok){
             location.reload();
         }else{
-            alert("No se pudo guardar");
+            alert(data.error);
         }
 
     });
+
 
 }
 let direccionOrden = {}
