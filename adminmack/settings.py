@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv(
 
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.onrender.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'adminmack.onrender.com']
 
 
  # Application definition
@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'adminmack.wsgi.application'
 
 
 import dj_database_url
-import os
+
 
 if os.getenv("DATABASE_URL"):
     # Render (PostgreSQL)

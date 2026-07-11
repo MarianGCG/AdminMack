@@ -132,6 +132,7 @@ text-align:center;
 
 <h2>REGLAS</h2>
 
+{% if not crear %}
 
 <div style="margin-bottom:12px;">
 
@@ -273,7 +274,7 @@ class="icono-eliminar">
 
 </table>
 
-
+{% endif %}
 
 
 
@@ -683,7 +684,14 @@ window.addEventListener("load", function(){
     });
 
     mostrarControles();
+    {% if crear %}
 
+        nuevoRegistro();
+
+        document.getElementById("edit_texto").value =
+            "{{ texto_inicial|escapejs }}";
+
+    {% endif %}
 });
 
 

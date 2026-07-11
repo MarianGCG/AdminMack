@@ -50,15 +50,182 @@
 }
 
 .panel-filtros2{
-    display: inline-block;     /* El marco ocupa solo el contenido */
-    background: #fff;
-    padding: 14px 16px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    margin-bottom: 18px;
+
+    display:block;
+
+    background:#FFFFFF;
+
+    padding:18px 22px;
+
+    border-radius:12px;
+
+    border:1px solid #D9E2EC;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+    margin-bottom:20px;
+
     width:100%;
-    min-width:1800px;
+
 }
+.btn-toolbar{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    width:220px;          /* <-- Nuevo */
+
+    height:50px;
+
+    padding:0 20px;
+
+    background:#FFF;
+
+    border:1px solid #D9E2EC;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    color:#212529;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+    cursor:pointer;
+
+}
+
+
+.btn-toolbar:hover{
+
+    background:#F8FAFC;
+
+    transform:translateY(-1px);
+
+    box-shadow:0 4px 12px rgba(0,0,0,.10);
+
+}
+
+.campo-filtro{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+}
+
+.campo-filtro label{
+
+    font-size:11px;
+
+    font-weight:600;
+
+    letter-spacing:.8px;
+
+    color:#6B7280;
+
+    text-transform:uppercase;
+
+}
+.filtro{
+
+    width:140px;
+
+    height:40px;
+
+    padding:0 12px;
+
+    border:1px solid #D9E2EC;
+
+    border-radius:8px;
+
+    background:#FFFFFF;
+
+    font-size:14px;
+
+}
+
+.fila-filtros{
+
+    display:flex;
+
+    align-items:flex-end;
+
+    gap:14px;
+
+    flex-wrap:wrap;
+
+}
+
+.btn-small{
+
+    height:40px;
+
+    padding:0 18px;
+
+    border-radius:8px;
+
+    background:white;
+
+    border:1px solid #D9E2EC;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}     
+
+
+/* PANEL LATERAL */
+
+.panel-editar{
+    position:fixed;
+    right:-380px;
+    top:0;
+    width:350px;
+    height:100%;
+    background:white;
+    box-shadow:-3px 0 10px rgba(0,0,0,0.2);
+    padding:20px;
+    transition:0.3s;
+    z-index:1000;
+}
+
+.panel-editar.abierto{
+    right:0;
+}
+
+.panel-editar label{
+    display:block;
+    margin-top:10px;
+    font-weight:bold;
+}
+
+.panel-editar input,
+.panel-editar select{
+    width:220px;
+    padding:4px;
+    margin-top:3px;
+    border:1px solid #ccc;
+    border-radius:4px;
+}
+
+.panel-editar h3{
+    margin-top:0;
+    border-bottom:1px solid #ddd;
+    padding-bottom:8px;
+}
+
+
+
+}
+
+
 </style>
 
 <h2>MOVIMIENTOS</h2>
@@ -73,177 +240,198 @@
     accept=".pdf,.xls,.xlsx"
     onchange="importarExcel()">
 
-<button  id="btnImportar" 
-    onclick="document.getElementById('archivoExcel').click()"
-    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;min-width:170px">
-
-    📥 Importar Resumen/Extracto
-
-</button>
 
 
-<button id="btnEliminar"
-    onclick="location.href='{% url 'movimientos' %}?eliminar=1'"
-    style="padding:6px 14px;
-           background:#c0392b;
-           color:white;
-           border:none;
-           border-radius:6px;
-           margin-left:8px;">
+<button
+    id="btnImportar"
+    class="btn-toolbar"
+    onclick="document.getElementById('archivoExcel').click()">
 
-    🗑 Eliminar Importación
+    <span style="color:#2563EB">📥</span>
+
+    Importar Resumen/Extracto
 
 </button>
 
 
-<button id="btnReaplicar"
-    onclick="location.href='{% url 'movimiento_actualizar' %}'"
-    style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;margin-left:8px;min-width:170px">
-🔄 Reaplicar Reglas
+<button
+    id="btnEliminar"
+    class="btn-toolbar"
+    onclick="location.href='{% url 'movimientos' %}?eliminar=1'">
+
+    <span style="color:#DC2626">🗑</span>
+
+    Eliminar Importación
+
 </button>
 
-<button  id="btnReglas"
+
+
+<button
+    id="btnReaplicar"
+    class="btn-toolbar"
+    onclick="location.href='{% url 'movimiento_actualizar' %}'">
+
+    <span style="color:#2563EB">🔄</span>
+
+    Reaplicar Reglas
+
+</button>
+
+<button
+    id="btnReglas"
+    class="btn-toolbar"
     type="button"
-    onclick="abrirReglas()"
-    style="padding:6px 14px;
-           background:#0d6efd;
-           color:white;
-           border:none;
-           border-radius:6px;
-           margin-left:8px;min-width:170px">
+    onclick="abrirReglas()">
 
-    📚 Reglas
+    <span style="color:#2563EB">📚</span>
+
+    Reglas
 
 </button>
 
 
 
-<button id="btnExportar"
-        onclick="location.href='{% url 'movimientos_exportar_excel' %}'"
-        style="padding:6px 14px;
-               background:#198754;
-               color:white;
-               border:none;
-               border-radius:6px;
-               margin-left:8px;">
+<button
+    id="btnExportar"
+    class="btn-toolbar"
+    onclick="location.href='{% url 'movimientos_exportar_excel' %}'">
 
-    📊 Exportar Excel
+    <span style="color:#16A34A">📊</span>
+
+    Exportar Excel
 
 </button>
+
 
 
 <form method="get" style="margin:15px 0;">
 
 
 
+<div class="fila-filtros">
 
-Período
+    <div class="campo-filtro">
 
-<select name="periodo">
+        <label>PERÍODO</label>
 
-    <option value="">Todos</option>
+        <select name="periodo" class="filtro">
 
-    {% for p in periodos %}
-        <option value="{{ p.periodo }}"
-            {% if request.GET.periodo == p.periodo %}
-                selected
-            {% endif %}>
-            {{ p.periodo }}
-        </option>
-    {% endfor %}
+            <option value="">Todos</option>
 
-</select>
+            {% for p in periodos %}
 
+                <option value="{{ p.periodo }}"
+                    {% if request.GET.periodo == p.periodo %}
+                        selected
+                    {% endif %}>
 
+                    {{ p.periodo }}
 
+                </option>
 
-    Categoría
+            {% endfor %}
 
-    <select name="categoria">
+        </select>
 
-        <option value="">Todas</option>
+    </div>
 
-        {% for c in categorias %}
+    <div class="campo-filtro">
 
-            <option
-                value="{{ c.id }}"
-                {% if request.GET.categoria == c.id|stringformat:"s" %}
-                    selected
-                {% endif %}
-            >
+        <label>Categoría</label>
 
-                {{ c }}
+        <select name="categoria" class="filtro">
 
-            </option>
+            <option value="">Todas</option>
 
-        {% endfor %}
+            {% for c in categorias %}
 
-    </select>
+                <option value="{{ c.id }}"
+                    {% if request.GET.categoria == c.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
+                
+                    {{ c }}
 
+                </option>
 
-    Finalidad
+            {% endfor %}
 
-    <select name="finalidad">
-
-        <option value="">Todas</option>
-
-        {% for f in finalidades %}
-
-            <option
-                value="{{ f.id }}"
-                {% if request.GET.finalidad == f.id|stringformat:"s" %}
-                    selected
-                {% endif %}
-            >
-
-                {{ f }}
-
-            </option>
-
-        {% endfor %}
-
-    </select>
+        </select>
 
 
-    Persona
+    </div>
 
-    <select name="persona">
+    <div class="campo-filtro">
 
-        <option value="">Todas</option>
+        <label>Finalidad</label>
 
-        {% for p in personas %}
+        <select name="finalidad" class="filtro">
 
-            <option
-                value="{{ p.id }}"
-                {% if request.GET.persona == p.id|stringformat:"s" %}
-                    selected
-                {% endif %}
-            >
+            <option value="">Todas</option>
 
-                {{ p }}
+            {% for f in finalidades %}
 
-            </option>
+                <option value="{{ f.id }}"
+                    {% if request.GET.finalidad == f.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
 
-        {% endfor %}
+                    {{ f }}
 
-    </select>
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
 
 
-    <button type="submit">
+    <div class="campo-filtro">
 
-        Filtrar
+        <label>Persona</label>
+
+        <select name="persona" class="filtro">
+
+            <option value="">Todas</option>
+
+            {% for p in personas %}
+
+                <option value="{{ p.id }}"
+                    {% if request.GET.persona == p.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
+
+                    {{ p }}
+
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <button type="submit" class="btn-small">
+
+        🔍 Filtrar
 
     </button>
 
 
     <button
         type="button"
+        class="btn-small"
         onclick="location.href='{% url 'movimientos' %}'">
 
-        Limpiar
+        🧹 Limpiar
 
     </button>
 
+
+</div>
 </form>
 </div>
 </div>
@@ -322,7 +510,7 @@ Período
             </a>
         </th>
 
-        <th style="width:420px;">Descripción</th>
+        <th style="width:1200px;">Descripción</th>
 
         <th>
             <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'importe' %}-importe{% else %}importe{% endif %}">
@@ -353,7 +541,7 @@ Período
                 {% if orden == 'persona__nombre' %}▼{% else %}▲{% endif %} Persona
             </a>
         </th>
-
+        <th style="width:70px;">Acción</th>
     </tr>
 
     </thead>
@@ -419,6 +607,30 @@ Período
             <td>
                 {{ m.persona }}
             </td>
+
+            <td style="text-align:center;">
+
+                <span
+                    style="cursor:pointer;font-size:20px;"
+                    title="Crear regla"
+
+                   
+                    onclick="crearRegla(
+                    '{{ m.descripcion|escapejs }}',
+                    '{{ m.categoria_id|default_if_none:"" }}',
+                    '{{ m.finalidad_id|default_if_none:"" }}',
+                    '{{ m.persona_id|default_if_none:"" }}'
+                    )"
+                    >
+
+
+                    ✨
+
+                </span>
+
+            </td>
+
+
         </tr>
 
     {% endfor %}
@@ -426,6 +638,205 @@ Período
     </tbody>
 
 </table>
+
+
+{% if mostrar_eliminar %}
+
+<div style="
+    position:fixed;
+    top:130px;
+    right:20px;
+    width:340px;
+    background:white;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,.20);
+    padding:18px;
+    z-index:999;
+">
+
+<h3 style="margin-top:0;">
+🗑 Eliminar Importación
+</h3>
+
+<form method="post" action="{% url 'eliminar_resumen' %}">
+
+    {% csrf_token %}
+
+    <label><b>Archivo</b></label>
+
+    <select
+        name="nombre_archivo"
+        style="width:100%;margin-top:8px;margin-bottom:20px;">
+
+        {% for a in archivos_importados %}
+
+            <option value="{{ a.nombre_archivo }}">
+                {{ a.nombre_archivo }}
+                ({{ a.cantidad }} movimientos)
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+    <button
+        type="submit"
+        style="
+            background:#c0392b;
+            color:white;
+            border:none;
+            padding:8px 16px;
+            border-radius:6px;">
+
+        🗑 Eliminar
+
+    </button>
+
+    <button
+        type="button"
+        onclick="location.href='{% url 'movimientos' %}'"
+        style="margin-left:8px;">
+
+        Cancelar
+
+    </button>
+
+</form>
+
+</div>
+
+{% endif %}
+
+
+
+<!-- ===================================== -->
+<!-- PANEL LATERAL PARA CREAR REGLAS -->
+<!-- ===================================== -->
+
+<div id="panelEditar" class="panel-editar">
+
+<h3>REGLAS</h3>
+
+<input type="hidden" id="edit_id">
+
+<label>Texto</label>
+
+<textarea
+    id="edit_texto"
+    rows="8"
+    style="
+        width:100%;
+        resize:vertical;
+        font-size:15px;
+        padding:8px;
+    ">
+</textarea>
+
+<label>Acción</label>
+
+<div style="margin-top:8px; margin-bottom:15px;">
+
+    <label>
+        <input type="radio" name="accion" value="C" checked>
+        Clasificar
+    </label>
+
+    <br>
+
+    <label>
+        <input type="radio" name="accion" value="A">
+        Agrupar
+    </label>
+
+    <br>
+
+    <label>
+        <input type="radio" name="accion" value="I">
+        Ignorar
+    </label>
+
+</div>
+
+<div id="bloqueClasificar">
+
+    <label>Categoría</label>
+    <select id="edit_categoria">
+
+
+
+        {% for c in categorias %}
+            <option value="{{ c.id }}">
+                {{ c.nombre }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+
+    <label>Finalidad</label>
+    <select id="edit_finalidad">
+
+
+        {% for f in finalidades %}
+            <option value="{{ f.id }}">
+                {{ f.nombre }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+
+</div>
+
+
+<div id="bloqueAgrupar" style="display:none;">
+
+    <label>Grupo</label>
+    <select id="edit_grupo">
+
+      
+        {% for g in parametros %}
+            <option value="{{ g.codigo }}">
+                {{ g.codigo }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+
+</div>
+
+
+<div id="bloquePersona">
+
+    <label>Persona</label>
+    <select id="edit_persona">
+       
+        {% for p in personas %}
+            <option value="{{ p.id }}">{{ p.nombre }}</option>
+        {% endfor %}
+    </select>
+
+</div>
+
+
+
+<label>
+    <input type="checkbox" id="edit_activo">
+    Activa
+</label>
+
+<br><br>
+
+<button onclick="guardarRegistro()">💾 Guardar</button>
+<button onclick="cerrarPanel()">Cerrar</button>
+
+</div>
+
+
+<!-- ===================================== -->
+
 <script>
 
 
@@ -547,6 +958,193 @@ function getCookie(name){
     return cookieValue;
 
 }
+
+function crearRegla(descripcion,categoria,finalidad,persona){
+
+    nuevoRegistro();
+
+    document.getElementById("edit_texto").value = descripcion;
+
+    if(categoria)
+        document.getElementById("edit_categoria").value = categoria;
+
+    if(finalidad)
+        document.getElementById("edit_finalidad").value = finalidad;
+
+    if(persona)
+        document.getElementById("edit_persona").value = persona;
+
+}
+
+
+
+function nuevoRegistro(){
+
+    document.getElementById("edit_id").value = "";
+    document.getElementById("edit_texto").value = "";
+
+    document.querySelector(
+        'input[name="accion"][value="C"]'
+    ).checked = true;
+
+    document.getElementById("edit_activo").checked = true;
+
+    document.getElementById("panelEditar").classList.add("abierto");
+
+    mostrarControles();
+}
+
+
+
+function cerrarPanel(){
+
+document.getElementById("panelEditar").classList.remove("abierto")
+
+}
+
+
+
+function mostrarControles(){
+
+    let radio = document.querySelector('input[name="accion"]:checked');
+
+    if(!radio){
+        return;
+    }
+
+    let accion = radio.value;
+
+    document.getElementById("bloqueClasificar").style.display = "none";
+    document.getElementById("bloqueAgrupar").style.display = "none";
+    document.getElementById("bloquePersona").style.display = "none";
+
+    switch(accion){
+
+        case "C":
+
+            document.getElementById("bloqueClasificar").style.display = "block";
+            document.getElementById("bloquePersona").style.display = "block";
+            break;
+
+        case "A":
+
+            document.getElementById("bloqueAgrupar").style.display = "block";
+            document.getElementById("bloquePersona").style.display = "block";
+            break;
+
+        case "I":
+
+            // No mostrar nada
+            break;
+
+    }
+
+}
+
+
+function guardarRegistro(){
+
+    let id = document.getElementById("edit_id").value;
+    let texto = document.getElementById("edit_texto").value;
+
+    let accion =
+        document.querySelector('input[name="accion"]:checked').value;
+
+    let categoria = "";
+    let finalidad = "";
+    let persona   = "";
+    let grupo     = "";
+
+    if(document.getElementById("edit_categoria"))
+        categoria = document.getElementById("edit_categoria").value;
+
+    if(document.getElementById("edit_finalidad"))
+        finalidad = document.getElementById("edit_finalidad").value;
+
+    if(document.getElementById("edit_persona"))
+        persona = document.getElementById("edit_persona").value;
+
+    if(document.getElementById("edit_grupo"))
+        grupo = document.getElementById("edit_grupo").value;
+
+    let activo = document.getElementById("edit_activo").checked;
+
+
+
+    console.log({
+        texto: document.getElementById("edit_texto").value,
+        categoria: document.getElementById("edit_categoria").value,
+        finalidad: document.getElementById("edit_finalidad").value,
+        persona: document.getElementById("edit_persona").value
+    });
+
+
+    fetch("{% url 'regla_guardar' %}", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+
+        body: JSON.stringify({
+
+            id: "",
+
+            texto: document.getElementById("edit_texto").value,
+
+            accion: document.querySelector(
+                'input[name="accion"]:checked'
+            ).value,
+
+            categoria: document.getElementById("edit_categoria").value,
+
+            finalidad: document.getElementById("edit_finalidad").value,
+
+            persona: document.getElementById("edit_persona").value,
+
+            grupo: document.getElementById("edit_grupo").value,
+
+            activo: document.getElementById("edit_activo").checked,
+
+            observacion: ""
+
+        })
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log(data);
+
+        if(data.ok){
+
+            if(data.nueva){
+
+                alert("Regla creada");
+
+            }else{
+
+                alert("Regla actualizada");
+
+            }
+
+            location.reload();
+
+        }else{
+
+            alert("Error al guardar");
+
+        }
+
+    });
+
+
+}
+
 
 </script>
 {% endblock %}

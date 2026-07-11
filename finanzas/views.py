@@ -169,6 +169,8 @@ def reglas(request):
     reglas = Regla.objects.order_by("texto")
 
     popup = request.GET.get("popup") == "1"
+    crear = request.GET.get("crear") == "1"
+    texto = request.GET.get("texto", "")
 
     return render(
         request,
@@ -180,6 +182,8 @@ def reglas(request):
             "personas": Persona.objects.order_by("nombre"),
             "parametros": ParametroSistema.objects.filter(valor="REGLA").order_by("codigo"),
             "popup": popup,
+            "crear": crear,
+            "texto_inicial": texto,
         }
     )
 
@@ -193,12 +197,25 @@ def regla_guardar(request):
 
     datos = json.loads(request.body)
     print(datos)
+
     id = datos.get("id")
+    es_nueva = False
 
     if id:
+
         regla = Regla.objects.get(id=id)
+
     else:
-        regla = Regla()
+
+        regla = Regla.objects.filter(
+            texto=datos.get("texto")
+        ).first()
+
+        if regla is None:
+            regla = Regla()
+            es_nueva = True
+
+
 
     regla.texto = datos.get("texto")
     regla.accion = datos.get("accion")
@@ -211,7 +228,11 @@ def regla_guardar(request):
 
     regla.activa = datos.get("activo")
     regla.observacion = datos.get("observacion", "")
+    print(datos)
 
+    print("Categoria:", datos.get("categoria"))
+    print("Finalidad:", datos.get("finalidad"))
+    print("Persona:", datos.get("persona"))
     regla.save()
 
     # ---------------------------------
@@ -221,9 +242,9 @@ def regla_guardar(request):
 
     return JsonResponse({
         "ok": True,
-        "cerrar": True
+        "nueva": es_nueva
     })
-
+    
 def regla_eliminar(request, id):
 
     Regla.objects.filter(id=id).delete()
@@ -273,7 +294,28 @@ def movimientos(request):
             persona_id=persona
         )
 
-        
+  
+    # ---------------------------------------
+    # PANEL ELIMINAR IMPORTACIÓN
+    # ---------------------------------------
+
+    mostrar_eliminar = request.GET.get("eliminar") == "1"
+
+    archivos_importados = []
+
+    if mostrar_eliminar:
+
+        archivos_importados = (
+            Movimiento.objects
+            .exclude(nombre_archivo__isnull=True)
+            .exclude(nombre_archivo="")
+            .values("nombre_archivo")
+            .annotate(
+                cantidad=Count("id")
+            )
+            .order_by("-nombre_archivo")
+        )
+      
 
     # ------------------------
     # ORDEN
@@ -329,9 +371,10 @@ def movimientos(request):
 
             "movimientos": movimientos,
 
-            "categorias": Categoria.objects.all(),
-            "finalidades": Finalidad.objects.all(),
-            "personas": Persona.objects.all(),
+
+            "categorias": Categoria.objects.order_by("nombre"),
+            "finalidades": Finalidad.objects.order_by("nombre"),
+            "personas": Persona.objects.order_by("nombre"),
 
             "periodos": periodos,
             "orden": orden,
@@ -339,6 +382,8 @@ def movimientos(request):
             # NUEVO
             "resumen_origen": resumen_origen,
             "totales": totales,
+            "mostrar_eliminar": mostrar_eliminar,
+            "archivos_importados": archivos_importados,
 
         }
     )
@@ -466,22 +511,15 @@ def dashboard(request):
     #==========================
 
     gastos_categoria = (
-
         movimientos
-
         .values("categoria__nombre")
-
         .annotate(
-
             total=Sum("importe")
-
         )
-
         .order_by("-total")
-
     )
 
-
+    categoria_principal = gastos_categoria.first()
 
     #==========================
     # PERSONAS
@@ -592,31 +630,23 @@ def dashboard(request):
     contexto = {
 
         "periodo_actual": periodo_actual,
-
         "periodos": periodos,
-
         "total_gastos": total_gastos,
-
         "cantidad_movimientos": cantidad_movimientos,
-
         "ticket_promedio": ticket_promedio,
-
         "cantidad_categorias": cantidad_categorias,
-
         "ultimos_movimientos": ultimos_movimientos,
-
         "gastos_categoria": list(gastos_categoria),
-
+        "categoria_principal": categoria_principal,
         "gastos_persona": list(gastos_persona),
-
         "gastos_finalidad": list(gastos_finalidad),
-
         "gastos_origen": list(gastos_origen),
-
         "datos_json": json.dumps(
             datos_dashboard,
             cls=DjangoJSONEncoder
         ),
+
+
     }
 
     return render(
@@ -629,8 +659,10 @@ def dashboard(request):
 
     )
 
+from django.db.models import Count
 
 def eliminar_resumen(request):
+    print("******** ENTRO A eliminar_resumen ********")
 
     if request.method == "POST":
 
@@ -650,6 +682,26 @@ def eliminar_resumen(request):
         )
 
         return redirect("movimientos")
+
+    # ==========================
+    # Mostrar archivos
+    # ==========================
+
+    archivos = (
+        Movimiento.objects
+        .values("nombre_archivo")
+        .annotate(cantidad=Count("id"))
+        .order_by("-nombre_archivo")
+    )
+
+    return render(
+        request,
+        "finanzas/eliminar_resumen.html",
+        {
+            "archivos": archivos
+        }
+    )
+
 
 
 @login_required
