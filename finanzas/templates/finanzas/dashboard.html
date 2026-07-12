@@ -180,7 +180,23 @@
   .table-foot{ display:flex; justify-content:space-between; padding:10px 4px; font-size:11.5px; color:var(--ink-soft); }
   .empty-state{ text-align:center; padding:40px; color:var(--ink-soft); font-size:13.5px; }
 
+.expand-chart{
+    float:right;
+    cursor:pointer;
+    font-size:20px;
+    font-weight:bold;
+    color:#6b7280;
+    user-select:none;
+    transition:.20s;
+}
 
+.expand-chart:hover{
+
+    color:#2563eb;
+
+    transform:scale(1.20);
+
+}
 </style>
 </head>
 <body>
@@ -383,6 +399,13 @@ const PERSON_COLORS = {'TODOS':'#4C6B4F','Andres':'#A9812F','Marian':'#6B5B95','
 let state = { persona:'ALL', categoria:'ALL', finalidad:'ALL', origen:'ALL', periodo:'ALL', search:'', 
               sortKey:'fecha', sortDir:'desc', expandedRow:null };
 
+              
+let chartExpandido = {
+    categoria: false,
+    finalidad: false,
+    persona: false
+};
+
 const PERIODO_LABELS = {};
 function periodoLabel(p){
   if(PERIODO_LABELS[p]) return PERIODO_LABELS[p];
@@ -434,6 +457,22 @@ function baseFilter(row, ignore){
 
 function getFiltered(){ return RAW.filter(r=>baseFilter(r,null)); }
 
+
+
+function getRowsDashboard(){
+
+    return RAW.filter(r => {
+
+        if(state.periodo !== 'ALL' && r.periodo !== state.periodo)
+            return false;
+
+        return true;
+
+    });
+
+}
+
+
 function aggregate(rows, key){
   const map = {};
   rows.forEach(r=>{ 
@@ -454,7 +493,10 @@ function aggregateMerchants(rows){
 }
 
 let charts = {};
-function renderChart(canvasId, type, labels, data, colors, onClickField){
+
+
+
+function renderChart(canvasId, type, labels, data, colors){
   const ctx = document.getElementById(canvasId);
   if(charts[canvasId]) charts[canvasId].destroy();
   charts[canvasId] = new Chart(ctx, {
@@ -471,17 +513,20 @@ function renderChart(canvasId, type, labels, data, colors, onClickField){
         x:{ ticks:{ callback:(v)=>'$'+(v/1000).toFixed(0)+'k', font:{size:10} }, grid:{color:'#DCE5D3'} },
         y:{ ticks:{ font:{size:11, family:'Inter'} }, grid:{display:false} }
       } : {},
-      onClick:(evt, elements)=>{
-        if(!elements.length) return;
-        const idx = elements[0].index;
-        const label = labels[idx];
-        if(state[onClickField] === label){ state[onClickField] = 'ALL'; }
-        else { state[onClickField] = label; }
-        render();
-      }
+      onClick: null
+
     }
   });
 }
+
+
+
+
+
+
+
+
+
 
 let openCombo = null;
 
@@ -542,54 +587,183 @@ function renderKPIs(rows){
   holder.appendChild(simple('Sin clasificar', sinClasificar, 'movimientos pendientes de categorizar', sinClasificar>0));
 }
 
+
 function setCardHeader(titleId, hintId, title, hint, isFallback){
-  const t = document.getElementById(titleId), h = document.getElementById(hintId);
-  t.innerHTML = title + (isFallback ? ' <span style="color:var(--brass); font-size:11px; font-weight:600;">· vista alternativa</span>' : '');
-  h.textContent = hint;
+
+    const t = document.getElementById(titleId);
+    const h = document.getElementById(hintId);
+
+    const field = titleId.replace("title","").toLowerCase();
+
+    let icono = "";
+
+    if(field === "categoria" || field === "finalidad"){
+
+
+
+
+
+        icono = `
+            <span
+                class="expand-chart"
+                title="${chartExpandido[field] ? 'Contraer' : 'Expandir'}"
+                onclick="toggleExpand('${field}')">
+                ${chartExpandido[field] ? "⤡" : "⤢"}
+            </span>
+        `;
+
+
+
+    }
+
+    t.innerHTML =
+        title +
+        icono +
+        (
+            isFallback
+                ? ' <span style="color:var(--brass);font-size:11px;font-weight:600;">· vista alternativa</span>'
+                : ''
+        );
+
+    h.textContent = hint;
+
 }
+
+
+
+function toggleExpand(field){
+
+    chartExpandido[field] = !chartExpandido[field];
+
+    renderCharts(null, field);
+
+}
+
+
 
 function renderDimensionChart(field, canvasId, titleId, hintId, defaultTitle, type, colorFn, sliceN){
-  const rows = getFiltered();
-  let agg = aggregate(rows, field);
-  if(sliceN) agg = agg.slice(0, sliceN);
 
-  if(agg.length <= 1 && rows.length > 0){
-    const merch = aggregateMerchants(rows).slice(0,8);
-    setCardHeader(titleId, hintId, defaultTitle, 'Ya estás filtrando por esta dimensión, así que te muestro los comercios con mayor gasto en su lugar. Clic para buscar ese comercio.', true);
-    renderChart(canvasId, 'bar', merch.map(c=>c[0]), merch.map(c=>c[1]), merch.map((_,i)=>PALETTE[i%PALETTE.length]), null);
-    charts[canvasId].options.onClick = (evt, elements)=>{
-      if(!elements.length) return;
-      const label = merch[elements[0].index][0];
-      state.search = (state.search === label) ? '' : label;
-      document.getElementById('fSearch').value = state.search;
-      render();
-    };
-    charts[canvasId].update();
-    return;
-  }
+   
+    const rows = getRowsDashboard();
+    let agg = aggregate(rows, field);
 
-  setCardHeader(titleId, hintId, defaultTitle, type==='doughnut' ? 'Clic en un sector para filtrar el detalle' : 'Clic en una barra para filtrar el detalle', false);
-  renderChart(canvasId, type, agg.map(c=>c[0]), agg.map(c=>c[1]), agg.map((c,i)=>colorFn(c,i)), field);
+    const expandido = chartExpandido[field];
+
+    if (sliceN && !expandido){
+        agg = agg.slice(0, sliceN);
+    }
+
+    // Ajustar altura
+    const holder = document.getElementById(canvasId).parentElement;
+
+    holder.style.height = expandido
+        ? Math.max(260, agg.length * 30) + "px"
+        : "260px";
+
+
+    // Texto de ayuda
+    const textoHint = expandido
+        ? "Clic en una barra para filtrar · Clic en ⤡ para contraer"
+        : "Clic en una barra para filtrar · Clic en ⤢ para expandir";
+
+
+    // Título
+    setCardHeader(
+        titleId,
+        hintId,
+        defaultTitle,
+        textoHint,
+        false
+    );
+
+
+    // Dibujar gráfico
+    renderChart(
+        canvasId,
+        type,
+        agg.map(x => x[0]),
+        agg.map(x => x[1]),
+        agg.map((x,i)=>colorFn(x,i))
+        
+    );
+
+
+    // Activar botón expandir
+    const btn = document.querySelector(`#${titleId} .expand-chart`);
+
+    if(btn){
+
+        btn.onclick = function(e){
+
+            e.stopPropagation();
+
+            chartExpandido[field] = !chartExpandido[field];
+
+            render();
+
+        };
+
+    }
+
 }
 
-function renderCharts(rows){
-  renderDimensionChart('categoria','chartCategoria','titleCategoria','hintCategoria','Gasto por Categoría','bar', (c,i)=>PALETTE[i%PALETTE.length], 8);
-  renderDimensionChart('finalidad','chartFinalidad','titleFinalidad','hintFinalidad','Gasto por Finalidad','bar', (c,i)=>PALETTE[i%PALETTE.length]);
-  renderDimensionChart('persona','chartPersona','titlePersona','hintPersona','Gasto por Persona','bar', (c)=>PERSON_COLORS[c[0]]||'#8E6C4C');
 
-  const evoRows = RAW.filter(r => baseFilter(r, 'periodo'));
+function renderCharts(rows, solo=null){
+
+  if(solo === null || solo === "categoria"){
+      renderDimensionChart(
+          'categoria',
+          'chartCategoria',
+          'titleCategoria',
+          'hintCategoria',
+          'Gasto por Categoría',
+          'bar',
+          (c,i)=>PALETTE[i%PALETTE.length],
+          8
+      );
+  }
+
+  if(solo === null || solo === "finalidad"){
+      renderDimensionChart(
+          'finalidad',
+          'chartFinalidad',
+          'titleFinalidad',
+          'hintFinalidad',
+          'Gasto por Finalidad',
+          'bar',
+          (c,i)=>PALETTE[i%PALETTE.length],
+          8
+      );
+  }
+
+  if(solo === null || solo === "persona"){
+      renderDimensionChart(
+          'persona',
+          'chartPersona',
+          'titlePersona',
+          'hintPersona',
+          'Gasto por Persona',
+          'bar',
+          (c)=>PERSON_COLORS[c[0]]||'#8E6C4C'
+      );
+  }
+
+  // El gráfico Evolución sólo cuando redibujamos todo
+  if(solo !== null){
+      return;
+  }
+
+  const evoRows = getRowsDashboard();
   const porPeriodo = {};
   evoRows.forEach(r=>{ porPeriodo[r.periodo] = (porPeriodo[r.periodo]||0) + Math.abs(r.importe); });
   const periodos = Object.keys(porPeriodo).sort();
-  const evoColors = periodos.map(p => (state.periodo==='ALL' || state.periodo===p) ? '#4C6B4F' : '#B7C7B3');
-  renderChart('chartEvolucion','bar', periodos.map(periodoLabel), periodos.map(p=>porPeriodo[p]), evoColors, '__periodo_raw__');
+  const evoColors = periodos.map(() => '#4C6B4F');
+
+
+
+
+  renderChart('chartEvolucion','bar', periodos.map(periodoLabel), periodos.map(p=>porPeriodo[p]), evoColors);
   charts['chartEvolucion'].options.indexAxis = 'x';
-  charts['chartEvolucion'].options.onClick = (evt, elements)=>{
-    if(!elements.length) return;
-    const p = periodos[elements[0].index];
-    state.periodo = (state.periodo===p) ? 'ALL' : p;
-    render();
-  };
   charts['chartEvolucion'].options.scales = { y:{ ticks:{ callback:(v)=>'$'+(v/1000).toFixed(0)+'k', font:{size:10} }, grid:{color:'#DCE5D3'} }, x:{ grid:{display:false} } };
   charts['chartEvolucion'].data.datasets[0].categoryPercentage = 0.92;
   charts['chartEvolucion'].data.datasets[0].barPercentage = 0.98;
@@ -662,13 +836,30 @@ function syncFilterInputs(){
 }
 
 function render(){
-  buildPersonTabs();
-  syncFilterInputs();
-  const rows = getFiltered();
-  renderKPIs(rows);
-  renderCharts(rows);
-  renderTable(rows);
+
+    buildPersonTabs();
+
+    syncFilterInputs();
+
+    renderDashboard();
+
+    const rows = getFiltered();
+
+    renderTable(rows);
+
 }
+
+
+function renderDashboard(){
+
+    const rows = getRowsDashboard();
+
+    renderKPIs(rows);
+
+    renderCharts(rows);
+
+}
+
 
 populateSelect('fCategoria', uniqueSorted(RAW.map(r=>r.categoria)));
 populateSelect('fFinalidad', uniqueSorted(RAW.map(r=>r.finalidad)));
