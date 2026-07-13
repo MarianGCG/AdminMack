@@ -99,6 +99,31 @@ def limpiar_numero(valor):
     
 
 
+def limpiar_numero_allianz(valor):
+
+    if valor is None:
+        return None
+
+    if isinstance(valor, float) and math.isnan(valor):
+        return None
+
+    if isinstance(valor, (int, float)):
+        return float(valor)
+
+    texto = str(valor).strip()
+
+    if texto == "" or texto.lower() == "nan":
+        return None
+
+    # Allianz usa coma para miles y punto para decimales
+    # Ej: 1,418.00  -> 1418.00
+    texto = texto.replace(",", "")
+
+    try:
+        return float(texto)
+
+    except Exception:
+        return None
 # ====
 
 def limpiar_fecha(valor):
@@ -737,6 +762,84 @@ def procesar_pdf_atm(archivo):
                         print("Error línea:", linea, e)
 
     return pd.DataFrame(filas)
+
+def procesar_pdf_allianz(archivo):
+
+    filas = []
+
+    with pdfplumber.open(archivo) as pdf:
+
+        for page in pdf.pages:
+
+            texto = page.extract_text()
+
+            if not texto:
+                continue
+
+            lineas = texto.split("\n")
+
+            for linea in lineas:
+
+                # Solo procesar líneas que empiezan con una fecha
+                if not re.match(r"^\d{2}/\d{2}/\d{4}", linea):
+                    continue
+
+                try:
+
+                    partes = linea.split()
+
+                    # Buscar moneda
+                    if "$" in partes:
+                        idx_moneda = partes.index("$")
+                        moneda = "$"
+                    elif "u$s" in partes:
+                        idx_moneda = partes.index("u$s")
+                        moneda = "u$s"
+                    else:
+                        continue
+                    ramo = partes[1]      # <-- ESTA LÍNEA ES LA QUE FALTA
+
+                    poliza = partes[2]
+                    endoso = partes[3]
+
+                    cliente = " ".join(partes[4:idx_moneda])
+
+                    premio = limpiar_numero_allianz(partes[idx_moneda + 1])
+                    prima = limpiar_numero_allianz(partes[idx_moneda + 2])
+                    comision = limpiar_numero_allianz(partes[idx_moneda + 3])
+                    porcentaje = (
+                        (comision / prima * 100)
+                        if prima else 0
+                    )
+
+                    filas.append({
+
+                        "cliente": cliente,
+                        "ramo": ramo,
+                        "poliza": poliza,
+                        "endoso": endoso,
+
+
+                        "premio": premio,
+                        "prima": prima,
+                        "porcentaje": porcentaje,
+                        "comision": comision,
+                        "moneda": moneda,
+                    })
+
+                except Exception as e:
+                    print("Error línea:", linea)
+                    print(e)
+
+    print(f"Filas leídas: {len(filas)}")
+
+    df = pd.DataFrame(filas)
+
+    print(df.head())
+    print(df[["ramo", "poliza"]].head(10))
+    return df
+
+
 
 def importar_desde_dataframe(df, nombre_archivo, aseguradora_id):
 

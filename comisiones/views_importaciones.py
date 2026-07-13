@@ -296,7 +296,38 @@ def importar_liquidaciones_view(request):
                     importar_desde_dataframe
                 )
 
-                df = procesar_pdf_atm(archivo)
+
+                # 🔵 SI ES PDF
+                if nombre_archivo.endswith(".pdf"):
+
+                    from .services.comisiones_service import (
+                        procesar_pdf_atm,
+                        procesar_pdf_allianz,
+                        importar_desde_dataframe
+                    )
+
+                    aseguradora = Aseguradoras.objects.get(pk=aseguradora_id)
+
+                    if aseguradora.nombre.upper() == "ALLIANZ":
+                        df = procesar_pdf_allianz(archivo)
+
+                    elif aseguradora.nombre.upper() == "ATM":
+                        df = procesar_pdf_atm(archivo)
+
+                    else:
+                        raise Exception(
+                            f"No existe importador PDF para {aseguradora.nombre}"
+                        )
+
+                    resultado = importar_desde_dataframe(
+                        df,
+                        archivo.name,
+                        aseguradora_id
+                    )
+
+                    
+
+
 
                 resultado = importar_desde_dataframe(
                     df,
