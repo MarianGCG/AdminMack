@@ -30,11 +30,12 @@ def categoria_eliminar(request, id):
 
     return JsonResponse({"ok": True})
 
+
+
+
 @login_required
 def categorias(request):
     categorias = Categoria.objects.order_by("nombre")
-
-
 
     return render(
         request,

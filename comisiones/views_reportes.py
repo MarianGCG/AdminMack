@@ -609,7 +609,7 @@ def reporte_comisiones_view(request):
             azul = '#1F4E78'
 
             formato_titulo_caja = workbook.add_format({
-                'bold': True,
+                'bold': False,
                 'align': 'center',
                 'valign': 'vcenter',
                 'border': 2,
@@ -643,25 +643,49 @@ def reporte_comisiones_view(request):
             # 📊 CUADRO
             # ============================
 
-            # ==worksheet.write(fila_inicio+1, col_inicio, "Bruto", formato_label)
-            # ==worksheet.write(fila_inicio+1, col_inicio+1, total_bruto, formato_moneda)
+            formato_label_sb = workbook.add_format({
+                'bold': False,
+                'align': 'right',
+                'border': 0,
+            })
 
-            # ==worksheet.write(fila_inicio+2, col_inicio, "IVA", formato_label)
-            # ==worksheet.write(fila_inicio+2, col_inicio+1, "-", formato_label)
+            formato_moneda_sb = workbook.add_format({
+                'num_format': '$ #,##0.00',
+                'align': 'right',
+                'border': 0,
+                'bold': False,
+            })
 
-            worksheet.write(fila_inicio+1, col_inicio, "Total Comisión", formato_label)
-            worksheet.write(fila_inicio+1, col_inicio+1, total_neto, formato_moneda)
+            formato_porcentaje_sb = workbook.add_format({
+                'num_format': '0%',
+                'align': 'right',
+                'border': 0,
+                'bold': False,     
+            })
 
-            worksheet.write(fila_inicio+2, col_inicio, "Desc.Impuestos", formato_label)
-            worksheet.write(fila_inicio+2, col_inicio+1, descuento, formato_porcentaje)
 
-            worksheet.write(fila_inicio+3, col_inicio, "Neto Comisión", formato_label)
-            worksheet.write(fila_inicio+3, col_inicio+1, pago, formato_moneda)
 
-            worksheet.merge_range(fila_inicio+4, col_inicio, fila_inicio+4, col_inicio + 1,"Monotributo", formato_titulo_caja )
+            worksheet.write(fila_inicio+1, col_inicio,   "Total Comisión",  formato_label_sb)
+            worksheet.write(fila_inicio+1, col_inicio+1, total_neto,        formato_moneda_sb)
 
-            worksheet.write(fila_inicio+5, col_inicio, "A Facturar y Pago", formato_label)
-            worksheet.write(fila_inicio+5, col_inicio+1, pago, formato_moneda)
+            worksheet.write(fila_inicio+2, col_inicio,   "Desc.Impuestos",  formato_label_sb)
+            worksheet.write(fila_inicio+2, col_inicio+1, descuento,         formato_porcentaje_sb)
+
+            worksheet.write(fila_inicio+3, col_inicio,   "Neto Comisión",   formato_label_sb)
+            worksheet.write(fila_inicio+3, col_inicio+1, pago,              formato_moneda_sb)
+
+
+            worksheet.merge_range(
+                fila_inicio+4,
+                col_inicio,
+                fila_inicio+5,
+                col_inicio+1,
+                "Monto de facturar Monotributo",
+                formato_titulo_caja
+            )
+
+            worksheet.write(fila_inicio+6, col_inicio,   "A Facturar", formato_label)
+            worksheet.write(fila_inicio+6, col_inicio+1, pago,         formato_moneda)
 
             # =========================
             # ENCABEZADO
