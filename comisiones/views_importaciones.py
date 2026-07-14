@@ -26,7 +26,12 @@ import json
 from .services.reglas_comision_service import importar_reglas_comision_excel
 from .models import ReglaComision
 from django.contrib.auth.decorators import login_required
-
+from .services.comisiones_service import (
+    procesar_pdf_atm,
+    procesar_pdf_allianz,
+    procesar_pdf_galicia,
+    importar_desde_dataframe,
+)
     
 # ================================
 # IMPORTAR DÓLAR
@@ -313,6 +318,9 @@ def importar_liquidaciones_view(request):
 
                     elif aseguradora.nombre.upper() == "ATM":
                         df = procesar_pdf_atm(archivo)
+                        
+                    elif aseguradora.nombre.upper() == "GALICIA":
+                        df = procesar_pdf_galicia(archivo)
 
                     else:
                         raise Exception(

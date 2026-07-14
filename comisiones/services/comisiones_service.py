@@ -361,7 +361,8 @@ def validar_columnas(columnas_detectadas):
 
     if faltantes:
         raise Exception(
-            f"Faltan columnas obligatorias: {', '.join(faltantes)}"
+            "Faltan columnas obligatorias: "
+            + ", ".join(faltantes)
         )
 
 
@@ -628,7 +629,7 @@ def importar_comisiones_excel(archivo, aseguradora_id):
             moneda_valor = "$"
 
             
-
+        print("RAMO:", row[columnas["ramo"]], type(row[columnas["ramo"]]))
 
         LiquidacionAseguradora.objects.create(
 
@@ -839,6 +840,96 @@ def procesar_pdf_allianz(archivo):
     print(df[["ramo", "poliza"]].head(10))
     return df
 
+def procesar_pdf_galicia(archivo):
+
+    filas = []
+
+    with pdfplumber.open(archivo) as pdf:
+
+        for page in pdf.pages:
+
+            texto = page.extract_text()
+
+            if not texto:
+                continue
+
+            lineas = texto.split("\n")
+
+            for linea in lineas:
+
+                # Solo líneas de movimientos
+                if not re.match(r"^\d{2}\s+\d+", linea):
+                    continue
+
+                partes = linea.split()
+
+                # Ignorar líneas de ajustes
+                if len(partes) < 15:
+                    continue
+
+                try:
+
+                    # Buscar el ramo
+                    idx_ramo = None
+
+                    for i in range(4, len(partes) - 2):
+
+                        if (
+                            len(partes[i]) == 2
+                            and partes[i].isdigit()
+                            and len(partes[i + 1]) == 9
+                            and partes[i + 2].isdigit()
+                        ):
+                            idx_ramo = i
+                            break
+
+                    if idx_ramo is None:
+                        continue
+
+                    cliente = " ".join(partes[4:idx_ramo])
+
+                    ramo = partes[idx_ramo]
+                    poliza = partes[idx_ramo + 1]
+                    endoso = partes[idx_ramo + 2]
+
+                    premio = float(partes[idx_ramo + 3])
+                    prima = float(partes[idx_ramo + 4])
+                    comision = float(partes[idx_ramo + 5])
+
+                    porcentaje = (
+                        (comision / prima) * 100
+                        if prima else 0
+                    )
+
+                    filas.append({
+
+                        "cliente": cliente,
+                        "ramo": ramo,
+                        "poliza": poliza,
+                        "endoso": endoso,
+
+                        "premio": premio,
+                        "prima": prima,
+                        "porcentaje": porcentaje,
+                        "comision": comision,
+
+                        "moneda": "$",
+
+                    })
+
+                except Exception as e:
+
+                    print("ERROR GALICIA:")
+                    print(linea)
+                    print(e)
+
+    print(f"Filas leídas: {len(filas)}")
+
+    df = pd.DataFrame(filas)
+
+    print(df.head())
+
+    return df
 
 
 def importar_desde_dataframe(df, nombre_archivo, aseguradora_id):
