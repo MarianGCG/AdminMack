@@ -471,7 +471,7 @@ def reporte_comisiones_view(request):
 
         if request.GET.get("solo_pas") == "1":
             columnas = [
-                "fecha", "quincena", "aseg",  "cliente", "ramo",
+                "fecha", "quincena", "aseg",  "cliente", "concepto_claro",
                 "poliza", "endoso", "moneda", "cotizacion",
                 "prima_original",
                 "meses", "prima",                
@@ -479,7 +479,7 @@ def reporte_comisiones_view(request):
             ]
         else:
             columnas = [
-                "fecha", "quincena", "aseg", "cliente", "ramo",
+                "fecha", "quincena", "aseg", "cliente", "concepto_claro",
                 "poliza", "endoso", "moneda", "cotizacion",
                 "prima_original",
                 "meses", "prima",  
@@ -495,7 +495,7 @@ def reporte_comisiones_view(request):
             "fecha": "Fecha",
             "aseg": "Aseguradora",
             "cliente": "Cliente",
-            "ramo": "Ramo",
+            "concepto_claro": "Ramo",
             "poliza": "Poliza",
             "endoso": "Endoso",
             "moneda": "Moneda",
