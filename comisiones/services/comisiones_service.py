@@ -697,6 +697,16 @@ def importar_comisiones_excel(archivo, aseguradora_id):
 
 def buscar_porcentaje_comision(aseguradora_id, producto, nivel, anio_poliza, moneda):
 
+    print(
+        "BUSCANDO:",
+        aseguradora_id,
+        repr(producto),
+        repr(nivel),
+        repr(anio_poliza),
+        repr(moneda)
+    )
+
+
     regla = ReglaComision.objects.filter(
         aseguradora_id=aseguradora_id,
         producto__iexact=producto,
@@ -925,12 +935,15 @@ def procesar_pdf_galicia(archivo):
 
     print(f"Filas leídas: {len(filas)}")
 
+
     df = pd.DataFrame(filas)
 
-    print(df.head())
+    print("=" * 80)
+    print(df.columns.tolist())
+    print(df)
+    print("=" * 80)
 
     return df
-
 
 def importar_desde_dataframe(df, nombre_archivo, aseguradora_id):
 
