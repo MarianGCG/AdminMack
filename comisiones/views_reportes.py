@@ -619,14 +619,17 @@ def reporte_comisiones_view(request):
 
             formato_label = workbook.add_format({
                 'border': 2,
-                'bold': True
+                'bold': True,
+                'align': 'center',
+                'valign': 'vcenter'
             })
 
             formato_moneda = workbook.add_format({
                 'num_format': '$ #,##0.00',
                 'border': 2,
-                'bold': True ,               
-                'align': 'right'
+                'bold': True,
+                'align': 'center',
+                'valign': 'vcenter'
             })
 
             formato_porcentaje = workbook.add_format({
@@ -687,6 +690,8 @@ def reporte_comisiones_view(request):
             worksheet.write(fila_inicio+6, col_inicio,   "A Facturar", formato_label)
             worksheet.write(fila_inicio+6, col_inicio+1, pago,         formato_moneda)
 
+            # Hacer la fila más alta
+            worksheet.set_row(fila_inicio+6, 32)
             # =========================
             # ENCABEZADO
             # =========================
