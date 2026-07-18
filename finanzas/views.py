@@ -62,6 +62,8 @@ def categoria_guardar(request):
     categoria.codigo = datos.get("codigo")
     categoria.nombre = datos.get("nombre")
     categoria.color = datos.get("color")
+    categoria.grupo_dashboard = datos.get("grupo_dashboard")
+    categoria.mostrar_dashboard = datos["mostrar_dashboard"]
     categoria.activo = datos.get("activo")
 
     try:
@@ -642,6 +644,16 @@ def dashboard(request):
             "descripcion": m.descripcion,
             "importe": float(m.importe),
             "categoria": m.categoria.nombre if m.categoria else "Sin clasificar",
+            "grupo_dashboard": m.categoria.grupo_dashboard if m.categoria else "OTROS",
+
+            "mostrar_dashboard": (
+                m.categoria.mostrar_dashboard
+                if m.categoria
+                else True
+            ),
+
+            "color_categoria": m.categoria.color if m.categoria else "#CCCCCC",
+
             "finalidad": m.finalidad.nombre if m.finalidad else "Sin clasificar",
             "persona": m.persona.nombre if m.persona else "Sin asignar",
             "origen": m.origen,

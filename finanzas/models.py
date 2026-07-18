@@ -4,7 +4,19 @@ from django.db import models
 # FINANZAS
 # ==========================================
 # Categoria
+
+
+
+
 class Categoria(models.Model):
+
+    GRUPOS_DASHBOARD = [
+        ("INGRESOS", "Ingresos"),
+        ("EGRESOS", "Egresos"),
+        ("TRANSFERENCIAS", "Transferencias"),
+        ("INVERSIONES", "Inversiones"),
+        ("OTROS", "Otros"),
+    ]
 
     codigo = models.CharField(
         max_length=50,
@@ -18,6 +30,17 @@ class Categoria(models.Model):
         default="#4e79a7"
     )
 
+    grupo_dashboard = models.CharField(
+        max_length=20,
+        choices=GRUPOS_DASHBOARD,
+        default="EGRESOS"
+    )
+
+    mostrar_dashboard = models.BooleanField(
+        default=True,
+        verbose_name="Mostrar en Dashboard"
+    )    
+
     activo = models.BooleanField(default=True)
 
     def __str__(self):
@@ -25,6 +48,8 @@ class Categoria(models.Model):
 
     class Meta:
         db_table = "fin_categorias"
+
+
 
 
 # Finalidad
