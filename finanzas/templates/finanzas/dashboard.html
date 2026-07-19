@@ -59,7 +59,7 @@
     font-family:'Fraunces',serif; font-weight:700; font-optical-sizing:auto;
     font-size:32px; color:var(--ledger-light); margin:0; letter-spacing:0.2px;
   }
-  .spine .subtitle{ color:#C7D6C3; font-size:13.5px; margin-top:4px; letter-spacing:0.3px;}
+  .spine .subtitle{ color:#C7D6C3; font-size:14px; margin-top:4px; letter-spacing:0.3px;}
   .toggle-wrap{ display:flex; align-items:center; gap:10px; color:var(--ledger-light); font-size:12.5px; padding-bottom:6px;}
   .switch{ position:relative; width:40px; height:22px; }
   .switch input{ display:none; }
@@ -161,7 +161,7 @@
 }
 
 .kpi.combo .chevron{
-    font-size:9px;
+    font-size:11px;
     color:var(--brass);
     transition:transform .15s;
 }
@@ -202,7 +202,7 @@
     padding:5px 8px;
 
     border-radius:5px;
-    font-size:11px;
+    font-size:14px;
 
     cursor:pointer;
 }
@@ -221,7 +221,7 @@
 .kpi-dropdown .drow .amt{
     font-family:'IBM Plex Mono',monospace;
     font-weight:600;
-    font-size:11px;
+    font-size:14px;
 }
 
 
@@ -231,15 +231,15 @@
     padding:14px 18px; margin-top:16px; background:var(--card); border-radius:10px; box-shadow:var(--shadow);
   }
   .filters select, .filters input[type=text]{
-    font-family:'Inter',sans-serif; font-size:12.5px; padding:8px 10px; border-radius:6px;
+    font-family:'Inter',sans-serif; font-size:14px; padding:8px 10px; border-radius:6px;
     border:1px solid var(--line); background:var(--paper); color:var(--ink);
   }
   .filters input[type=text]{ min-width:220px; }
-  .filters .field-label{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.5px; margin-bottom:3px; display:block;}
+  .filters .field-label{ font-size:14px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.5px; margin-bottom:3px; display:block;}
   .filters .field{ display:flex; flex-direction:column; }
   .clear-btn{
     margin-left:auto; background:none; border:1px solid var(--line); color:var(--ink-soft);
-    font-size:12px; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600;
+    font-size:14px; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600;
   }
   .clear-btn:hover{ background:var(--ledger-light); color:var(--ink); }
 
@@ -250,7 +250,7 @@
   .chart-card h3{
     font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px 0; font-weight:600;
   }
-  .chart-card .hint{ font-size:11px; color:var(--ink-soft); margin-bottom:10px; }
+  .chart-card .hint{ font-size:14px; color:var(--ink-soft); margin-bottom:10px; }
   .chart-holder{ position:relative; height:260px; }
 
 
@@ -276,10 +276,10 @@
   /* TABLE */
   .table-card{ margin-top:16px; background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px 8px 20px;}
   .table-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 2px 0; font-weight:600; }
-  .table-card .hint{ font-size:11px; color:var(--ink-soft); margin-bottom:10px; }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .table-card .hint{ font-size:14px; color:var(--ink-soft); margin-bottom:10px; }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
   thead th{
-    text-align:left; padding:9px 10px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px;
+    text-align:left; padding:9px 10px; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;
     color:var(--ink-soft); border-bottom:2px solid var(--ledger); cursor:pointer; user-select:none;
     position:sticky; top:0; background:var(--card);
   }
@@ -292,13 +292,13 @@
   td.amount{ text-align:right; font-weight:600; }
   td.amount.neg{ color:var(--red); }
   td.amount.pos{ color:var(--ledger-dark); }
-  .cat-chip{ font-size:10.5px; padding:2px 8px; border-radius:20px; background:var(--ledger-light); color:var(--ink); font-weight:600; }
+  .cat-chip{ font-size:14px; padding:2px 8px; border-radius:20px; background:var(--ledger-light); color:var(--ink); font-weight:600; }
   .detail-row{ display:none; background:var(--paper-alt) !important; }
-  .detail-row td{ padding:10px 16px; font-size:12px; color:var(--ink-soft); }
-  .detail-row .archivo{ font-family:'IBM Plex Mono',monospace; font-size:11px; }
+  .detail-row td{ padding:10px 16px; font-size:14px; color:var(--ink-soft); }
+  .detail-row .archivo{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
   .table-scroll{ max-height:520px; overflow-y:auto; border-radius:6px; }
-  .table-foot{ display:flex; justify-content:space-between; padding:10px 4px; font-size:11.5px; color:var(--ink-soft); }
-  .empty-state{ text-align:center; padding:40px; color:var(--ink-soft); font-size:13.5px; }
+  .table-foot{ display:flex; justify-content:space-between; padding:10px 4px; font-size:14px; color:var(--ink-soft); }
+  .empty-state{ text-align:center; padding:40px; color:var(--ink-soft); font-size:14px; }
 
 .expand-chart{
     float:right;
@@ -429,6 +429,31 @@
                 <canvas id="chartDashboard"></canvas>
             </div>
         </div>
+
+
+
+        <!-- NUEVO GRAFICO -->
+
+        <div class="chart-card" id="cardEvolucion" style="display:none; margin-top:20px;">
+
+            <h3 id="tituloEvolucion">
+                Evolución mensual
+            </h3>
+
+            <div class="hint">
+                Evolución de la categoría seleccionada
+            </div>
+
+            <div class="chart-holder" style="height:350px;">
+                <canvas id="chartEvolucionCategoria"></canvas>
+            </div>
+
+        </div>
+
+
+
+
+
       </div>
 
     </div>
@@ -558,25 +583,52 @@ function aggregateMerchants(rows){
 let charts = {};
 
 
+function renderChart(canvasId, type, labels, data, colors, vertical=false){
 
-function renderChart(canvasId, type, labels, data, colors){
   const ctx = document.getElementById(canvasId);
   if(charts[canvasId]) charts[canvasId].destroy();
   charts[canvasId] = new Chart(ctx, {
     type: type,
-    data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: type==='doughnut'?2:0, borderColor:'#F7F3E8', borderRadius: type==='bar'?4:0 }] },
+    data: { labels: labels, datasets: [{ data: data, 
+      backgroundColor: Array.isArray(colors)
+          ? colors
+          : labels.map(()=>colors),
+            
+      borderWidth: type==='doughnut'?2:0, borderColor:'#F7F3E8', borderRadius: type==='bar'?4:0, categoryPercentage: 1.00,barThickness: 85, barPercentage:  1.20}] },
     options: {
-      indexAxis: type==='bar' ? 'y' : undefined,
+      
+
+      indexAxis: type==='bar'
+          ? (vertical ? 'x' : 'y')
+          : undefined,
+
+            
       responsive:true, maintainAspectRatio:false,
       plugins:{
         legend:{ display: type==='doughnut', position:'right', labels:{ boxWidth:10, font:{size:11, family:'Inter'}, color:'#212529' } },
-        tooltip:{ callbacks:{ label: (c)=> ' ' + fmtMoney(c.raw) } }
+        tooltip:{ callbacks:{ label: (c)=> ' ' + fmtMoney(c.raw) } },
+        
+
+        datalabels:{
+            color:"#ffffff",
+            anchor:"center",
+            align:"center",
+            font:{
+                weight:"bold",
+                size:15
+            },
+            formatter:(v)=>fmtMoneySigned(v)
+        }
+
+
       },
       scales: type==='bar' ? {
         x:{ ticks:{ callback:(v)=>'$'+(v/1000).toFixed(0)+'k', font:{size:10} }, grid:{color:'#DCE5D3'} },
         y:{ ticks:{ font:{size:11, family:'Inter'} }, grid:{display:false} }
       } : {},
+
       onClick: null
+
 
     }
   });
@@ -684,7 +736,7 @@ function setCardHeader(titleId, hintId, title, hint, isFallback){
         icono +
         (
             isFallback
-                ? ' <span style="color:var(--brass);font-size:11px;font-weight:600;">· vista alternativa</span>'
+                ? ' <span style="color:var(--brass);font-size:14px;font-weight:600;">· vista alternativa</span>'
                 : ''
         );
 
@@ -823,7 +875,7 @@ function renderTable(rows){
       <td><span class="cat-chip">${r.categoria}</span></td>
       <td>${r.finalidad}</td>
       <td>${r.persona}</td>
-      <td style="font-size:11px;color:var(--ink-soft)">${r.origen}</td>
+      <td style="font-size:14px;color:var(--ink-soft)">${r.origen}</td>
       <td class="amount num ${isNeg?'neg':'pos'}">${fmtMoneySigned(r.importe)}</td>
     `;
     tr.onclick = ()=>{
@@ -860,6 +912,52 @@ function syncFilterInputs(){
   document.getElementById('fPeriodo').value = state.periodo;
 }
 
+
+
+function renderEvolucionCategoria(){
+
+    if(!state.categoria){
+
+        document.getElementById("cardEvolucion").style.display = "none";
+        return;
+
+    }
+
+    document.getElementById("cardEvolucion").style.display = "block";
+
+    document.getElementById("tituloEvolucion").innerHTML =
+        "Evolución mensual - " + state.categoria;
+
+    const filas = getFiltered();
+
+    const porMes = {};
+
+    filas.forEach(f=>{
+
+        if(!porMes[f.periodo]){
+            porMes[f.periodo] = 0;
+        }
+
+        porMes[f.periodo] += Number(f.importe);
+
+    });
+
+    const meses = Object.keys(porMes).sort();
+
+    const importes = meses.map(m => porMes[m]);
+    const colorCategoria =
+        filas.find(f => f.color_categoria)?.color_categoria || "#7FB77E";
+    renderChart(
+        "chartEvolucionCategoria",
+        "bar",
+        meses,
+        importes,
+        colorCategoria,
+        true
+    );
+}
+
+
 function render(){
 
     buildPersonTabs();
@@ -871,6 +969,9 @@ function render(){
     const rows = getFiltered();
 
     renderTable(rows);
+
+    renderEvolucionCategoria();   // <-- AGREGAR ESTA LINEA
+
 
 }
 
@@ -920,7 +1021,7 @@ function renderDashboardStacked(){
             grupos[grupo][categoria] = 0;
         }
 
-        grupos[grupo][categoria] += Math.abs(r.importe);
+        grupos[grupo][categoria] += Number(r.importe);
 
         categorias[categoria] = color;
 
@@ -1001,57 +1102,65 @@ function renderDashboardStacked(){
         },
 
         options:{
-
             responsive:true,
-
             maintainAspectRatio:false,
-
             indexAxis:"x",
 
 
+            onClick: (event, elements) => {
+
+                if (!elements.length) return;
+                console.log(elements[0]);
+                const chart = event.chart;
+
+                const datasetIndex = elements[0].datasetIndex;
+                console.log(datasetIndex);
+                console.log(chart.data.datasets[datasetIndex]);
+                const categoria = chart.data.datasets[datasetIndex].label;
+
+                const combo = document.getElementById("fCategoria");
+
+                setTimeout(() => {
+
+                    const combo = document.getElementById("fCategoria");
 
 
+                    setTimeout(() => {
+                        const combo = document.getElementById("fCategoria");
+                        combo.value = categoria;
+                        combo.dispatchEvent(new Event("change"));
+                    }, 0);
+                }, 10);
+            },
 
             plugins:{
-
                 legend:{
                     display:false
                 },
-
                 tooltip:{
                     enabled:false
                 },
-
                 datalabels:{
-
                     color:"#ffffff",
-
                     anchor:"center",
-
                     align:"center",
-
                     font:{
                         weight:"bold",
-                        size:13
+                        size:15
                     },
 
                     formatter:function(value,ctx){
 
-                        if(value < 60000){
+                        if (Math.abs(value) < 60000) {
                             return "";
                         }
-
                         const grupo = ctx.dataIndex;
-
                         let total = 0;
-
                         ctx.chart.data.datasets.forEach(ds=>{
                             total += ds.data[grupo];
                         });
 
                         const porcentaje = value / total * 100;
-
-
                         return (
                             ctx.dataset.label +
                             "  " +
@@ -1059,14 +1168,8 @@ function renderDashboardStacked(){
                             "  " +
                             porcentaje.toFixed(1) + "%"
                         );
-
-
-
-
                     }
-
                 }
-
             },
             scales:{
 
