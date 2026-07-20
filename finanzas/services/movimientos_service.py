@@ -33,6 +33,7 @@ def obtener_origen_pdf(texto):
 
     titular = "??"
 
+    # Formato anterior
     m = re.search(
         r"CONSUMIDOR FINAL\s+([A-ZÑ ]+?)\s+DR ",
         texto,
@@ -42,8 +43,18 @@ def obtener_origen_pdf(texto):
     if m:
         titular = " ".join(m.group(1).split())
 
-    return f"??-??-??-{titular}"
+    # Formato Patagonia
+    if titular == "??":
 
+        m = re.search(
+            r"SR\.\s*\(ES\)\s*\d+\s*\n([A-ZÑ, ]+)",
+            texto
+        )
+
+        if m:
+            titular = m.group(1).strip()
+
+    return f"??-??-??-{titular}"
 
 
 
@@ -135,6 +146,16 @@ def importar_movimientos(archivo):
             return importar_pdf_tc_amex_galicia(
                 archivo,
                 datos
+            )
+
+        # CA PATAGONIA
+        elif (
+            datos["tipo"] == "CA"
+            and datos["banco"] == "PATA"
+        ):
+            print(">>> CA PATAGONIA")
+            return importar_pdf_patagonia(
+                archivo
             )
 
         # RESTO DE LOS PDF
@@ -1372,3 +1393,193 @@ def buscar_cotizacion_dolar(periodo):
         )
 
     return dolar.valor
+
+    
+    
+def importar_pdf_patagonia(archivo):
+    print("********** ENTRE  ****importar_pdf_patagonia******")
+    movimientos = []
+
+    leyendo = False
+
+    with pdfplumber.open(archivo) as pdf:
+    # Obtener el texto de la primera página
+
+        texto_caratula = pdf.pages[0].extract_text()
+        
+
+        datos = obtener_datos_nombre_archivo(archivo.name)
+        titular = datos["alias"]
+        origen = (
+            f"{datos['tipo']}-"
+            f"{datos['marca']}-"
+            f"{datos['banco']}-"
+            f"{titular}"
+        )
+        periodo = datos["periodo"]
+
+
+        print("PERIODO:", periodo)
+        print()
+        print("ORIGEN DETECTADO:", origen)
+        print()
+
+
+        for pagina in pdf.pages:
+
+            texto = pagina.extract_text()
+            print("=" * 80)
+            print(texto[:3000])
+            if not texto:
+                continue
+
+            lineas = texto.split("\n")
+
+            for linea in lineas:
+
+                linea = linea.strip()
+
+                if "FECHA CONCEPTO" in linea:
+                    leyendo = True
+                    continue
+
+                if not leyendo:
+                    continue
+
+                # -------------------------------
+                # Fin de la tabla de movimientos
+                # -------------------------------
+                if "TRANSFERENCIAS ENVIADAS" in linea:
+                    break
+
+
+                # -------------------------------
+                # Buscar una línea de consumo
+                # -------------------------------
+                # Primero: líneas con importe + saldo
+                m = re.match(
+                    r"^(\d{2})/(\d{2})/(\d{2})\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)$",
+                    linea
+                )
+
+                # Si no coincide, probar líneas con un solo importe
+                if not m:
+                    m = re.match(
+                        r"^(\d{2})/(\d{2})/(\d{2})\s+(.+?)\s+([\d.,]+)$",
+                        linea
+                    )
+
+                    if not m:
+                        continue
+
+                dia = int(m.group(1))
+                mes = int(m.group(2))
+                anio = int(m.group(3))
+
+                descripcion = m.group(4)
+                importe = m.group(5)
+
+
+                if "SALDO ANTERIOR" in descripcion.upper():
+                    continue
+
+                if "SALDO ACTUAL" in descripcion.upper():
+                    continue
+
+                movimientos.append({
+
+                    "fecha": f"{dia:02d}/{mes:02d}/{2000 + anio}",
+                    "descripcion": descripcion,
+                    "importe": importe
+
+                })
+
+
+
+
+    leidos = 0
+    clasificados = 0
+    pendientes = 0
+    ignorados = 0
+
+    # SOLO MIENTRAS HACEMOS PRUEBAS
+    Movimiento.objects.filter(
+        nombre_archivo=archivo.name
+    ).delete()
+
+    print("TOTAL MOVIMIENTOS LEIDOS =", len(movimientos))
+    for mov in movimientos:
+
+        regla = buscar_regla(mov["descripcion"])
+
+        categoria = None
+        finalidad = None
+        persona = None
+        grupo = ""
+
+        if regla:
+
+            if regla.accion == "I":
+                ignorados += 1
+                continue
+
+            elif regla.accion == "C":
+                categoria = regla.categoria
+                finalidad = regla.finalidad
+                persona = regla.persona
+                clasificados += 1
+
+            elif regla.accion == "A":
+                grupo = regla.grupo
+                persona = regla.persona
+                clasificados += 1
+
+        else:
+            pendientes += 1
+
+        # Fecha
+        dia, mes, anio = mov["fecha"].split("/")
+
+        fecha = datetime(
+            int(anio),
+            int(mes),
+            int(dia)
+        ).date()
+
+        # Importe
+        importe = mov["importe"].replace(".", "").replace(",", ".")
+
+        if importe.endswith("-"):
+            importe = "-" + importe[:-1]
+        print("PERIODO =", periodo)
+        print("GUARDANDO  de importar_pdf_movimientos   :", archivo.name)
+        print("ARCHIVO =", archivo.name)
+        Movimiento.objects.create(
+
+            nombre_archivo=archivo.name,
+
+            fecha=fecha,
+            descripcion=mov["descripcion"],
+            importe=importe,
+
+            periodo=periodo,
+            origen=origen,
+
+            categoria=categoria,
+            finalidad=finalidad,
+            persona=persona,
+            grupo=grupo,
+
+            regla_aplicada=regla,
+        )
+        print("GUARDADO")
+        leidos += 1
+
+    return (
+        f"Leídos: {leidos} - "
+        f"Clasificados: {clasificados} - "
+        f"Pendientes: {pendientes} - "
+        f"Ignorados: {ignorados}"
+    )
+
+
