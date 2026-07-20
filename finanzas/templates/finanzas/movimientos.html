@@ -222,7 +222,26 @@
 }
 
 
+/*=========================================
+  Columna Descripción redimensionable
+=========================================*/
 
+th.resizable{
+    position:relative;
+}
+
+th.resizable .resizer{
+    position:absolute;
+    top:0;
+    right:0;
+    width:8px;
+    height:100%;
+    cursor:col-resize;
+    user-select:none;
+}
+
+th.resizable .resizer:hover{
+    background:rgba(255,255,255,.30);
 }
 
 
@@ -522,7 +541,18 @@
             </a>
         </th>
 
-        <th style="width:1200px;">Descripción</th>
+  
+
+        <th
+            id="thDescripcion"
+            class="resizable"
+            style="min-width:420px;"
+        >
+            Descripción
+            <span class="resizer"></span>
+        </th>
+
+
 
         <th>
             <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'importe' %}-importe{% else %}importe{% endif %}">
@@ -567,19 +597,20 @@
             <td>{{ m.periodo }}</td>
             <td>{{ m.fecha|date:"d/m" }}</td>
             
+ 
             <td
+                class="tdDescripcion"
                 title="{{ m.descripcion }}"
                 style="
-                    width:420px;
-                    max-width:420px;
+                    min-width:420px;
                     white-space:nowrap;
                     overflow:hidden;
                     text-overflow:ellipsis;
                     font-size:14px;
-            ">
+                "
+            >
                 {{ m.descripcion }}
             </td>
- 
 
 
             <td style="text-align:right">
@@ -1160,6 +1191,75 @@ function guardarRegistro(){
 
 }
 
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const th = document.getElementById("thDescripcion");
+    const grip = th.querySelector(".resizer");
+
+    let inicioX;
+    let inicioAncho;
+
+    // Restaurar ancho
+    const guardado = localStorage.getItem("anchoDescripcion");
+
+    if (guardado){
+        aplicar(parseInt(guardado));
+    }
+
+    grip.addEventListener("mousedown", function(e){
+        console.log("mousedown");
+        inicioX = e.clientX;
+        inicioAncho = th.offsetWidth;
+
+        document.addEventListener("mousemove", mover);
+        document.addEventListener("mouseup", soltar);
+
+        e.preventDefault();
+
+    });
+
+    function mover(e){
+        console.log("moviendo");
+
+        let ancho = inicioAncho + (e.clientX - inicioX);
+
+        if(ancho < 150)
+            ancho = 150;
+
+        aplicar(ancho);
+
+    }
+
+
+    function aplicar(ancho){
+
+        th.style.width = ancho + "px";
+        th.style.minWidth = ancho + "px";
+
+        document.querySelectorAll(".tdDescripcion").forEach(td=>{
+
+            td.style.width = ancho + "px";
+            td.style.minWidth = ancho + "px";
+            td.style.maxWidth = ancho + "px";
+
+        });
+
+    }
+
+    function soltar(){
+
+        localStorage.setItem(
+            "anchoDescripcion",
+            th.offsetWidth
+        );
+
+        document.removeEventListener("mousemove", mover);
+        document.removeEventListener("mouseup", soltar);
+
+    }
+
+});
 
 </script>
 {% endblock %}
