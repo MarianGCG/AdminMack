@@ -134,30 +134,35 @@ text-align:center;
 
 {% if not crear %}
 
-<div style="margin-bottom:12px;">
 
-<button onclick="nuevoRegistro()"
-style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;">
-➕ Nuevo
-</button>
+
+<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+
+    <button onclick="nuevoRegistro()"
+        style="padding:6px 14px;background:#174a7c;color:white;border:none;border-radius:6px;">
+        ➕ Nuevo
+    </button>
+
+    <input
+        type="text"
+        id="buscarTexto"
+        placeholder="Buscar texto..."
+        onkeyup="filtrarReglas()"
+        style="width:300px;padding:6px 10px;border:1px solid #bbb;border-radius:6px;">
 
 </div>
-
-
 
 <table class="tabla-listado" id="tabla">
 
 <thead>
 
 <tr>
-
     <th onclick="ordenarTabla(0,this)">Texto</th>
-    <th>Acción</th>
-    <th>Destino</th>
-    <th>Persona</th>
-    <th>Activa</th>
+    <th onclick="ordenarTabla(1,this)">Acción</th>
+    <th onclick="ordenarTabla(2,this)">Destino</th>
+    <th onclick="ordenarTabla(3,this)">Persona</th>
+    <th onclick="ordenarTabla(4,this)">Activa</th>
     <th>Acciones</th>
-
 </tr>
 
 </thead>
@@ -637,6 +642,11 @@ th.innerHTML = th.innerHTML + " <span class='flecha'>▼</span>"
 
 }
 
+
+
+
+
+
 function mostrarControles(){
 
     let radio = document.querySelector('input[name="accion"]:checked');
@@ -695,7 +705,28 @@ window.addEventListener("load", function(){
 });
 
 
+function filtrarReglas() {
 
+    const filtro = document
+        .getElementById("buscarTexto")
+        .value
+        .toUpperCase();
+
+    const filas = document
+        .querySelectorAll("#tabla tbody tr");
+
+    filas.forEach(fila => {
+
+        const texto = fila.cells[0].innerText.toUpperCase();
+
+        fila.style.display =
+            texto.includes(filtro)
+                ? ""
+                : "none";
+
+    });
+
+}
 </script>
 
 

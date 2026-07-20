@@ -263,6 +263,15 @@ class Movimiento(models.Model):
         db_index=True
     ) 
 
+    # importe: siempre expresado en pesos.
+    # importe_usd: monto original cuando el movimiento fue en dólares.
+    # Si el movimiento es en pesos, vale 0.
+    importe_usd = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+    )
+
     class Meta:
         db_table = "fin_movimientos"
         ordering = ["-fecha", "-id"]

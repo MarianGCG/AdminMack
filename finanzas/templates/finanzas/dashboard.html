@@ -564,8 +564,8 @@ function getRowsDashboard(){
 function aggregate(rows, key){
   const map = {};
   rows.forEach(r=>{ 
-    
-    map[r[key]] = (map[r[key]]||0) + r.importe;
+    map[r[key]] = (map[r[key]] || 0) + Math.abs(Number(r.importe));
+
   });
   return Object.entries(map).sort((a,b)=>b[1]-a[1]);
 }
@@ -938,8 +938,8 @@ function renderEvolucionCategoria(){
             porMes[f.periodo] = 0;
         }
 
-        porMes[f.periodo] += Number(f.importe);
-
+       
+        porMes[f.periodo] += Math.abs(Number(f.importe));
     });
 
     const meses = Object.keys(porMes).sort();
@@ -1021,8 +1021,7 @@ function renderDashboardStacked(){
             grupos[grupo][categoria] = 0;
         }
 
-        grupos[grupo][categoria] += Number(r.importe);
-
+        grupos[grupo][categoria] += Math.abs(Number(r.importe));
         categorias[categoria] = color;
 
     });

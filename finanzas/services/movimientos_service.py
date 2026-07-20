@@ -5,6 +5,8 @@ import re
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from ..models import Movimiento, Regla
+from comisiones.models import CotizacionesDolar
+from decimal import Decimal
 import re
 print("******** CARGUE movimientos_service.py ********")
 MESES_CORTOS = {
@@ -89,7 +91,12 @@ def importar_movimientos(archivo):
     extension = os.path.splitext(archivo.name)[1].lower()
 
     if extension == ".pdf":
+        texto_caratula = ""
 
+        with pdfplumber.open(archivo) as pdf:
+            texto_caratula = pdf.pages[0].extract_text() or ""
+            print(">>> CARATULA")
+            print(texto_caratula)
         # ======================================================
         # VISA ICBC ANDRES
         # ======================================================
@@ -98,8 +105,9 @@ def importar_movimientos(archivo):
             and datos["marca"] == "VISA"
             and datos["banco"] == "ICBC"
             and datos["alias"] == "ANDRES"
+            and "RESUMEN DE CUENTA" in texto_caratula 
         ):
-
+            print(">>> VISA ICBC ANDRES")
             return importar_pdf_tc_icbc_andres(
                 archivo,
                 datos
@@ -111,7 +119,7 @@ def importar_movimientos(archivo):
             and datos["marca"] == "VISA"
             and datos["banco"] == "GALI"
         ):
-
+            print(">>> VISA GALICIA")
             return importar_pdf_tc_galicia(
                 archivo,
                 datos
@@ -123,7 +131,7 @@ def importar_movimientos(archivo):
             and datos["marca"] == "AMEX"
             and datos["banco"] == "GALI"
         ):
-
+            print(">>> AMEX GALICIA")
             return importar_pdf_tc_amex_galicia(
                 archivo,
                 datos
@@ -131,7 +139,7 @@ def importar_movimientos(archivo):
 
         # RESTO DE LOS PDF
         else:
-
+            print(">>> IMPORTADOR GENERICO")
             return importar_pdf_movimientos(archivo)
 
 
@@ -620,8 +628,8 @@ def importar_pdf_cuenta_corriente(archivo, datos):
 
             periodo=datos["periodo"],
 
-            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}",
 
+            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}-{datos['alias']}",
             fecha=mov["fecha"],
             descripcion=mov["descripcion"],
             importe=mov["importe"],
@@ -676,6 +684,7 @@ def importar_csv_icbc(archivo, datos):
             importe = -debito
         else:
             importe = credito
+
         regla = buscar_regla(descripcion)
 
         categoria = None
@@ -704,7 +713,7 @@ def importar_csv_icbc(archivo, datos):
 
             periodo=datos["periodo"],
 
-            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}",
+            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}-{datos['alias']}",
 
             fecha=fecha,
             descripcion=descripcion,
@@ -812,8 +821,7 @@ def importar_excel_galicia(archivo, datos):
 
             periodo=datos["periodo"],
 
-            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}",
-
+            origen=f"{datos['tipo']}-{datos['marca']}-{datos['banco']}-{datos['alias']}",
             fecha=fecha,
             descripcion=descripcion,
             importe=importe,
@@ -900,10 +908,27 @@ def importar_pdf_tc_galicia(archivo, datos):
                     "%d-%m-%y"
                 ).date()
 
-                importe = float(
+
+
+
+
+                importe = Decimal(
                     importe_txt
                         .replace(".", "")
                         .replace(",", ".")
+                )
+
+                linea_upper = linea.upper()
+
+                if "USD" in linea_upper:
+                    moneda = "USD"
+                else:
+                    moneda = "ARS"
+
+                importe, importe_usd = convertir_importe(
+                    moneda,
+                    importe,
+                    datos["periodo"]
                 )
 
                 regla = buscar_regla(descripcion)
@@ -937,6 +962,8 @@ def importar_pdf_tc_galicia(archivo, datos):
                     fecha=fecha,
                     descripcion=descripcion,
                     importe=importe,
+                    importe_usd=importe_usd,
+
                     categoria=categoria,
                     finalidad=finalidad,
                     persona=persona,
@@ -1313,3 +1340,35 @@ def importar_pdf_tc_amex_galicia(archivo, datos):
         f"Ignorados: {ignorados}"
     )
 
+def convertir_importe(moneda, importe, periodo):
+
+    if moneda == "USD":
+
+        cotizacion = buscar_cotizacion_dolar(periodo)
+
+        return (
+            importe * cotizacion,   # importe en pesos
+            importe                 # importe_usd
+        )
+
+    return (
+        importe,
+        0
+    )
+
+def buscar_cotizacion_dolar(periodo):
+
+    anio = int(periodo[:4])
+    mes = int(periodo[4:6])
+
+    dolar = CotizacionesDolar.objects.filter(
+        periodo_anio=anio,
+        periodo_mes=mes
+    ).first()
+
+    if dolar is None or dolar.valor is None:
+        raise Exception(
+            f"No existe cotización del dólar para {periodo}"
+        )
+
+    return dolar.valor
