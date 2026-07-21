@@ -322,7 +322,12 @@ def movimientos(request):
             persona_id=persona
         )
 
-  
+    origen = request.GET.get("origen", "").strip()
+
+    if origen:
+        movimientos = movimientos.filter(
+            origen=origen
+        )
 
     descripcion = request.GET.get("descripcion", "").strip()
 
@@ -331,7 +336,33 @@ def movimientos(request):
             descripcion__icontains=descripcion
         )
 
+    fecha_desde = request.GET.get("fecha_desde")
 
+    if fecha_desde:
+        movimientos = movimientos.filter(
+            fecha__gte=fecha_desde
+        )
+
+    fecha_hasta = request.GET.get("fecha_hasta")
+
+    if fecha_hasta:
+        movimientos = movimientos.filter(
+            fecha__lte=fecha_hasta
+        )
+
+    importe_desde = request.GET.get("importe_desde")
+
+    if importe_desde:
+        movimientos = movimientos.filter(
+            importe__gte=importe_desde
+        )
+
+    importe_hasta = request.GET.get("importe_hasta")
+
+    if importe_hasta:
+        movimientos = movimientos.filter(
+            importe__lte=importe_hasta
+        )
 
 
 
@@ -383,7 +414,13 @@ def movimientos(request):
         .order_by("-periodo")
     )
 
-
+    origenes = (
+        Movimiento.objects
+        .exclude(origen="")
+        .values_list("origen", flat=True)
+        .distinct()
+        .order_by("origen")
+    )
 
     # =====================================
     # RESUMEN POR PERIODO / ORIGEN
@@ -419,6 +456,7 @@ def movimientos(request):
             "personas": Persona.objects.order_by("nombre"),
 
             "periodos": periodos,
+            "origenes": origenes,
             "orden": orden,
 
             # NUEVO

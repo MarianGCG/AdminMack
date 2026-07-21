@@ -50,134 +50,84 @@
 }
 
 .panel-filtros2{
-
     display:block;
-
     background:#FFFFFF;
-
     padding:18px 22px;
-
     border-radius:12px;
-
     border:1px solid #D9E2EC;
-
     box-shadow:0 2px 8px rgba(0,0,0,.06);
-
     margin-bottom:20px;
-
     width:100%;
+}
 
+.panel-filtros2{
+    background:#fff;
+    border:1px solid #D9E2EC;
+    border-radius:12px;
+    padding:18px 22px;
 }
 .btn-toolbar{
 
     display:inline-flex;
     align-items:center;
     justify-content:center;
-
-    width:220px;          /* <-- Nuevo */
-
+    width:220px;
     height:50px;
-
     padding:0 20px;
-
     background:#FFF;
-
     border:1px solid #D9E2EC;
-
     border-radius:10px;
-
     font-size:15px;
-
     font-weight:700;
-
     color:#212529;
-
-    box-shadow:0 2px 8px rgba(0,0,0,.06);
-
+    box-shadow:none;      /* <-- cambiar esto */
     cursor:pointer;
-
 }
 
-
 .btn-toolbar:hover{
-
     background:#F8FAFC;
-
     transform:translateY(-1px);
-
     box-shadow:0 4px 12px rgba(0,0,0,.10);
-
 }
 
 .campo-filtro{
-
     display:flex;
-
     flex-direction:column;
-
     gap:5px;
-
 }
 
 .campo-filtro label{
-
-    font-size:11px;
-
+    font-size:13px;
     font-weight:600;
-
     letter-spacing:.8px;
-
     color:#6B7280;
-
     text-transform:uppercase;
-
 }
 .filtro{
-
     width:140px;
-
     height:40px;
-
     padding:0 12px;
-
     border:1px solid #D9E2EC;
-
     border-radius:8px;
-
     background:#FFFFFF;
-
-    font-size:14px;
-
+    font-size:15px;
 }
 
 .fila-filtros{
-
     display:flex;
-
     align-items:flex-end;
-
     gap:14px;
-
     flex-wrap:wrap;
-
 }
 
 .btn-small{
-
-    height:40px;
-
-    padding:0 18px;
-
-    border-radius:8px;
-
+    height:60px;
+    padding:0 24px;
+    border-radius:10px;
     background:white;
-
-    border:1px solid #D9E2EC;
-
-    font-size:14px;
-
-    font-weight:600;
-
+    border:2px solid #D9E2EC;
+    font-size:15px;
+    font-weight:800;
 }     
 
 
@@ -221,6 +171,14 @@
     padding-bottom:8px;
 }
 
+.panel-filtros2{
+    background:#fff;
+    border:1px solid #d8e2ef;
+    border-radius:12px;
+    padding:12px 16px;
+    margin-bottom:12px;
+}
+
 
 /*=========================================
   Columna Descripción redimensionable
@@ -248,224 +206,243 @@ th.resizable .resizer:hover{
 </style>
 
 <h2>MOVIMIENTOS</h2>
+
 <div class="panel-filtros2">
 
-<div style="margin-bottom:12px;">
 
-<input
-    type="file"
-    id="archivoExcel"
-    style="display:none"
-    accept=".pdf,.xls,.xlsx"
-    onchange="importarExcel()">
 
+        <input
+            type="file"
+            id="archivoExcel"
+            style="display:none"
+            accept=".pdf,.xls,.xlsx"
+            onchange="importarExcel()">
 
+        <button
+            id="btnImportar"
+            class="btn-toolbar"
+            onclick="document.getElementById('archivoExcel').click()">
 
-<button
-    id="btnImportar"
-    class="btn-toolbar"
-    onclick="document.getElementById('archivoExcel').click()">
+            <span style="color:#2563EB">📥</span>
 
-    <span style="color:#2563EB">📥</span>
+            Importar Resumen/Extracto
 
-    Importar Resumen/Extracto
+        </button>
 
-</button>
 
+        <button
+            id="btnEliminar"
+            class="btn-toolbar"
+            onclick="location.href='{% url 'movimientos' %}?eliminar=1'">
 
-<button
-    id="btnEliminar"
-    class="btn-toolbar"
-    onclick="location.href='{% url 'movimientos' %}?eliminar=1'">
+            <span style="color:#DC2626">🗑</span>
 
-    <span style="color:#DC2626">🗑</span>
+            Eliminar Importación
 
-    Eliminar Importación
+        </button>
 
-</button>
 
 
+        <button
+            id="btnReaplicar"
+            class="btn-toolbar"
+            onclick="location.href='{% url 'movimiento_actualizar' %}'">
 
-<button
-    id="btnReaplicar"
-    class="btn-toolbar"
-    onclick="location.href='{% url 'movimiento_actualizar' %}'">
+            <span style="color:#2563EB">🔄</span>
 
-    <span style="color:#2563EB">🔄</span>
+            Reaplicar Reglas
 
-    Reaplicar Reglas
+        </button>
 
-</button>
+        <button
+            id="btnReglas"
+            class="btn-toolbar"
+            type="button"
+            onclick="abrirReglas()">
 
-<button
-    id="btnReglas"
-    class="btn-toolbar"
-    type="button"
-    onclick="abrirReglas()">
+            <span style="color:#2563EB">📚</span>
 
-    <span style="color:#2563EB">📚</span>
+            Reglas
 
-    Reglas
+        </button>
 
-</button>
+        <button
+            id="btnExportar"
+            class="btn-toolbar"
+            onclick="location.href='{% url 'movimientos_exportar_excel' %}'">
 
+            <span style="color:#16A34A">📊</span>
 
+            Exportar Excel
 
-<button
-    id="btnExportar"
-    class="btn-toolbar"
-    onclick="location.href='{% url 'movimientos_exportar_excel' %}'">
-
-    <span style="color:#16A34A">📊</span>
-
-    Exportar Excel
-
-</button>
-
-
-
-<form method="get" style="margin:15px 0;">
-
-
-
-<div class="fila-filtros">
-
-    <div class="campo-filtro">
-
-        <label>PERÍODO</label>
-
-        <select name="periodo" class="filtro">
-
-            <option value="">Todos</option>
-
-            {% for p in periodos %}
-
-                <option value="{{ p.periodo }}"
-                    {% if request.GET.periodo == p.periodo %}
-                        selected
-                    {% endif %}>
-
-                    {{ p.periodo }}
-
-                </option>
-
-            {% endfor %}
-
-        </select>
-
-    </div>
-
-    <div class="campo-filtro">
-
-        <label>Categoría</label>
-
-        <select name="categoria" class="filtro">
-
-            <option value="">Todas</option>
-
-            {% for c in categorias %}
-
-                <option value="{{ c.id }}"
-                    {% if request.GET.categoria == c.id|stringformat:"s" %}
-                        selected
-                    {% endif %}>
-                
-                    {{ c }}
-
-                </option>
-
-            {% endfor %}
-
-        </select>
-
-
-    </div>
-
-    <div class="campo-filtro">
-
-        <label>Finalidad</label>
-
-        <select name="finalidad" class="filtro">
-
-            <option value="">Todas</option>
-
-            {% for f in finalidades %}
-
-                <option value="{{ f.id }}"
-                    {% if request.GET.finalidad == f.id|stringformat:"s" %}
-                        selected
-                    {% endif %}>
-
-                    {{ f }}
-
-                </option>
-
-            {% endfor %}
-
-        </select>
-
-    </div>
-
-
-    <div class="campo-filtro">
-
-        <label>Persona</label>
-
-        <select name="persona" class="filtro">
-
-            <option value="">Todas</option>
-
-            {% for p in personas %}
-
-                <option value="{{ p.id }}"
-                    {% if request.GET.persona == p.id|stringformat:"s" %}
-                        selected
-                    {% endif %}>
-
-                    {{ p }}
-
-                </option>
-
-            {% endfor %}
-
-        </select>
-
-    </div>
-
-
-
-    <label>Descripción</label>
-
-    <input
-        type="text"
-        name="descripcion"
-        value="{{ request.GET.descripcion }}"
-        placeholder="Buscar descripción..."
-        style="width:220px;">
-        
-
-
-    <button type="submit" class="btn-small">
-
-        🔍 Filtrar
-
-    </button>
-
-
-    <button
-        type="button"
-        class="btn-small"
-        onclick="location.href='{% url 'movimientos' %}'">
-
-        🧹 Limpiar
-
-    </button>
-
+        </button>
 
 </div>
-</form>
+
+
+<div class="panel-filtros2">
+
+    <form method="get" style="margin:15px 0;">
+
+
+
+        <div class="fila-filtros">
+            <div class="campo-filtro">
+                <label>PERÍODO</label>
+                <select name="periodo" class="filtro">
+                    <option value="">Todos</option>
+                    {% for p in periodos %}
+                        <option value="{{ p.periodo }}"
+                            {% if request.GET.periodo == p.periodo %}
+                                selected
+                            {% endif %}>
+                            {{ p.periodo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label>Categoría</label>
+                <select name="categoria" class="filtro">
+                    <option value="">Todas</option>
+                    {% for c in categorias %}
+                        <option value="{{ c.id }}"
+                            {% if request.GET.categoria == c.id|stringformat:"s" %}
+                                selected
+                            {% endif %}>
+                            {{ c }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label>Finalidad</label>
+                <select name="finalidad" class="filtro">
+                    <option value="">Todas</option>
+                    {% for f in finalidades %}
+                        <option value="{{ f.id }}"
+                            {% if request.GET.finalidad == f.id|stringformat:"s" %}
+                                selected
+                            {% endif %}>
+                            {{ f }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <div class="campo-filtro">
+                <label>Persona</label>
+                <select name="persona" class="filtro">
+                    <option value="">Todas</option>
+                    {% for p in personas %}
+                        <option value="{{ p.id }}"
+                            {% if request.GET.persona == p.id|stringformat:"s" %}
+                                selected
+                            {% endif %}>
+                            {{ p }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label>Descripción</label>
+                <input
+                    type="text"
+                    name="descripcion"
+                    value="{{ request.GET.descripcion }}"
+                    placeholder="Buscar descripción..."
+                    class="filtro"
+                    style="min-width:300px;">
+            </div>
+
+
+
+            <div class="campo-filtro">
+                <label>Origen</label>
+                <select name="origen" class="filtro">
+                    <option value="">Todos</option>
+                    {% for o in origenes %}
+                        <option value="{{ o }}"
+                            {% if request.GET.origen == o %}
+                                selected
+                            {% endif %}>
+                            {{ o }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label>F. Desde</label>
+                <input
+                    type="date"
+                    name="fecha_desde"
+                    value="{{ request.GET.fecha_desde }}"
+                    class="filtro">
+            </div>
+
+            <div class="campo-filtro">
+                <label>F. Hasta</label>
+                <input
+                    type="date"
+                    name="fecha_hasta"
+                    value="{{ request.GET.fecha_hasta }}"
+                    class="filtro">
+            </div>
+
+            <div class="campo-filtro">
+                <label>Imp. Desde</label>
+                <input
+                    type="number"
+                    step="0.01"
+                    name="importe_desde"
+                    value="{{ request.GET.importe_desde }}"
+                    class="filtro"
+                    style="width:110px;">
+            </div>
+
+            <div class="campo-filtro">
+                <label>Imp. Hasta</label>
+                <input
+                    type="number"
+                    step="0.01"
+                    name="importe_hasta"
+                    value="{{ request.GET.importe_hasta }}"
+                    class="filtro"
+                    style="width:110px;">
+            </div>
+
+
+
+
+
+
+
+            <button type="submit" class="btn-small">
+
+                🔍 Filtrar
+
+            </button>
+
+
+            <button
+                type="button"
+                class="btn-small"
+                onclick="location.href='{% url 'movimientos' %}'">
+
+                🧹 Limpiar
+
+            </button>
+
+
+        </div>
+    </form>
 </div>
-</div>
+
 
 
 
