@@ -608,7 +608,7 @@ function renderChart(canvasId, type, labels, data, colors, vertical=false){
         legend:{ display: type==='doughnut', position:'right', labels:{ boxWidth:10, font:{size:11, family:'Inter'}, color:'#212529' } },
         tooltip:{ callbacks:{ label: (c)=> ' ' + fmtMoney(c.raw) } },
         
-
+        /* TABLE   */
         datalabels:{
             color:"#ffffff",
             anchor:"center",
@@ -619,8 +619,20 @@ function renderChart(canvasId, type, labels, data, colors, vertical=false){
             },
             formatter:(v)=>fmtMoneySigned(v)
         }
-
-
+      
+        /*
+        datalabels:{
+            color: vertical ? "#212529" : "#ffffff",
+            anchor: vertical ? "end" : "center",
+            align: vertical ? "top" : "center",
+            offset: vertical ? 4 : 0,
+            font:{
+                weight:"bold",
+                size:13
+            },
+            formatter:(v)=>fmtMoneySigned(v)
+        }
+        */
       },
       scales: type==='bar' ? {
         x:{ ticks:{ callback:(v)=>'$'+(v/1000).toFixed(0)+'k', font:{size:10} }, grid:{color:'#DCE5D3'} },
@@ -929,9 +941,12 @@ function renderEvolucionCategoria(){
         "Evolución mensual - " + state.categoria;
 
     const filas = getFiltered();
-
+    console.log("Filas:", filas.length);
+    console.table(filas);
     const porMes = {};
-
+    console.log(filas);
+    console.table(filas);
+    console.log("Cantidad:", filas.length);
     filas.forEach(f=>{
 
         if(!porMes[f.periodo]){
@@ -945,6 +960,11 @@ function renderEvolucionCategoria(){
     const meses = Object.keys(porMes).sort();
 
     const importes = meses.map(m => porMes[m]);
+
+
+    console.log("Meses:", meses);
+    console.log("Importes:", importes);
+
     const colorCategoria =
         filas.find(f => f.color_categoria)?.color_categoria || "#7FB77E";
     renderChart(
@@ -1033,6 +1053,20 @@ function renderDashboardStacked(){
 
     const labels = Object.keys(grupos);
 
+    const labelsConTotal = labels.map(grupo => {
+
+        let total = 0;
+
+        Object.values(grupos[grupo]).forEach(v => total += v);
+
+        return [
+            grupo,
+            fmtMoney(total)
+        ];
+
+    });
+
+
     //--------------------------------------------------
     // datasets
     //--------------------------------------------------
@@ -1096,7 +1130,7 @@ function renderDashboardStacked(){
         type:"bar",
 
         data:{
-            labels:labels,
+            labels:labelsConTotal,
             datasets:datasets
         },
 
@@ -1116,7 +1150,7 @@ function renderDashboardStacked(){
                 console.log(datasetIndex);
                 console.log(chart.data.datasets[datasetIndex]);
                 const categoria = chart.data.datasets[datasetIndex].label;
-
+                console.log(categoria);
                 const combo = document.getElementById("fCategoria");
 
                 setTimeout(() => {
@@ -1175,9 +1209,13 @@ function renderDashboardStacked(){
                 x:{
                     stacked:true,
                     ticks:{
-                        callback:(v)=>"$"+(v/1000).toFixed(0)+"k"
+                        callback:function(value){
+                            return this.getLabelForValue(value);
+                        }
                     }
                 },
+
+
 
                 y:{
                     stacked:true
