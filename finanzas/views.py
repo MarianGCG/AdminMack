@@ -5,6 +5,7 @@ from comisiones.models import ParametroSistema
 from django.http import JsonResponse
 import json
 from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_POST
 from .services.movimientos_service import importar_movimientos,  buscar_regla, actualizar_movimientos
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg
@@ -454,7 +455,15 @@ def movimientos(request):
             "categorias": Categoria.objects.order_by("nombre"),
             "finalidades": Finalidad.objects.order_by("nombre"),
             "personas": Persona.objects.order_by("nombre"),
-
+            "reglas": (
+                Regla.objects
+                .select_related(
+                    "categoria",
+                    "finalidad",
+                    "persona"
+                )
+                .order_by("texto")
+            ),
             "periodos": periodos,
             "origenes": origenes,
             "orden": orden,
@@ -464,7 +473,6 @@ def movimientos(request):
             "totales": totales,
             "mostrar_eliminar": mostrar_eliminar,
             "archivos_importados": archivos_importados,
-
         }
     )
 
@@ -870,3 +878,48 @@ def movimientos_exportar_excel(request):
     wb.save(response)
 
     return response
+
+def regla_movimiento(request, id):
+
+    movimiento = Movimiento.objects.select_related("regla_aplicada").get(id=id)
+
+    r = movimiento.regla_aplicada
+
+    return JsonResponse({
+        "id": r.id,
+        "texto": r.texto,
+        "accion": r.accion,
+        "categoria": r.categoria_id,
+        "finalidad": r.finalidad_id,
+        "persona": r.persona_id,
+        "grupo": r.grupo,
+        "activa": r.activa,
+    })
+
+
+from django.http import JsonResponse
+
+def regla_json(request, id):
+
+    try:
+        regla = Regla.objects.get(pk=id)
+
+        return JsonResponse({
+            "ok": True,
+            "id": regla.id,
+            "texto": regla.texto,
+            "accion": regla.accion,
+            "categoria": regla.categoria_id,
+            "finalidad": regla.finalidad_id,
+            "persona": regla.persona_id,
+            "grupo": regla.grupo,
+            "activa": regla.activa,
+            "observacion": regla.observacion,
+        })
+
+    except Regla.DoesNotExist:
+
+        return JsonResponse({
+            "ok": False,
+            "error": "La regla no existe"
+        })  

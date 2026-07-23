@@ -23,10 +23,15 @@ urlpatterns = [
     path("movimiento-actualizar/",          views.movimiento_actualizar,name="movimiento_actualizar" ),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("eliminar_resumen/",  views.eliminar_resumen,   name="eliminar_resumen",),
+    path("movimientos/exportar_excel/",    views.movimientos_exportar_excel,    name="movimientos_exportar_excel"),  
     path(
-    "movimientos/exportar_excel/",
-    views.movimientos_exportar_excel,
-    name="movimientos_exportar_excel",
-),
-
+        "regla-json/<int:id>/",
+        views.regla_json,
+        name="regla_json",
+    ),
+    path(
+        "regla-movimiento/<int:id>/",
+        views.regla_movimiento,
+        name="regla_movimiento"
+    ),
 ]

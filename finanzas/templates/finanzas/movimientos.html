@@ -202,6 +202,175 @@ th.resizable .resizer:hover{
     background:rgba(255,255,255,.30);
 }
 
+.acciones-mov{
+    position:relative;
+    display:inline-block;
+}
+
+
+.btnAccion{
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    font-size:22px;
+    font-weight:bold;
+    padding:4px 8px;
+}
+.menuAcciones{
+    display:none;
+    position:absolute;
+    right:0;
+    background:white;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+    min-width:220px;
+    z-index:1000;
+}
+
+.menuAcciones div{
+    padding:10px 14px;
+    cursor:pointer;
+}
+
+.menuAcciones div:hover{
+    background:#f4f6f8;
+}
+
+.acciones-mov:hover .menuAcciones{
+    display:block;
+}
+
+
+#modalReglas{
+
+    position:fixed;
+
+    left:0;
+    top:0;
+
+    width:100%;
+    height:100%;
+
+    z-index:99999;
+
+}
+
+.modal-fondo{
+
+    position:absolute;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,.35);
+
+}
+
+.modal-ventana{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    width:900px;
+
+    max-height:650px;
+
+    overflow:auto;
+
+    background:white;
+
+    border-radius:8px;
+
+    padding:15px;
+
+    box-shadow:0 0 20px rgba(0,0,0,.40);
+
+}
+
+.modal-titulo{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:15px;
+
+}
+
+#buscarRegla{
+
+    width:100%;
+
+    padding:8px;
+
+    margin-bottom:10px;
+
+}
+
+#tablaReglas{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+#tablaReglas th{
+
+    background:#173d6b;
+
+    color:white;
+
+    padding:8px;
+
+}
+
+#tablaReglas td{
+
+    padding:8px;
+
+    border-bottom:1px solid #ddd;
+
+}
+#tablaReglas tbody tr{
+
+    cursor:pointer;
+
+}
+
+#tablaReglas tbody tr:hover{
+
+    background:#dcecff;
+
+}
+.cerrar-modal{
+
+    font-size:20px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+}
+
+.cerrar-modal:hover{
+
+    color:red;
+
+}
+
+.linkOrden{
+    color:white;
+    text-decoration:none;
+}
+
 
 </style>
 
@@ -507,59 +676,63 @@ th.resizable .resizer:hover{
     <tr>
 
         <th style="width:90px;">
-            <a style="color:white;text-decoration:none;" href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'periodo' %}-periodo{% else %}periodo{% endif %}">
-                {% if orden == 'periodo' %}▼{% else %}▲{% endif %} Período
+            <a href="#" class="linkOrden" onclick="ordenarPor('periodo');return false;">
+                {% if orden == 'periodo' %}▲{% elif orden == '-periodo' %}▼{% else %}▲▼{% endif %} Período
             </a>
         </th>
+
 
         <th>
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'fecha' %}-fecha{% else %}fecha{% endif %}">
-                {% if orden == 'fecha' %}▼{% else %}▲{% endif %} Fecha
+            <a href="#" class="linkOrden" onclick="ordenarPor('fecha');return false;">
+                {% if orden == 'fecha' %}▲{% elif orden == '-fecha' %}▼{% else %}▲▼{% endif %} Fecha
             </a>
         </th>
+        
 
-  
+
 
         <th
             id="thDescripcion"
             class="resizable"
             style="min-width:420px;"
         >
-            Descripción
+            <a href="#" class="linkOrden" onclick="ordenarPor('descripcion');return false;">
+                {% if orden == 'descripcion' %}▲{% elif orden == '-descripcion' %}▼{% else %}▲▼{% endif %} Descripción
+            </a>
+
             <span class="resizer"></span>
         </th>
 
-
-
         <th>
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'importe' %}-importe{% else %}importe{% endif %}">
-                {% if orden == 'importe' %}▼{% else %}▲{% endif %} Importe
+            <a href="#" class="linkOrden" onclick="ordenarPor('importe');return false;">
+                {% if orden == 'importe' %}▲{% elif orden == '-importe' %}▼{% else %}▲▼{% endif %} Importe
             </a>
         </th>
 
-        <th style="width:260px;color:white;">
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'origen' %}-origen{% else %}origen{% endif %}">
-                {% if orden == 'origen' %}▼{% else %}▲{% endif %} Origen
+        <th style="width:260px;">
+            <a href="#" class="linkOrden" onclick="ordenarPor('origen');return false;">
+                {% if orden == 'origen' %}▲{% elif orden == '-origen' %}▼{% else %}▲▼{% endif %} Origen
             </a>
         </th>
 
         <th>
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'categoria__nombre' %}-categoria__nombre{% else %}categoria__nombre{% endif %}">
-                {% if orden == 'categoria__nombre' %}▼{% else %}▲{% endif %} Categoría
+            <a href="#" class="linkOrden" onclick="ordenarPor('categoria__nombre');return false;">
+                {% if orden == 'categoria__nombre' %}▲{% elif orden == '-categoria__nombre' %}▼{% else %}▲▼{% endif %} Categoría
             </a>
         </th>
 
         <th>
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'finalidad__nombre' %}-finalidad__nombre{% else %}finalidad__nombre{% endif %}">
-                {% if orden == 'finalidad__nombre' %}▼{% else %}▲{% endif %} Finalidad
+            <a href="#" class="linkOrden" onclick="ordenarPor('finalidad__nombre');return false;">
+                {% if orden == 'finalidad__nombre' %}▲{% elif orden == '-finalidad__nombre' %}▼{% else %}▲▼{% endif %} Finalidad
             </a>
         </th>
 
         <th>
-            <a  style="color:white;text-decoration:none;"href="?periodo={{ request.GET.periodo }}&categoria={{ request.GET.categoria }}&finalidad={{ request.GET.finalidad }}&persona={{ request.GET.persona }}&orden={% if orden == 'persona__nombre' %}-persona__nombre{% else %}persona__nombre{% endif %}">
-                {% if orden == 'persona__nombre' %}▼{% else %}▲{% endif %} Persona
+            <a href="#" class="linkOrden" onclick="ordenarPor('persona__nombre');return false;">
+                {% if orden == 'persona__nombre' %}▲{% elif orden == '-persona__nombre' %}▼{% else %}▲▼{% endif %} Persona
             </a>
         </th>
+
         <th style="width:70px;">Acción</th>
     </tr>
 
@@ -571,9 +744,11 @@ th.resizable .resizer:hover{
     {% for m in movimientos %}
 
         <tr>
+
             <td>{{ m.periodo }}</td>
             <td>{{ m.fecha|date:"d/m" }}</td>
-            
+            <td>{{ m.id }}</td>
+            <td>{{ m.regla_aplicada_id }}</td>
  
             <td
                 class="tdDescripcion"
@@ -633,23 +808,47 @@ th.resizable .resizer:hover{
 
             <td style="text-align:center;">
 
-                <span
-                    style="cursor:pointer;font-size:20px;"
-                    title="Crear regla"
+                <div class="acciones-mov">
 
-                   
-                    onclick="crearRegla(
-                    '{{ m.descripcion|escapejs }}',
-                    '{{ m.categoria_id|default_if_none:"" }}',
-                    '{{ m.finalidad_id|default_if_none:"" }}',
-                    '{{ m.persona_id|default_if_none:"" }}'
-                    )"
-                    >
+                    <button
+                        type="button"
+                        class="btnAccion"
+                        title="Acciones">
+                        ⋮
+                    </button>
 
+                    <div class="menuAcciones">
 
-                    ✨
+                        <div
+                            onclick="crearRegla(
+                                '{{ m.descripcion|escapejs }}',
+                                '{{ m.categoria_id|default_if_none:"" }}',
+                                '{{ m.finalidad_id|default_if_none:"" }}',
+                                '{{ m.persona_id|default_if_none:"" }}'
+                            )">
 
-                </span>
+                            ➕ Nueva regla
+
+                        </div>
+
+                        {% if m.regla_aplicada %}
+                        <div
+                            data-id="{{ m.regla_aplicada_id }}"
+                            onclick="modificarRegla(this.dataset.id)">
+                            ✏ Modificar regla
+                        </div>
+                        {% endif %}
+
+                        <div
+                            onclick="desvincularRegla('{{ m.id }}')">
+
+                            🚫 Desvincular regla
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </td>
 
@@ -902,7 +1101,7 @@ function importarExcel(){
     .then(data => {
 
         if(data.ok){
-
+            alert("GUARDÓ");
             location.reload();
 
         }else{
@@ -999,6 +1198,39 @@ function crearRegla(descripcion,categoria,finalidad,persona){
 
 }
 
+function modificarRegla(idRegla){
+
+    fetch("/finanzas/regla-json/" + idRegla + "/")
+
+    .then(r => r.json())
+
+    .then(r => {
+
+        if(!r.ok){
+            alert(r.error);
+            return;
+        }
+
+        document.getElementById("edit_id").value = r.id;
+        document.getElementById("edit_texto").value = r.texto;
+
+        document.querySelector(
+            'input[name="accion"][value="' + r.accion + '"]'
+        ).checked = true;
+
+        document.getElementById("edit_categoria").value = r.categoria || "";
+        document.getElementById("edit_finalidad").value = r.finalidad || "";
+        document.getElementById("edit_persona").value = r.persona || "";
+        document.getElementById("edit_grupo").value = r.grupo || "";
+        document.getElementById("edit_activo").checked = r.activa;
+
+        mostrarControles();
+
+        document.getElementById("panelEditar").classList.add("abierto");
+
+    });
+
+}
 
 
 function nuevoRegistro(){
@@ -1113,8 +1345,7 @@ function guardarRegistro(){
 
         body: JSON.stringify({
 
-            id: "",
-
+            id: document.getElementById("edit_id").value,
             texto: document.getElementById("edit_texto").value,
 
             accion: document.querySelector(
@@ -1165,6 +1396,62 @@ function guardarRegistro(){
 
     });
 
+
+}
+
+let movimientoSeleccionado = null;
+
+function asignarRegla(idMovimiento){
+
+    movimientoSeleccionado =
+        String(idMovimiento).replace(/\./g,"");
+
+    console.log("Movimiento limpio:", movimientoSeleccionado);
+
+    document.getElementById("modalReglas").style.display = "block";
+
+}
+
+
+function filtrarReglas(){
+
+    let texto =
+        document.getElementById("buscarRegla")
+        .value
+        .toUpperCase();
+
+    let filas =
+        document.querySelectorAll("#tablaReglas tbody tr");
+
+    filas.forEach(function(fila){
+
+        fila.style.display =
+            fila.innerText.toUpperCase().includes(texto)
+            ? ""
+            : "none";
+
+    });
+
+}
+
+
+function ordenarPor(campo){
+
+    const url = new URL(window.location);
+
+    const actual = url.searchParams.get("orden");
+
+    if(actual === campo){
+        url.searchParams.set("orden", "-" + campo);
+    }
+    else if(actual === "-" + campo){
+        url.searchParams.set("orden", campo);
+    }
+    else{
+        url.searchParams.set("orden", campo);
+    }
+
+    location.href = url.toString();
 
 }
 
@@ -1236,7 +1523,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
     }
 
-});
 
+});
 </script>
+
+
 {% endblock %}
