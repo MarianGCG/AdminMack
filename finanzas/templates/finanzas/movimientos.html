@@ -23,6 +23,10 @@
     background:#f4f8fc;
     cursor:pointer;
 }
+.tabla-listado tr.fila-activa td{
+    background:#607EC9 !important;
+   
+}
 .tabla-resumen{
     width:560px;
     margin:0 auto 15px auto;
@@ -237,9 +241,6 @@ th.resizable .resizer:hover{
     background:#f4f6f8;
 }
 
-.acciones-mov:hover .menuAcciones{
-    display:block;
-}
 
 
 #modalReglas{
@@ -370,7 +371,9 @@ th.resizable .resizer:hover{
     color:white;
     text-decoration:none;
 }
-
+.fila-activa{
+    background:#607EC9  !important;
+}
 
 </style>
 
@@ -411,18 +414,16 @@ th.resizable .resizer:hover{
         </button>
 
 
-
         <button
             id="btnReaplicar"
             class="btn-toolbar"
-            onclick="location.href='{% url 'movimiento_actualizar' %}'">
+            onclick="reaplicarReglas()">
 
             <span style="color:#2563EB">🔄</span>
 
             Reaplicar Reglas
 
         </button>
-
         <button
             id="btnReglas"
             class="btn-toolbar"
@@ -689,7 +690,7 @@ th.resizable .resizer:hover{
         </th>
         
 
-
+        <th>ID</th>
 
         <th
             id="thDescripcion"
@@ -744,11 +745,12 @@ th.resizable .resizer:hover{
     {% for m in movimientos %}
 
         <tr>
+            
 
+            <td>{{ m.i  }}</td>
             <td>{{ m.periodo }}</td>
             <td>{{ m.fecha|date:"d/m" }}</td>
-            <td>{{ m.id }}</td>
-            <td>{{ m.regla_aplicada_id }}</td>
+
  
             <td
                 class="tdDescripcion"
@@ -813,10 +815,10 @@ th.resizable .resizer:hover{
                     <button
                         type="button"
                         class="btnAccion"
-                        title="Acciones">
-                        ⋮
+                        title="Acciones"
+                        onclick="abrirMenu(this,event)">
+                        ☰ ▼
                     </button>
-
                     <div class="menuAcciones">
 
                         <div
@@ -840,8 +842,8 @@ th.resizable .resizer:hover{
                         {% endif %}
 
                         <div
+                            
                             onclick="desvincularRegla('{{ m.id }}')">
-
                             🚫 Desvincular regla
 
                         </div>
@@ -938,7 +940,7 @@ th.resizable .resizer:hover{
 
 <div id="panelEditar" class="panel-editar">
 
-<h3>REGLAS</h3>
+<h3 id="tituloPanel">REGLAS</h3>
 
 <input type="hidden" id="edit_id">
 
@@ -1181,10 +1183,25 @@ function getCookie(name){
 
 }
 
+
+function reaplicarReglas(){
+
+    const btn = document.getElementById("btnReaplicar");
+
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Reaplicando reglas...";
+
+    setTimeout(function(){
+
+        window.location.href = "{% url 'movimiento_actualizar' %}";
+
+    }, 100);
+
+}
 function crearRegla(descripcion,categoria,finalidad,persona){
 
     nuevoRegistro();
-
+    document.getElementById("tituloPanel").innerText = "Nueva regla";
     document.getElementById("edit_texto").value = descripcion;
 
     if(categoria)
@@ -1210,7 +1227,7 @@ function modificarRegla(idRegla){
             alert(r.error);
             return;
         }
-
+        document.getElementById("tituloPanel").innerText = "Modificar regla";
         document.getElementById("edit_id").value = r.id;
         document.getElementById("edit_texto").value = r.texto;
 
@@ -1249,7 +1266,26 @@ function nuevoRegistro(){
     mostrarControles();
 }
 
+function abrirMenu(boton, event){
 
+    event.stopPropagation();
+
+    // Cerrar otros menús
+    document.querySelectorAll(".menuAcciones").forEach(function(m){
+        m.style.display = "none";
+    });
+
+    // Mostrar el menú de esta fila
+    const menu = boton.parentElement.querySelector(".menuAcciones");
+    menu.style.display = "block";
+
+    // Resaltar la fila
+    document.querySelectorAll("tr").forEach(function(f){
+        f.classList.remove("fila-activa");
+    });
+
+    boton.closest("tr").classList.add("fila-activa");
+}
 
 function cerrarPanel(){
 
@@ -1411,7 +1447,23 @@ function asignarRegla(idMovimiento){
     document.getElementById("modalReglas").style.display = "block";
 
 }
+function desvincularRegla(id){
+    id = String(id).replace(/\./g,"");
 
+    console.log("ID =", id);
+    console.log("URL =", "/finanzas/desvincular-regla/" + id + "/");
+
+    if(!confirm("¿Desea desvincular la regla de este movimiento?"))
+        return;
+
+    fetch("/finanzas/desvincular-regla/" + id + "/",{
+        method:"POST",
+        headers:{
+            "X-CSRFToken": getCookie("csrftoken")
+        }
+    })
+
+}
 
 function filtrarReglas(){
 

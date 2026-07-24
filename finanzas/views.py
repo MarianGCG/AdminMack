@@ -6,7 +6,7 @@ from django.http import JsonResponse
 import json
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
-from .services.movimientos_service import importar_movimientos,  buscar_regla, actualizar_movimientos
+from .services.movimientos_service import importar_movimientos,   actualizar_movimientos
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Sum, Avg
 from django.db.models.functions import Coalesce
@@ -923,3 +923,26 @@ def regla_json(request, id):
             "ok": False,
             "error": "La regla no existe"
         })  
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+@require_POST
+def desvincular_regla(request, id):
+
+    movimiento = Movimiento.objects.get(pk=id)
+
+    movimiento.regla_aplicada = None
+    movimiento.categoria = None
+    movimiento.finalidad = None
+    movimiento.persona = None
+    movimiento.grupo =  ""
+
+    movimiento.save(update_fields=[
+        "regla_aplicada",
+        "categoria",
+        "finalidad",
+        "persona",
+        "grupo",
+    ])
+
+    return JsonResponse({"ok": True})

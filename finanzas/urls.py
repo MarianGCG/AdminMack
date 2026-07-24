@@ -34,4 +34,10 @@ urlpatterns = [
         views.regla_movimiento,
         name="regla_movimiento"
     ),
+    path(
+        "desvincular-regla/<int:id>/",
+        views.desvincular_regla,
+        name="desvincular_regla",
+    ),
+
 ]

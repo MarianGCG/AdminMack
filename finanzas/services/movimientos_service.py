@@ -80,7 +80,7 @@ def obtener_datos_nombre_archivo(nombre_archivo):
         "periodo": partes[4],
 
     }
-
+"""
 def buscar_regla(descripcion):
 
     descripcion = str(descripcion).upper()
@@ -93,7 +93,7 @@ def buscar_regla(descripcion):
             return regla
 
     return None
-
+"""
 
 def importar_movimientos(archivo):
 
@@ -482,45 +482,43 @@ def importar_pdf_movimientos(archivo):
         f"Pendientes: {pendientes} - "
         f"Ignorados: {ignorados}"
     )
-
-
 def actualizar_movimientos():
 
-    for mov in Movimiento.objects.all():
+    #--------------------------------------------------
+    # Limpiar todos los movimientos
+    #--------------------------------------------------
 
-        regla = buscar_regla(mov.descripcion)
+    Movimiento.objects.update(
 
-        mov.regla_aplicada = regla
+        regla_aplicada=None,
+        categoria=None,
+        finalidad=None,
+        persona=None,
+        grupo=""
 
-        if regla:
+    )
 
-            if regla.accion == "I":
-                continue
+    #--------------------------------------------------
+    # Recorrer reglas ordenadas por texto
+    #--------------------------------------------------
 
-            elif regla.accion == "C":
+    reglas = Regla.objects.filter(
+        activa=True
+    ).order_by("texto")
 
-                mov.categoria = regla.categoria
-                mov.finalidad = regla.finalidad
-                mov.persona = regla.persona
-                mov.grupo = ""
+    for regla in reglas:
 
-            elif regla.accion == "A":
+        for mov in Movimiento.objects.filter(
+            descripcion__icontains=regla.texto
+        ):
 
-                mov.grupo = regla.grupo
-                mov.persona = regla.persona
-                mov.categoria = None
-                mov.finalidad = None
+            mov.regla_aplicada = regla
+            mov.categoria      = regla.categoria
+            mov.finalidad      = regla.finalidad
+            mov.persona        = regla.persona
+            mov.grupo          = regla.grupo
 
-        else:
-
-            mov.categoria = None
-            mov.finalidad = None
-            mov.persona = None
-            mov.grupo = ""
-            mov.regla_aplicada = None
-
-        mov.save()
-
+            mov.save()
 
 def importar_pdf_cuenta_corriente(archivo, datos):
 
