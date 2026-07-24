@@ -197,37 +197,13 @@ def importar_movimientos(archivo):
         descripcion = str(row["Descripcion"]).strip()
         importe = row["Importe"]
 
-        regla = buscar_regla(descripcion)
 
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                ignorados += 1
-                continue
-
-            elif regla.accion == "C":
-
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-
-                clasificados += 1
-
-            elif regla.accion == "A":
-
-                grupo = regla.grupo
-                persona = regla.persona
-
-                clasificados += 1
-
-        else:
-
-            pendientes += 1
+        pendientes += 1
 
         Movimiento.objects.create(
 
@@ -249,7 +225,7 @@ def importar_movimientos(archivo):
         )
 
         leidos += 1
-
+    actualizar_movimientos()
     return (
         f"Leídos: {leidos} - "
         f"Clasificados: {clasificados} - "
@@ -412,32 +388,12 @@ def importar_pdf_movimientos(archivo):
     print("TOTAL MOVIMIENTOS LEIDOS =", len(movimientos))
     for mov in movimientos:
 
-        regla = buscar_regla(mov["descripcion"])
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                ignorados += 1
-                continue
-
-            elif regla.accion == "C":
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-                clasificados += 1
-
-            elif regla.accion == "A":
-                grupo = regla.grupo
-                persona = regla.persona
-                clasificados += 1
-
-        else:
-            pendientes += 1
+        pendientes += 1
 
         # Fecha
         dia, mes_txt, anio = mov["fecha"].split("/")
@@ -448,10 +404,15 @@ def importar_pdf_movimientos(archivo):
         ).date()
 
         # Importe
-        importe = mov["importe"].replace(".", "").replace(",", ".")
+        
+        importe = Decimal(
+            mov["importe"]
+                .replace(".", "")
+                .replace(",", ".")
+        )
+        importe = -abs(importe)
 
-        if importe.endswith("-"):
-            importe = "-" + importe[:-1]
+
         print("PERIODO =", periodo)
         print("GUARDANDO  de importar_pdf_movimientos   :", archivo.name)
         print("ARCHIVO =", archivo.name)
@@ -475,7 +436,7 @@ def importar_pdf_movimientos(archivo):
         )
         print("GUARDADO")
         leidos += 1
-
+    actualizar_movimientos()
     return (
         f"Leídos: {leidos} - "
         f"Clasificados: {clasificados} - "
@@ -618,28 +579,11 @@ def importar_pdf_cuenta_corriente(archivo, datos):
 
     for mov in movimientos:
 
-        regla = buscar_regla(mov["descripcion"])
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                continue
-
-            elif regla.accion == "C":
-
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-
-            elif regla.accion == "A":
-
-                grupo = regla.grupo
-                persona = regla.persona
 
         Movimiento.objects.create(
 
@@ -661,6 +605,7 @@ def importar_pdf_cuenta_corriente(archivo, datos):
             regla_aplicada=regla,
 
         )
+    actualizar_movimientos()
 
     return f"Importados {len(movimientos)} movimientos."
 
@@ -704,28 +649,11 @@ def importar_csv_icbc(archivo, datos):
         else:
             importe = credito
 
-        regla = buscar_regla(descripcion)
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                continue
-
-            elif regla.accion == "C":
-
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-
-            elif regla.accion == "A":
-
-                grupo = regla.grupo
-                persona = regla.persona
 
         Movimiento.objects.create(
             nombre_archivo=archivo.name,
@@ -748,6 +676,7 @@ def importar_csv_icbc(archivo, datos):
         )
 
         leidos += 1
+    actualizar_movimientos()
 
     return f"Importados {leidos} movimientos."
 
@@ -810,30 +739,11 @@ def importar_excel_galicia(archivo, datos):
             importe = 0
 
 
-
-
-        regla = buscar_regla(descripcion)
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                continue
-
-            elif regla.accion == "C":
-
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-
-            elif regla.accion == "A":
-
-                grupo = regla.grupo
-                persona = regla.persona
 
         Movimiento.objects.create(
             nombre_archivo=archivo.name,
@@ -855,6 +765,7 @@ def importar_excel_galicia(archivo, datos):
         )
 
         leidos += 1
+    actualizar_movimientos()
 
     return f"Importados {leidos} movimientos."
 
@@ -936,7 +847,8 @@ def importar_pdf_tc_galicia(archivo, datos):
                         .replace(".", "")
                         .replace(",", ".")
                 )
-
+                # Todos los consumos de tarjeta se guardan negativos
+                importe = -abs(importe)
                 linea_upper = linea.upper()
 
                 if "USD" in linea_upper:
@@ -950,28 +862,11 @@ def importar_pdf_tc_galicia(archivo, datos):
                     datos["periodo"]
                 )
 
-                regla = buscar_regla(descripcion)
-
+                regla = None
                 categoria = None
                 finalidad = None
                 persona = None
                 grupo = ""
-
-                if regla:
-
-                    if regla.accion == "I":
-                        continue
-
-                    elif regla.accion == "C":
-
-                        categoria = regla.categoria
-                        finalidad = regla.finalidad
-                        persona = regla.persona
-
-                    elif regla.accion == "A":
-
-                        grupo = regla.grupo
-                        persona = regla.persona
 
                 Movimiento.objects.create(
                     nombre_archivo=archivo.name,
@@ -992,6 +887,7 @@ def importar_pdf_tc_galicia(archivo, datos):
                 )
 
                 leidos += 1
+    actualizar_movimientos()
 
     return f"Importados {leidos} movimientos."
 
@@ -1091,42 +987,31 @@ def importar_pdf_tc_icbc_andres(archivo, datos):
     print("MOVIMIENTOS =", len(movimientos))
     for mov in movimientos:
 
-        regla = buscar_regla(mov["descripcion"])
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                ignorados += 1
-                continue
-
-            elif regla.accion == "C":
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-                clasificados += 1
-
-            elif regla.accion == "A":
-                grupo = regla.grupo
-                persona = regla.persona
-                clasificados += 1
-
-        else:
-            pendientes += 1
 
         fecha = datetime.strptime(
             mov["fecha"],
             "%d/%m/%y"
         ).date()
 
-        importe = mov["importe"].replace(".", "").replace(",", ".")
 
-        if importe.endswith("-"):
-            importe = "-" + importe[:-1]
+
+
+        # Importe
+        importe = Decimal(
+            mov["importe"]
+                .replace(".", "")
+                .replace(",", ".")
+        )
+
+        # Todos los consumos de tarjeta se guardan negativos
+        importe = -abs(importe)
+
+
 
         Movimiento.objects.create(
             nombre_archivo=archivo.name,
@@ -1166,7 +1051,7 @@ def importar_pdf_tc_icbc_andres(archivo, datos):
     )
 
 
-
+    actualizar_movimientos()
 
     return (
         f"Leídos: {leidos} - "
@@ -1272,32 +1157,12 @@ def importar_pdf_tc_amex_galicia(archivo, datos):
     print("MOVIMIENTOS =", len(movimientos))
     for mov in movimientos:
 
-        regla = buscar_regla(mov["descripcion"])
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                ignorados += 1
-                continue
-
-            elif regla.accion == "C":
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-                clasificados += 1
-
-            elif regla.accion == "A":
-                grupo = regla.grupo
-                persona = regla.persona
-                clasificados += 1
-
-        else:
-            pendientes += 1
+        pendientes += 1
 
 
 
@@ -1306,11 +1171,16 @@ def importar_pdf_tc_amex_galicia(archivo, datos):
             "%d-%m-%y"
         ).date()
 
+        importe = Decimal(
+            mov["importe"]
+                .replace(".", "")
+                .replace(",", ".")
+        )
 
-        importe = mov["importe"].replace(".", "").replace(",", ".")
+        # Todos los consumos de tarjeta se guardan negativos
+        importe = -abs(importe)
 
-        if importe.endswith("-"):
-            importe = "-" + importe[:-1]
+
 
         Movimiento.objects.create(
             nombre_archivo=archivo.name,
@@ -1350,7 +1220,8 @@ def importar_pdf_tc_amex_galicia(archivo, datos):
     )
 
 
-
+    # Reaplicar reglas a los movimientos importados
+    actualizar_movimientos()
 
     return (
         f"Leídos: {leidos} - "
@@ -1508,32 +1379,12 @@ def importar_pdf_patagonia(archivo):
     print("TOTAL MOVIMIENTOS LEIDOS =", len(movimientos))
     for mov in movimientos:
 
-        regla = buscar_regla(mov["descripcion"])
-
+        regla = None
         categoria = None
         finalidad = None
         persona = None
         grupo = ""
-
-        if regla:
-
-            if regla.accion == "I":
-                ignorados += 1
-                continue
-
-            elif regla.accion == "C":
-                categoria = regla.categoria
-                finalidad = regla.finalidad
-                persona = regla.persona
-                clasificados += 1
-
-            elif regla.accion == "A":
-                grupo = regla.grupo
-                persona = regla.persona
-                clasificados += 1
-
-        else:
-            pendientes += 1
+        pendientes += 1
 
         # Fecha
         dia, mes, anio = mov["fecha"].split("/")
@@ -1545,13 +1396,19 @@ def importar_pdf_patagonia(archivo):
         ).date()
 
         # Importe
-        importe = mov["importe"].replace(".", "").replace(",", ".")
+        importe = Decimal(
+            mov["importe"]
+                .replace(".", "")
+                .replace(",", ".")
+        )
 
-        if importe.endswith("-"):
-            importe = "-" + importe[:-1]
+        # Todos los consumos de tarjeta se guardan negativos
+        importe = -abs(importe)
+
         print("PERIODO =", periodo)
         print("GUARDANDO  de importar_pdf_movimientos   :", archivo.name)
         print("ARCHIVO =", archivo.name)
+
         Movimiento.objects.create(
 
             nombre_archivo=archivo.name,
@@ -1570,9 +1427,8 @@ def importar_pdf_patagonia(archivo):
 
             regla_aplicada=regla,
         )
-        print("GUARDADO")
         leidos += 1
-
+    actualizar_movimientos()
     return (
         f"Leídos: {leidos} - "
         f"Clasificados: {clasificados} - "
