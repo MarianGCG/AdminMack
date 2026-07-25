@@ -374,7 +374,25 @@ th.resizable .resizer:hover{
 .fila-activa{
     background:#607EC9  !important;
 }
+#divResumenArchivos{
+    display:none;
+    position:absolute;
+    top:55px;
+    left:0;
+    z-index:1000;
 
+    background:white;
+    border:1px solid #cfd8e3;
+    border-radius:6px;
+    box-shadow:0 4px 12px rgba(0,0,0,.18);
+
+    padding:8px;
+}
+
+.resumen-wrapper{
+    position:relative;
+    display:inline-block;
+}
 </style>
 
 <h2>MOVIMIENTOS</h2>
@@ -446,6 +464,81 @@ th.resizable .resizer:hover{
             Exportar Excel
 
         </button>
+
+        <div class="resumen-wrapper">
+
+
+
+            <button
+                id="btnResumenArchivos"
+                class="btn-toolbar"
+                type="button">
+
+                <span style="color:#16A34A">📋</span>
+
+                Resumen por archivos
+
+            </button>
+
+                <div id="divResumenArchivos" style="display:none;">
+
+                <table class="tabla-resumen">
+                    <thead>
+                        <tr>
+                            <th style="width:90px;">Período</th>
+                            <th style="width:220px;">Origen</th>
+                            <th style="width:90px;text-align:right;">Registros</th>
+                            <th style="width:160px;text-align:right;">Importe</th>
+
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    {% for r in resumen_origen %}
+
+                        <tr>
+
+                            <td>
+                                {{ r.periodo }}
+                            </td>
+                            <td style="
+                                width:210px;
+                                white-space:nowrap;
+                                overflow:hidden;
+                                text-overflow:ellipsis;
+                            ">
+                                {{ r.origen }}
+                            </td>
+
+
+                            <td style="text-align:right;">
+                                {{ r.cantidad }}
+                            </td>
+
+                            <td style="text-align:right;">
+                                {{ r.total|floatformat:2 }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                        <tr style="font-weight:bold;background:#eef3fa;">
+                            <td></td>
+                            <td>TOTAL</td>
+                            <td style="text-align:right;">{{ totales.cantidad }}</td>
+                            <td style="text-align:right;">{{ totales.total|floatformat:2 }}</td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+                </div>
+
+
+        </div>
 
 </div>
 
@@ -615,60 +708,6 @@ th.resizable .resizer:hover{
 
 
 
-
-    <table class="tabla-resumen">
-        <thead>
-            <tr>
-                <th style="width:90px;">Período</th>
-                <th style="width:220px;">Origen</th>
-                <th style="width:90px;text-align:right;">Registros</th>
-                <th style="width:160px;text-align:right;">Importe</th>
-
-
-            </tr>
-        </thead>
-
-        <tbody>
-
-        {% for r in resumen_origen %}
-
-            <tr>
-
-                <td>
-                    {{ r.periodo }}
-                </td>
-                <td style="
-                    width:210px;
-                    white-space:nowrap;
-                    overflow:hidden;
-                    text-overflow:ellipsis;
-                ">
-                    {{ r.origen }}
-                </td>
-
-
-                <td style="text-align:right;">
-                    {{ r.cantidad }}
-                </td>
-
-                <td style="text-align:right;">
-                    {{ r.total|floatformat:2 }}
-                </td>
-
-            </tr>
-
-        {% endfor %}
-
-            <tr style="font-weight:bold;background:#eef3fa;">
-                <td></td>
-                <td>TOTAL</td>
-                <td style="text-align:right;">{{ totales.cantidad }}</td>
-                <td style="text-align:right;">{{ totales.total|floatformat:2 }}</td>
-            </tr>
-
-        </tbody>
-
-    </table>
 
     <div style="overflow-x:auto; width:100%;">
     <table class="tabla-listado" id="tabla">
@@ -1153,6 +1192,17 @@ function abrirReglas(){
 
 
 
+function toggleResumen(){
+
+    const div = document.getElementById("divResumenArchivos");
+
+    div.style.display =
+        div.style.display === "none"
+            ? "block"
+            : "none";
+}
+
+
 function getCookie(name){
 
     let cookieValue = null;
@@ -1575,6 +1625,53 @@ document.addEventListener("DOMContentLoaded", function(){
 
     }
 
+
+});
+document.getElementById("btnResumenArchivos").onclick = function(e){
+
+    e.stopPropagation();
+
+    const panel = document.getElementById("divResumenArchivos");
+
+    panel.style.display =
+        panel.style.display === "block"
+            ? "none"
+            : "block";
+};
+
+document.addEventListener("click", function(e){
+
+    const panel = document.getElementById("divResumenArchivos");
+    const boton = document.getElementById("btnResumenArchivos");
+
+    if (!panel.contains(e.target) && !boton.contains(e.target)) {
+        panel.style.display = "none";
+    }
+
+});
+
+document.getElementById("divResumenArchivos").onclick = function(e){
+    e.stopPropagation();
+};
+// Evitar que un click dentro del menú lo cierre
+document.querySelectorAll(".menuAcciones").forEach(function(menu){
+
+    menu.addEventListener("click", function(event){
+        event.stopPropagation();
+    });
+
+});
+
+// Cerrar los menús al hacer click fuera
+document.addEventListener("click", function(){
+
+    document.querySelectorAll(".menuAcciones").forEach(function(menu){
+        menu.style.display = "none";
+    });
+
+    document.querySelectorAll("tr").forEach(function(fila){
+        fila.classList.remove("fila-activa");
+    });
 
 });
 </script>
