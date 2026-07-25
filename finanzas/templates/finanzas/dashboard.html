@@ -2,12 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-
-
 {% block content %}
-
-
-
 
 <title>Dashboard — Panorama Financiero</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +11,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
-
 
   :root{
    /* ===== paper:#EDE6D3; ===== */
@@ -48,12 +42,12 @@
   /* ===== SPINE HEADER ===== */
   .spine{
     background: linear-gradient(180deg, var(--ledger-dark), var(--ledger));
-    padding: 22px 34px 0 34px;
+    padding:16px 34px 16px 34px;
     box-shadow: 0 3px 10px rgba(34,48,31,0.25);
   }
   .spine-top{
     display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;
-    padding-bottom:16px;
+    padding-bottom:0px;
   }
   .spine h1{
     font-family:'Fraunces',serif; font-weight:700; font-optical-sizing:auto;
@@ -103,6 +97,7 @@
     grid-template-columns:repeat(4,1fr);
     gap:14px;
     padding:36px 0 6px 0;
+    margin-top:-25px;
 }
 
 .kpi{
@@ -177,16 +172,12 @@
     right:0;
     top:calc(100% + 4px);
     z-index:20;
-
     background:var(--card);
     border-radius:6px;
     box-shadow:0 4px 12px rgba(34,48,31,.20);
-
     border:1px solid var(--line);
-
     max-height:220px;
     overflow-y:auto;
-
     padding:4px;
 }
 
@@ -198,12 +189,9 @@
     display:flex;
     justify-content:space-between;
     gap:8px;
-
     padding:5px 8px;
-
     border-radius:5px;
     font-size:14px;
-
     cursor:pointer;
 }
 
@@ -225,80 +213,100 @@
 }
 
 
-  /* FILTER BAR */
-  .filters{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    padding:14px 18px; margin-top:16px; background:var(--card); border-radius:10px; box-shadow:var(--shadow);
-  }
-  .filters select, .filters input[type=text]{
-    font-family:'Inter',sans-serif; font-size:14px; padding:8px 10px; border-radius:6px;
-    border:1px solid var(--line); background:var(--paper); color:var(--ink);
-  }
-  .filters input[type=text]{ min-width:220px; }
-  .filters .field-label{ font-size:14px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.5px; margin-bottom:3px; display:block;}
-  .filters .field{ display:flex; flex-direction:column; }
-  .clear-btn{
-    margin-left:auto; background:none; border:1px solid var(--line); color:var(--ink-soft);
-    font-size:14px; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600;
-  }
-  .clear-btn:hover{ background:var(--ledger-light); color:var(--ink); }
+/* FILTER BAR */
+.filters{
+display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+padding:14px 18px; margin-top:13px; background:var(--card); border-radius:10px; box-shadow:var(--shadow);
+}
+.filters select, .filters input[type=text]{
+font-family:'Inter',sans-serif; font-size:14px; padding:8px 10px; border-radius:6px;
+border:1px solid var(--line); background:var(--paper); color:var(--ink);
+}
+.filters input[type=text]{ min-width:220px; }
+.filters .field-label{ font-size:14px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.5px; margin-bottom:3px; display:block;}
+.filters .field{ display:flex; flex-direction:column; }
+.clear-btn{
+margin-left:auto; background:none; border:1px solid var(--line); color:var(--ink-soft);
+font-size:14px; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600;
+}
+.clear-btn:hover{ background:var(--ledger-light); color:var(--ink); }
 
-  /* CHARTS */
-  .charts{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-top:16px; }
-  .charts-row2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
-  .chart-card{ background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; }
-  .chart-card h3{
-    font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px 0; font-weight:600;
-  }
-  .chart-card .hint{ font-size:14px; color:var(--ink-soft); margin-bottom:10px; }
-  .chart-holder{ position:relative; height:260px; }
+/* CHARTS */
+.charts{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-top:16px; }
+.charts-row2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+.chart-card{ background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; margin-top:16px; }
+.chart-card h3{
+font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px 0; font-weight:600;    text-align:center;    margin-bottom:10px;
+}
+.chart-card .hint{ font-size:14px; color:var(--ink-soft); margin-bottom:10px;  }
+.chart-holder{ position:relative; height:260px; }
 
 
-  .dashboard-main{
-      display:grid;
-      grid-template-columns:58% 42%;
-      gap:18px;
-      align-items:start;
-  }
-  .dashboard-left{
-      display:flex;
-      flex-direction:column;
-  }
+.dashboard-main{
+    display:grid;
+    grid-template-columns:50% 50%;
+    gap:16px;
+    align-items:start;
+}
+.dashboard-left{
+    display:flex;
+    flex-direction:column;
+}
 
-  .dashboard-right{
-      display:flex;
-      flex-direction:column;
-      gap:16px;
+.dashboard-right{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    margin-top:-12px;
 
-      padding-top:36px;
-  }
+    padding-top:36px;
+}
 
   /* TABLE */
-  .table-card{ margin-top:16px; background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px 8px 20px;}
-  .table-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 2px 0; font-weight:600; }
-  .table-card .hint{ font-size:14px; color:var(--ink-soft); margin-bottom:10px; }
-  table{ width:100%; border-collapse:collapse; font-size:14px; }
-  thead th{
-    text-align:left; padding:9px 10px; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;
-    color:var(--ink-soft); border-bottom:2px solid var(--ledger); cursor:pointer; user-select:none;
-    position:sticky; top:0; background:var(--card);
-  }
-  thead th:hover{ color:var(--ink); }
-  thead th.sorted::after{ content:" ▾"; color:var(--brass); }
-  tbody tr{ border-bottom:1px solid var(--line); cursor:pointer; }
-  tbody tr:nth-child(even){ background:var(--ledger-light); }
-  tbody tr:hover{ background:#EAD9B8; }
-  tbody td{ padding:8px 10px; vertical-align:top; }
-  td.amount{ text-align:right; font-weight:600; }
-  td.amount.neg{ color:var(--red); }
-  td.amount.pos{ color:var(--ledger-dark); }
-  .cat-chip{ font-size:14px; padding:2px 8px; border-radius:20px; background:var(--ledger-light); color:var(--ink); font-weight:600; }
-  .detail-row{ display:none; background:var(--paper-alt) !important; }
-  .detail-row td{ padding:10px 16px; font-size:14px; color:var(--ink-soft); }
-  .detail-row .archivo{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
-  .table-scroll{ max-height:520px; overflow-y:auto; border-radius:6px; }
-  .table-foot{ display:flex; justify-content:space-between; padding:10px 4px; font-size:14px; color:var(--ink-soft); }
-  .empty-state{ text-align:center; padding:40px; color:var(--ink-soft); font-size:14px; }
+
+.table-card{
+    margin-top:0;
+    background:var(--card);
+    border-radius:10px;
+    box-shadow:var(--shadow);
+    padding:14px 16px 8px 16px;
+}
+
+.table-card h3{
+    font-family:'Fraunces',serif;
+    font-size:17px;
+    margin:0;
+    font-weight:600;
+}
+
+.table-card .hint{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+}
+
+table{ width:100%; border-collapse:collapse; font-size:14px; }
+thead th{
+text-align:left; padding:9px 10px; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;
+color:var(--ink-soft); border-bottom:2px solid var(--ledger); cursor:pointer; user-select:none;
+position:sticky; top:0; background:var(--card);
+}
+thead th:hover{ color:var(--ink); }
+thead th.sorted::after{ content:" ▾"; color:var(--brass); }
+tbody tr{ border-bottom:1px solid var(--line); cursor:pointer; }
+tbody tr:nth-child(even){ background:var(--ledger-light); }
+tbody tr:hover{ background:#EAD9B8; }
+tbody td{ padding:8px 10px; vertical-align:top; }
+td.amount{ text-align:right; font-weight:600; }
+td.amount.neg{ color:var(--red); }
+td.amount.pos{ color:var(--ledger-dark); }
+.cat-chip{ font-size:14px; padding:2px 8px; border-radius:20px; background:var(--ledger-light); color:var(--ink); font-weight:600; }
+.detail-row{ display:none; background:var(--paper-alt) !important; }
+.detail-row td{ padding:10px 16px; font-size:14px; color:var(--ink-soft); }
+.detail-row .archivo{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
+.table-scroll{ max-height:1000px; overflow-y:auto; border-radius:2px; }
+.table-foot{ display:flex; justify-content:space-between; padding:10px 4px; font-size:14px; color:var(--ink-soft); }
+.empty-state{ text-align:center; padding:40px; color:var(--ink-soft); font-size:14px; }
 
 .expand-chart{
     float:right;
@@ -316,7 +324,10 @@
 
     transform:scale(1.20);
 
+
 }
+
+
 </style>
 </head>
 <body>
@@ -329,7 +340,7 @@
     </div>
 
   </div>
-  <div class="tabs" id="personTabs"></div>
+
 </div>
 
 <div class="dashboard-wrap">
@@ -338,126 +349,89 @@
     <div class="dashboard-main">
       <div class="dashboard-left">
 
-
+        <!--
         <div class="kpis" id="kpiRow"></div>
-
-        <div class="filters">
-          <div class="field">
-            <span class="field-label">Categoría</span>
-            <select id="fCategoria"><option value="ALL">Todas</option></select>
-          </div>
-          <div class="field">
-            <span class="field-label">Finalidad</span>
-            <select id="fFinalidad"><option value="ALL">Todas</option></select>
-          </div>
-          <div class="field">
-            <span class="field-label">Cuenta / Tarjeta</span>
-            <select id="fOrigen"><option value="ALL">Todas</option></select>
-          </div>
-          <div class="field">
-            <span class="field-label">Período</span>
-            <select id="fPeriodo"><option value="ALL">Todos</option></select>
-          </div>
-          <div class="field">
-            <span class="field-label">Buscar descripción</span>
-            <input type="text" id="fSearch" placeholder="ej: farmacia, google, edenor...">
-          </div>
-          <button class="clear-btn" id="clearFilters">Limpiar filtros</button>
-        </div>
-
+        -->
 
 
         <!-- TABLA -->
 
-        <div class="table-card">
-
-            <h3>Detalle de movimientos</h3>
-
-            <div class="hint">
-                Clic en una fila para ver la descripción completa y el archivo de origen
-            </div>
-
-            <div class="table-scroll">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th data-key="fecha">Fecha</th>
-                            <th data-key="descripcion">Descripción</th>
-                            <th data-key="categoria">Categoría</th>
-                            <th data-key="finalidad">Finalidad</th>
-                            <th data-key="persona">Persona</th>
-                            <th data-key="origen">Cuenta</th>
-                            <th data-key="importe" style="text-align:right">Importe</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="tableBody"></tbody>
-
-                </table>
-
-            </div>
-
-            <div class="table-foot">
-
-                <span id="rowCount"></span>
-
-                <span id="rowSum"></span>
-
-            </div>
-        </div>
-
-      </div>   <!-- dashboard-left -->  
-        <!-- COLUMNA DERECHA -->
-
-      <div class="dashboard-right">
-
-
         <div class="chart-card">
             <h3 id="titleDashboard">
-                Distribución General
+                Distribución General -  por Grupo Dashboard
             </h3>
-
-            <div class="hint" id="hintDashboard">
-                Distribución por Grupo Dashboard
-            </div>
-
             <div class="chart-holder" style="height:900px;">
                 <canvas id="chartDashboard"></canvas>
             </div>
         </div>
 
-
-
-        <!-- NUEVO GRAFICO -->
-
         <div class="chart-card" id="cardEvolucion" style="display:none; margin-top:20px;">
-
-            <h3 id="tituloEvolucion">
-                Evolución mensual
-            </h3>
-
-            <div class="hint">
-                Evolución de la categoría seleccionada
-            </div>
-
+            <h3 id="tituloEvolucion">Evolución mensual</h3>
+            <div class="hint">Evolución de la categoría seleccionada            </div>
             <div class="chart-holder" style="height:350px;">
                 <canvas id="chartEvolucionCategoria"></canvas>
             </div>
-
         </div>
 
+      </div>   <!-- dashboard-left -->  
+       
+        <div class="dashboard-right">
 
-
-
-
-      </div>
-
+            <div class="filters">
+            <div class="field">
+                <span class="field-label">Categoría</span>
+                <select id="fCategoria"><option value="ALL">Todas</option></select>
+            </div>
+            <div class="field">
+                <span class="field-label">Finalidad</span>
+                <select id="fFinalidad"><option value="ALL">Todas</option></select>
+            </div>
+            <div class="field">
+                <span class="field-label">Cuenta / Tarjeta</span>
+                <select id="fOrigen"><option value="ALL">Todas</option></select>
+            </div>
+            <div class="field">
+                <span class="field-label">Período</span>
+                <select id="fPeriodo"><option value="ALL">Todos</option></select>
+            </div>
+            <div class="field">
+                <span class="field-label">Buscar descripción</span>
+                <input type="text" id="fSearch" placeholder="ej: farmacia, google, edenor...">
+            </div>
+            <button class="clear-btn" id="clearFilters">Limpiar filtros</button>
+            </div>
+                
+            <div class="table-card">
+                <h3>Detalle de movimientos</h3>
+                <div class="hint">
+                    Clic en una fila para ver la descripción completa y el archivo de origen
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-key="categoria" style="width:160px;">Categoría</th>
+                                <th data-key="finalidad" style="width:160px;">Finalidad</th>
+                                <th id="thRegla" style="cursor:pointer;">Regla</th>
+                                <th data-key="origen" style="width:190px;">Cuenta</th>
+                                <th data-key="importe"
+                                    style="width:110px;text-align:right;">
+                                    Importe
+                                </th>
+                                <th data-key="fecha" style="width:120px;">Fecha</th>
+                                <th data-key="descripcion">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-foot">
+                    <span id="rowCount"></span>
+                    <span id="rowSum"></span>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
 
 
@@ -581,7 +555,7 @@ function aggregateMerchants(rows){
 }
 
 let charts = {};
-
+let mostrarReglaCompleta = false;
 
 function renderChart(canvasId, type, labels, data, colors, vertical=false){
 
@@ -590,11 +564,15 @@ function renderChart(canvasId, type, labels, data, colors, vertical=false){
   charts[canvasId] = new Chart(ctx, {
     type: type,
     data: { labels: labels, datasets: [{ data: data, 
-      backgroundColor: Array.isArray(colors)
-          ? colors
-          : labels.map(()=>colors),
+        backgroundColor: Array.isArray(colors)
+        ? colors
+        : labels.map(()=>colors),
             
-      borderWidth: type==='doughnut'?2:0, borderColor:'#F7F3E8', borderRadius: type==='bar'?4:0, categoryPercentage: 1.00,barThickness: 85, barPercentage:  1.20}] },
+        borderWidth: type==='doughnut'?2:0, borderColor:'#F7F3E8', borderRadius: type==='bar'?4:0, 
+        categoryPercentage: 1.00,
+        barPercentage: 1.00,
+        maxBarThickness: 130,
+        barThickness: 95  }] },
     options: {
       
 
@@ -645,11 +623,6 @@ function renderChart(canvasId, type, labels, data, colors, vertical=false){
     }
   });
 }
-
-
-
-
-
 
 
 
@@ -845,28 +818,25 @@ function sortRows(rows){
 
     return [...rows].sort((a,b)=>{
 
-        let A = a[state.sortKey];
-        let B = b[state.sortKey];
+        if (a.categoria !== b.categoria)
+            return a.categoria.localeCompare(b.categoria,'es');
 
-        if(state.sortKey === "importe"){
-            A = Number(A);
-            B = Number(B);
-        }
+        if (a.finalidad !== b.finalidad)
+            return a.finalidad.localeCompare(b.finalidad,'es');
 
-        if(state.sortKey === "fecha"){
-            A = String(A);
-            B = String(B);
-        }
+        if ((a.regla || "") !== (b.regla || ""))
+            return (a.regla || "").localeCompare(b.regla || "","es");
 
-        if(A < B){
-            return state.sortDir === "asc" ? -1 : 1;
-        }
+        if (a.origen !== b.origen)
+            return a.origen.localeCompare(b.origen,'es');
 
-        if(A > B){
-            return state.sortDir === "asc" ? 1 : -1;
-        }
+        if (a.importe !== b.importe)
+            return b.importe - a.importe;
 
-        return 0;
+        if (a.fecha !== b.fecha)
+            return b.fecha.localeCompare(a.fecha);
+
+        return a.descripcion.localeCompare(b.descripcion,'es');
 
     });
 
@@ -882,13 +852,21 @@ function renderTable(rows){
     const tr = document.createElement('tr');
     const isNeg = r.importe < 0;
     tr.innerHTML = `
-      <td class="num">${r.fecha}</td>
-      <td>${r.descripcion.split('\\n')[0].slice(0,55)}</td>
-      <td><span class="cat-chip">${r.categoria}</span></td>
-      <td>${r.finalidad}</td>
-      <td>${r.persona}</td>
-      <td style="font-size:14px;color:var(--ink-soft)">${r.origen}</td>
-      <td class="amount num ${isNeg?'neg':'pos'}">${fmtMoneySigned(r.importe)}</td>
+        <td><span class="cat-chip">${r.categoria}</span></td>
+        <td>${r.finalidad}</td>
+
+        <td class="regla">
+            ${
+                mostrarReglaCompleta
+                    ? (r.regla || "")
+                    : ((r.regla || "").substring(0,1))
+            }
+        </td>
+
+        <td style="font-size:14px;color:var(--ink-soft)">${r.origen}</td>
+        <td class="amount num ${isNeg ? 'neg' : 'pos'}">${fmtMoneySigned(r.importe)}</td>
+        <td class="num">${r.fecha}</td>
+        <td>${r.descripcion.split('\n')[0]}</td>
     `;
     tr.onclick = ()=>{
       const next = document.getElementById('detail-'+i);
@@ -908,14 +886,52 @@ function renderTable(rows){
     body.appendChild(detail);
   });
 
-  document.getElementById('rowCount').textContent = sorted.length + ' movimientos mostrados';
-  const sum = sorted.reduce((s,r)=>s+r.importe,0);
-  document.getElementById('rowSum').textContent = 'Suma: ' + fmtMoney(sum);
 
-  document.querySelectorAll('thead th').forEach(th=>{
-    th.classList.toggle('sorted', th.dataset.key===state.sortKey);
-  });
+
+    const thRegla = document.getElementById("thRegla"); 
+        thRegla.onclick = function(){ 
+        mostrarReglaCompleta = !mostrarReglaCompleta; renderTable(getFiltered()); };
+
+    document.querySelectorAll(".regla").forEach(td => {
+
+        if(mostrarReglaCompleta){
+            td.style.width = "350px";
+            td.style.whiteSpace = "normal";
+        }else{
+            td.style.width = "35px";
+            td.style.whiteSpace = "nowrap";
+        }
+
+    });
+
+    if(mostrarReglaCompleta){
+        thRegla.style.width = "350px";
+    }else{
+        thRegla.style.width = "25px";
+    }
+
+
+
+
+    document.getElementById('rowCount').textContent = sorted.length + ' movimientos mostrados';
+    const sum = sorted.reduce((s,r)=>s+r.importe,0);
+    document.getElementById('rowSum').textContent = 'Suma: ' + fmtMoney(sum);
+
+    document.querySelectorAll('thead th').forEach(th=>{
+        th.classList.toggle('sorted', th.dataset.key===state.sortKey);
+    });
 }
+
+
+document.getElementById("thRegla").onclick = function () {
+
+    alert("CLICK");
+
+    mostrarReglaCompleta = !mostrarReglaCompleta;
+
+    renderTable(getFiltered());
+
+};
 
 function syncFilterInputs(){
   document.getElementById('fCategoria').value = state.categoria;
@@ -940,7 +956,28 @@ function renderEvolucionCategoria(){
     document.getElementById("tituloEvolucion").innerHTML =
         "Evolución mensual - " + state.categoria;
 
-    const filas = getFiltered();
+
+
+    const filas = RAW.filter(f => {
+
+        if (state.categoria !== "ALL" && f.categoria !== state.categoria)
+            return false;
+
+        if (state.finalidad !== "ALL" && f.finalidad !== state.finalidad)
+            return false;
+
+        if (state.origen !== "ALL" && f.origen !== state.origen)
+            return false;
+
+        if (state.search &&
+            !JSON.stringify(f).toLowerCase().includes(state.search.toLowerCase()))
+            return false;
+
+        return true;
+
+    });
+
+
     console.log("Filas:", filas.length);
     console.table(filas);
     const porMes = {};
@@ -958,6 +995,7 @@ function renderEvolucionCategoria(){
     });
 
     const meses = Object.keys(porMes).sort();
+    const labels = meses.map(periodoLabel);
 
     const importes = meses.map(m => porMes[m]);
 
@@ -970,7 +1008,7 @@ function renderEvolucionCategoria(){
     renderChart(
         "chartEvolucionCategoria",
         "bar",
-        meses,
+        labels,
         importes,
         colorCategoria,
         true
@@ -980,18 +1018,12 @@ function renderEvolucionCategoria(){
 
 function render(){
 
-    buildPersonTabs();
 
     syncFilterInputs();
-
     renderDashboard();
-
     const rows = getFiltered();
-
     renderTable(rows);
-
     renderEvolucionCategoria();   // <-- AGREGAR ESTA LINEA
-
 
 }
 
@@ -1000,12 +1032,27 @@ function renderDashboard(){
 
     const rows = getRowsDashboard();
 
-    renderKPIs(rows);
+    // <-- renderKPIs(rows);
     renderDashboardStacked();
 
     renderCharts(rows);
 
 }
+
+
+
+function renderDetalle(){
+
+    syncFilterInputs();
+
+    const rows = getFiltered();
+
+    renderTable(rows);
+
+    renderEvolucionCategoria();
+
+}
+
 
 function renderDashboardStacked(){
 
@@ -1232,17 +1279,25 @@ function renderDashboardStacked(){
 populateSelect('fCategoria', uniqueSorted(RAW.map(r=>r.categoria)));
 populateSelect('fFinalidad', uniqueSorted(RAW.map(r=>r.finalidad)));
 populateSelect('fOrigen', uniqueSorted(RAW.map(r=>r.origen)));
+
+// <-- PEGALO ACÁ
+console.log("Períodos en RAW:");
+console.log(RAW.map(r => r.periodo));
+
+console.log("Períodos únicos:");
+console.log(uniqueSorted(RAW.map(r => r.periodo)));
+
 const periodoSel = document.getElementById('fPeriodo');
 uniqueSorted(RAW.map(r=>r.periodo)).forEach(p=>{
   const opt = document.createElement('option'); opt.value = p; opt.textContent = periodoLabel(p);
   periodoSel.appendChild(opt);
 });
 
-document.getElementById('fCategoria').onchange = e=>{ state.categoria=e.target.value; render(); };
-document.getElementById('fFinalidad').onchange = e=>{ state.finalidad=e.target.value; render(); };
-document.getElementById('fOrigen').onchange = e=>{ state.origen=e.target.value; render(); };
+document.getElementById('fCategoria').onchange = e=>{ state.categoria=e.target.value; renderDetalle(); };
+document.getElementById('fFinalidad').onchange = e=>{ state.finalidad=e.target.value; renderDetalle(); };
+document.getElementById('fOrigen').onchange = e=>{ state.origen=e.target.value; renderDetalle(); };
 document.getElementById('fPeriodo').onchange = e=>{ state.periodo=e.target.value; render(); };
-document.getElementById('fSearch').oninput = e=>{ state.search=e.target.value; render(); };
+document.getElementById('fSearch').oninput = e=>{ state.search=e.target.value; renderDetalle(); };
 
 
 document.getElementById('clearFilters').onclick = ()=>{

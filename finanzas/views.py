@@ -544,8 +544,14 @@ def dashboard(request):
             .first()
         )
 
-    movimientos = Movimiento.objects.filter(
-        periodo=periodo_actual
+    movimientos = (
+        Movimiento.objects
+        .select_related(
+            "categoria",
+            "finalidad",
+            "persona",
+            "regla_aplicada",
+        )
     )
 
     #==========================
@@ -681,6 +687,7 @@ def dashboard(request):
         "categoria",
         "finalidad",
         "persona",
+        "regla_aplicada",
     ):
 
         datos_dashboard.append({
@@ -703,6 +710,7 @@ def dashboard(request):
             "finalidad": m.finalidad.nombre if m.finalidad else "Sin clasificar",
             "persona": m.persona.nombre if m.persona else "Sin asignar",
             "origen": m.origen,
+            "regla": m.regla_aplicada.texto if m.regla_aplicada else "",
             "archivo": m.nombre_archivo,
             "tipo": m.get_tipo_display(),
 
