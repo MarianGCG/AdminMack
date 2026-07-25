@@ -1,7 +1,6 @@
 from django.shortcuts import render
 
 from .models import Movimiento, Categoria, Finalidad, Persona,  Regla
-from comisiones.models import ParametroSistema
 from django.http import JsonResponse
 import json
 from django.views.decorators.http import require_GET
@@ -24,6 +23,9 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.decorators import login_required
 from django.db import DataError, IntegrityError
 
+
+from comisiones.models import ParametroSistema
+
 @require_GET
 def categoria_eliminar(request, id):
 
@@ -34,15 +36,23 @@ def categoria_eliminar(request, id):
 
 
 
+
 @login_required
 def categorias(request):
+   
     categorias = Categoria.objects.order_by("nombre")
+
+    grupos_dashboard = ParametroSistema.objects.filter(valor="DASHBOARD_GRUPOS").order_by("codigo")
+
+    
+    print(list(ParametroSistema.objects.values("codigo", "valor")))
 
     return render(
         request,
         "finanzas/categorias.html",
         {
-            "categorias": categorias
+            "categorias": categorias,
+            "grupos_dashboard": grupos_dashboard,
         }
     )
 

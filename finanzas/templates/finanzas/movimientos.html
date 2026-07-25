@@ -3,6 +3,22 @@
 {% block content %}
 
 <style>
+:root{
+/* ===== paper:#EDE6D3; ===== */
+--paper:#F4F6F9;
+--paper-alt:#E4DBC3;
+--card:#FFFFFF;
+--ink:#212529;
+--ink-soft:#5B5745;
+--ledger:#4C6B4F;
+--ledger-dark:#37502F;
+--ledger-light:#DCE5D3;
+--brass:#A9812F;
+--red:#9C3B32;
+--line:#D9E2EC;
+--shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
 .tabla-listado{
     width:100%;
     min-width:1800px;
@@ -11,7 +27,7 @@
 
 .tabla-listado th,
 .tabla-listado td{
-    padding:6px 8px;
+    padding:2px 8px;
     white-space:nowrap;
 }
 
@@ -391,15 +407,65 @@ th.resizable .resizer:hover{
 
 .resumen-wrapper{
     position:relative;
-    display:inline-block;
+    display:inline-block;}
+
+.page-header-finanzas{
+    background:#3F5F3B;      /* el mismo verde del Dashboard */
+    color:white;
+    padding:14px 24px;
+    border-radius:4px;
+    margin-bottom:12px;
 }
+
+.page-header-finanzas h1{
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+}
+
+.page-header-finanzas small{
+    display:block;
+    margin-top:2px;
+    opacity:.9;
+    font-size:13px;
+}
+ /* ===== SPINE HEADER ===== */
+.spine{
+    background: linear-gradient(180deg,#486542,#5D7A56);
+    padding:16px 34px;
+    box-shadow:0 3px 10px rgba(34,48,31,.25);
+    margin-bottom:16px;   /* <-- agregar */
+
+}
+
+.spine h1{
+    margin:0;
+    color:#fff;
+    font-family:'Fraunces',serif; font-weight:700; font-optical-sizing:auto;
+    font-size:32px; color:var(--ledger-light); margin:0; letter-spacing:0.2px;
+}
+
+
+.spine .subtitle{
+    color:#C7D6C3;
+}
+
+.spine-top{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;padding-bottom:0px;}
+
 </style>
 
-<h2>MOVIMIENTOS</h2>
+<div class="spine">
+    <div class="spine-top">
+        <div>
+            <h1>Movimientos</h1>
+            <div class="subtitle">
+                Importación, clasificación y administración de movimientos
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="panel-filtros2">
-
-
 
         <input
             type="file"
@@ -682,9 +748,6 @@ th.resizable .resizer:hover{
 
 
 
-
-
-
             <button type="submit" class="btn-small">
 
                 🔍 Filtrar
@@ -729,7 +792,6 @@ th.resizable .resizer:hover{
         </th>
         
 
-        <th>ID</th>
 
         <th
             id="thDescripcion"
@@ -786,7 +848,7 @@ th.resizable .resizer:hover{
         <tr>
             
 
-            <td>{{ m.i  }}</td>
+
             <td>{{ m.periodo }}</td>
             <td>{{ m.fecha|date:"d/m" }}</td>
 

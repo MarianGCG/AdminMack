@@ -475,11 +475,11 @@ th.innerHTML = th.innerHTML + " <span class='flecha'>▼</span>"
 
 <select id="edit_grupo_dashboard">
 
-    <option value="INGRESOS">Ingresos</option>
-    <option value="EGRESOS">Egresos</option>
-    <option value="TRANSFERENCIAS">Transferencias</option>
-    <option value="INVERSIONES">Inversiones</option>
-    <option value="OTROS">Otros</option>
+    {% for grupo in grupos_dashboard %}
+        <option value="{{ grupo.codigo }}">
+            {{ grupo.codigo  }}
+        </option>
+    {% endfor %}
 
 </select>
 

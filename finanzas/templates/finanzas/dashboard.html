@@ -216,7 +216,7 @@
 /* FILTER BAR */
 .filters{
 display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-padding:14px 18px; margin-top:13px; background:var(--card); border-radius:10px; box-shadow:var(--shadow);
+padding:14px 18px; margin-top:-10px; background:var(--card); border-radius:10px; box-shadow:var(--shadow);
 }
 .filters select, .filters input[type=text]{
 font-family:'Inter',sans-serif; font-size:14px; padding:8px 10px; border-radius:6px;
@@ -234,7 +234,7 @@ font-size:14px; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight
 /* CHARTS */
 .charts{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-top:16px; }
 .charts-row2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
-.chart-card{ background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; margin-top:16px; }
+.chart-card{ background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; margin-top:16px;  font-size:16px; }
 .chart-card h3{
 font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px 0; font-weight:600;    text-align:center;    margin-bottom:10px;
 }
@@ -270,6 +270,7 @@ font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px 0; font-weight:600;
     border-radius:10px;
     box-shadow:var(--shadow);
     padding:14px 16px 8px 16px;
+    font-size:24px;
 }
 
 .table-card h3{
@@ -318,16 +319,78 @@ td.amount.pos{ color:var(--ledger-dark); }
     transition:.20s;
 }
 
-.expand-chart:hover{
-
-    color:#2563eb;
-
-    transform:scale(1.20);
-
-
+.expand-chart:hover{    color:#2563eb;    transform:scale(1.20);}
+#tituloEvolucion{
+    font-size:24px;
+    font-weight:700;
+    text-align:center;
+    margin:10px 0 15px 0;
+    color:#1f2937;
 }
 
+#titleDashboard{
+    font-size:24px;
+    font-weight:700;
+    text-align:center;
+    margin:10px 0 15px 0;
+    color:#1f2937;
+}
+.dashboard-table td{
+    color:#2B2B2B;
+    font-weight:500;
+}
 
+.dashboard-table th{
+    color:#3A3A3A;
+    font-weight:700;
+}
+.positivo{
+    color:#2E5D34;
+    font-weight:600;
+}
+
+.negativo{
+    color:#A32626;
+    font-weight:600;
+}
+
+/* Títulos de los filtros */
+.campo-filtro label{
+    color:#000;
+    font-weight:900;
+    font-size:15px;
+    letter-spacing:.5px;
+}
+.subtitulo-detalle{
+    font-size:14px;
+    color:#000;
+}
+/* Contenido de los combos e inputs */
+.filtro,
+select,
+input{
+    font-size:14px;
+    font-weight:900;
+    color:#1F2937;
+}
+
+/* Encabezados de la tabla */
+.tabla-detalle th{
+    font-size:14px;
+    font-weight:900;
+    color:#374151;
+}
+
+/* Datos de la tabla */
+.tabla-detalle td{
+    font-size:14px;
+    font-weight:900;
+    color:#1F2937;
+}
+thead th{
+    color:#374151;
+    font-weight:900;
+}
 </style>
 </head>
 <body>
@@ -365,9 +428,8 @@ td.amount.pos{ color:var(--ledger-dark); }
             </div>
         </div>
 
-        <div class="chart-card" id="cardEvolucion" style="display:none; margin-top:20px;">
+        <div class="chart-card" id="cardEvolucion" style="display:none; margin-top:20px;font-size:24px;">
             <h3 id="tituloEvolucion">Evolución mensual</h3>
-            <div class="hint">Evolución de la categoría seleccionada            </div>
             <div class="chart-holder" style="height:350px;">
                 <canvas id="chartEvolucionCategoria"></canvas>
             </div>
