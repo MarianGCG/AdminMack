@@ -251,7 +251,7 @@ def importar_pdf_movimientos(archivo):
 
         datos = obtener_datos_nombre_archivo(archivo.name)
         origen_pdf = obtener_origen_pdf(texto_caratula)
-        titular = origen_pdf.split("-", 3)[3]
+        titular = datos["alias"]
         origen = (
             f"{datos['tipo']}-"
             f"{datos['marca']}-"
@@ -259,6 +259,8 @@ def importar_pdf_movimientos(archivo):
             f"{titular}"
         )
         periodo = datos["periodo"]
+
+
 
 
         print("PERIODO:", periodo)
@@ -404,13 +406,25 @@ def importar_pdf_movimientos(archivo):
         ).date()
 
         # Importe
-        
-        importe = Decimal(
+        texto_importe = (
             mov["importe"]
                 .replace(".", "")
                 .replace(",", ".")
         )
-        importe = -abs(importe)
+
+        es_credito = texto_importe.endswith("-")
+
+        if es_credito:
+            texto_importe = texto_importe[:-1]
+
+        importe = Decimal(texto_importe)
+
+        if es_credito:
+            # Bonificación / devolución
+            importe = abs(importe)
+        else:
+            # Consumo
+            importe = -abs(importe)
 
 
         print("PERIODO =", periodo)

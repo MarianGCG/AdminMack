@@ -18,7 +18,7 @@
     --paper-alt:#E4DBC3;
     --card:#FFFFFF;
     --ink:#212529;
-    --ink-soft:#5B5745;
+    --ink-soft:#000000;
     --ledger:#4C6B4F;
     --ledger-dark:#37502F;
     --ledger-light:#DCE5D3;
@@ -412,11 +412,6 @@ thead th{
     <div class="dashboard-main">
       <div class="dashboard-left">
 
-        <!--
-        <div class="kpis" id="kpiRow"></div>
-        -->
-
-
         <!-- TABLA -->
 
         <div class="chart-card">
@@ -638,48 +633,73 @@ function renderChart(canvasId, type, labels, data, colors, vertical=false){
     options: {
       
 
-      indexAxis: type==='bar'
-          ? (vertical ? 'x' : 'y')
-          : undefined,
+        indexAxis: type==='bar'
+            ? (vertical ? 'x' : 'y')
+            : undefined,
 
+                
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+            legend:{ display: type==='doughnut', position:'right', labels:{ boxWidth:10, font:{size:11, family:'Inter'}, color:'#000000' } },
+            tooltip:{ callbacks:{ label: (c)=> ' ' + fmtMoney(c.raw) } },
             
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{ display: type==='doughnut', position:'right', labels:{ boxWidth:10, font:{size:11, family:'Inter'}, color:'#212529' } },
-        tooltip:{ callbacks:{ label: (c)=> ' ' + fmtMoney(c.raw) } },
+            /* TABLE   */
+            datalabels:{
+                color:"#ffffff",
+                anchor:"center",
+                align:"center",
+                font:{
+                    weight:"bold",
+                    size:15
+                },
+                formatter:(v)=>fmtMoneySigned(v)
+            }
         
-        /* TABLE   */
-        datalabels:{
-            color:"#ffffff",
-            anchor:"center",
-            align:"center",
-            font:{
-                weight:"bold",
-                size:15
-            },
-            formatter:(v)=>fmtMoneySigned(v)
-        }
-      
-        /*
-        datalabels:{
-            color: vertical ? "#212529" : "#ffffff",
-            anchor: vertical ? "end" : "center",
-            align: vertical ? "top" : "center",
-            offset: vertical ? 4 : 0,
-            font:{
-                weight:"bold",
-                size:13
-            },
-            formatter:(v)=>fmtMoneySigned(v)
-        }
-        */
-      },
-      scales: type==='bar' ? {
-        x:{ ticks:{ callback:(v)=>'$'+(v/1000).toFixed(0)+'k', font:{size:10} }, grid:{color:'#DCE5D3'} },
-        y:{ ticks:{ font:{size:11, family:'Inter'} }, grid:{display:false} }
-      } : {},
 
-      onClick: null
+        },
+
+
+
+
+        scales: type==='bar'
+            ? (
+                vertical
+                ? {
+                    x:{
+                        ticks:{
+                            color:"#000000", font:{ size:13, weight:"600"}
+                        },
+                        grid:{ display:false }
+                    },
+                    y:{
+                        ticks:{
+                            callback:(v)=>Number(v).toLocaleString("es-AR"),
+                            color:"#000000", font:{ size:13, weight:"600" }
+                        },
+                        grid:{ color:'#DCE5D3' }
+                    }
+                }
+                : {
+                    x:{
+                        ticks:{
+                            callback:(v)=>Number(v).toLocaleString("es-AR"),
+                            color:"#000000", font:{ size:13, weight:"600" }
+                        },
+                        grid:{ color:'#DCE5D3' }
+                    },
+                    y:{
+                        ticks:{
+                            color:"#000000", font:{ size:13, weight:"600" }
+                        },
+                        grid:{ display:false }
+                    }
+                }
+            )
+            : {},
+
+
+
+        onClick: null
 
 
     }
@@ -1312,24 +1332,42 @@ function renderDashboardStacked(){
                     }
                 }
             },
+
+
+
+            
+
             scales:{
 
                 x:{
                     stacked:true,
                     ticks:{
+                        color:"#000000",
+                        font:{
+                            size:13,
+                            weight:"700"
+                        },
                         callback:function(value){
                             return this.getLabelForValue(value);
                         }
                     }
                 },
 
-
-
                 y:{
-                    stacked:true
+                    stacked:true,
+                    ticks:{
+                        color:"#000000",
+                        font:{
+                            size:13,
+                            weight:"700"
+                        }
+                    }
                 }
 
-            }
+            }           
+
+
+
 
         }
 

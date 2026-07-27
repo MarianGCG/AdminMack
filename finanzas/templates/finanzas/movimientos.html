@@ -19,11 +19,12 @@
 --shadow:0 2px 8px rgba(0,0,0,.06);
 }
 
+
 .tabla-listado{
-    width:100%;
-    min-width:1800px;
-    border-collapse:collapse;
+    table-layout: fixed;
+    width: max-content !important;
 }
+
 
 .tabla-listado th,
 .tabla-listado td{
@@ -452,6 +453,50 @@ th.resizable .resizer:hover{
 
 .spine-top{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;padding-bottom:0px;}
 
+
+.overlay-importando{
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,.70);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    z-index:99999;
+}
+
+.overlay-box{
+    background:white;
+    border-radius:12px;
+    padding:30px 40px;
+    box-shadow:0 10px 30px rgba(0,0,0,.20);
+    text-align:center;
+}
+
+.spinner{
+    width:60px;
+    height:60px;
+    border:6px solid #E5E7EB;
+    border-top:6px solid #2563EB;
+    border-radius:50%;
+    animation:girar .8s linear infinite;
+    margin:auto;
+}
+
+.overlay-texto{
+    margin-top:18px;
+    font-size:18px;
+    font-weight:600;
+    color:#374151;
+}
+
+@keyframes girar{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+}
+
+
 </style>
 
 <div class="spine">
@@ -772,20 +817,20 @@ th.resizable .resizer:hover{
 
 
 
-    <div style="overflow-x:auto; width:100%;">
+    <div style="overflow-x:auto; ">
     <table class="tabla-listado" id="tabla">
     <thead>
 
     <tr>
 
-        <th style="width:90px;">
+        <th style="width:70px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('periodo');return false;">
                 {% if orden == 'periodo' %}▲{% elif orden == '-periodo' %}▼{% else %}▲▼{% endif %} Período
             </a>
         </th>
 
 
-        <th>
+        <th style="width:70px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('fecha');return false;">
                 {% if orden == 'fecha' %}▲{% elif orden == '-fecha' %}▼{% else %}▲▼{% endif %} Fecha
             </a>
@@ -796,7 +841,7 @@ th.resizable .resizer:hover{
         <th
             id="thDescripcion"
             class="resizable"
-            style="min-width:420px;"
+            style="min-width:520px;"
         >
             <a href="#" class="linkOrden" onclick="ordenarPor('descripcion');return false;">
                 {% if orden == 'descripcion' %}▲{% elif orden == '-descripcion' %}▼{% else %}▲▼{% endif %} Descripción
@@ -805,35 +850,54 @@ th.resizable .resizer:hover{
             <span class="resizer"></span>
         </th>
 
-        <th>
+        <th style="width:110px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('importe');return false;">
                 {% if orden == 'importe' %}▲{% elif orden == '-importe' %}▼{% else %}▲▼{% endif %} Importe
             </a>
         </th>
 
-        <th style="width:260px;">
+        <th style="width:220px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('origen');return false;">
                 {% if orden == 'origen' %}▲{% elif orden == '-origen' %}▼{% else %}▲▼{% endif %} Origen
             </a>
         </th>
 
-        <th>
+
+
+        <th style="width:400px;">
+            <a href="#" class="linkOrden" onclick="ordenarPor('regla_aplicada__texto');return false;">
+                {% if orden == 'regla_aplicada__texto' %}
+                    ▲
+                {% elif orden == '-regla_aplicada__texto' %}
+                    ▼
+                {% else %}
+                    ▲▼
+                {% endif %}
+                Regla
+            </a>
+        </th>
+
+
+
+
+        <th style="width:120px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('categoria__nombre');return false;">
                 {% if orden == 'categoria__nombre' %}▲{% elif orden == '-categoria__nombre' %}▼{% else %}▲▼{% endif %} Categoría
             </a>
         </th>
 
-        <th>
+        <th style="width:120px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('finalidad__nombre');return false;">
                 {% if orden == 'finalidad__nombre' %}▲{% elif orden == '-finalidad__nombre' %}▼{% else %}▲▼{% endif %} Finalidad
             </a>
         </th>
 
-        <th>
+        <th style="width:70px;">
             <a href="#" class="linkOrden" onclick="ordenarPor('persona__nombre');return false;">
                 {% if orden == 'persona__nombre' %}▲{% elif orden == '-persona__nombre' %}▼{% else %}▲▼{% endif %} Persona
             </a>
         </th>
+
 
         <th style="width:70px;">Acción</th>
     </tr>
@@ -857,7 +921,7 @@ th.resizable .resizer:hover{
                 class="tdDescripcion"
                 title="{{ m.descripcion }}"
                 style="
-                    min-width:420px;
+                    min-width:520px;
                     white-space:nowrap;
                     overflow:hidden;
                     text-overflow:ellipsis;
@@ -887,20 +951,37 @@ th.resizable .resizer:hover{
                 {{ m.origen }}
             </td>
 
-            <td>
+            <td
+                style="
+                    width:520px;
+                    max-width:400px;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                "
+                title="{{ m.regla_aplicada.texto }}"
+            >
                 {% if m.regla_aplicada %}
-                    {% if m.grupo %}
-                        {{ m.grupo }}
-                    {% else %}
-                        {{ m.categoria|default:"-" }}
-                    {% endif %}
+                    {{ m.regla_aplicada.texto }}
                 {% else %}
-                    <span style="color:red;font-weight:bold;">
-                        ⚠ SIN REGLA
-                    </span>
+                    <span style="color:red;font-weight:bold;">⚠ SIN REGLA</span>
                 {% endif %}
-
             </td>
+
+            <td
+                title="{{ m.categoria  }}"
+                style="
+                    width:260px;
+                    max-width:260px;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                "
+            >
+                {{ m.categoria  }}
+            </td>
+
+
 
             <td>
                 {{ m.finalidad }}
@@ -1179,7 +1260,7 @@ function importarExcel(){
         document.getElementById("btnReglas").disabled = true;
 
         document.getElementById("btnImportar").innerHTML = "⏳ Importando...";
-
+        document.getElementById("overlayImportando").style.display = "flex";
 
  
 
@@ -1222,7 +1303,7 @@ function importarExcel(){
     })
 
     .finally(() => {
-
+        document.getElementById("overlayImportando").style.display = "none";
         document.getElementById("btnImportar").disabled = false;
         document.getElementById("btnEliminar").disabled = false;
         document.getElementById("btnReaplicar").disabled = false;
@@ -1631,9 +1712,13 @@ document.addEventListener("DOMContentLoaded", function(){
     // Restaurar ancho
     const guardado = localStorage.getItem("anchoDescripcion");
 
+
     if (guardado){
         aplicar(parseInt(guardado));
+    }else{
+        aplicar(520);
     }
+
 
     grip.addEventListener("mousedown", function(e){
         console.log("mousedown");
@@ -1738,5 +1823,18 @@ document.addEventListener("click", function(){
 });
 </script>
 
+<div id="overlayImportando" class="overlay-importando" style="display:none;">
+
+    <div class="overlay-box">
+
+        <div class="spinner"></div>
+
+        <div class="overlay-texto">
+            Importando movimientos...
+        </div>
+
+    </div>
+
+</div>
 
 {% endblock %}
