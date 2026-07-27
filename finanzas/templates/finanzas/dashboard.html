@@ -467,16 +467,36 @@ thead th{
                     <table>
                         <thead>
                             <tr>
-                                <th data-key="categoria" style="width:160px;">Categoría</th>
-                                <th data-key="finalidad" style="width:160px;">Finalidad</th>
-                                <th id="thRegla" style="cursor:pointer;">Regla</th>
-                                <th data-key="origen" style="width:190px;">Cuenta</th>
-                                <th data-key="importe"
-                                    style="width:110px;text-align:right;">
-                                    Importe
+                              
+
+                                <th data-key="categoria" style="width:160px;cursor:pointer;">
+                                    Categoría <span>▲▼</span>
                                 </th>
-                                <th data-key="fecha" style="width:120px;">Fecha</th>
-                                <th data-key="descripcion">Descripción</th>
+
+                                <th data-key="finalidad" style="width:160px;cursor:pointer;">
+                                    Finalidad <span>▲▼</span>
+                                </th>
+
+                                <th data-key="regla" id="thRegla" style="cursor:pointer;">
+                                    Regla <span>▲▼</span>
+                                </th>
+
+                                <th data-key="origen" style="width:190px;cursor:pointer;">
+                                    Cuenta <span>▲▼</span>
+                                </th>
+
+                                <th data-key="importe" style="width:150px;text-align:right;cursor:pointer;">
+                                    Importe <span>▲▼</span>
+                                </th>
+
+                                <th data-key="fecha" style="width:120px;cursor:pointer;">
+                                    Fecha <span>▲▼</span>
+                                </th>
+
+                                <th data-key="descripcion" style="cursor:pointer;">
+                                    Descripción <span>▲▼</span>
+                                </th>
+                                
                             </tr>
                         </thead>
                         <tbody id="tableBody"></tbody>
@@ -535,6 +555,21 @@ function periodoLabel(p){
 
 const fmtMoney = n => '$ ' + Math.round(n).toLocaleString('es-AR');
 const fmtMoneySigned = n => (n<0?'-':'') + '$ ' + Math.round(Math.abs(n)).toLocaleString('es-AR');
+
+
+
+function ordenarTabla(campo){
+
+    if(ordenTabla.campo === campo){
+        ordenTabla.asc = !ordenTabla.asc;
+    }else{
+        ordenTabla.campo = campo;
+        ordenTabla.asc = true;
+    }
+
+    renderDetalle();
+
+}
 
 function uniqueSorted(arr){ return [...new Set(arr)].sort((a,b)=>a.localeCompare(b,'es')); }
 
@@ -896,33 +931,46 @@ function renderCharts(rows, solo=null){
     return;
 
 }
+let ordenTabla = {
+    campo: "categoria",
+    asc: true
+};
+
 function sortRows(rows){
 
     return [...rows].sort((a,b)=>{
 
-        if (a.categoria !== b.categoria)
-            return a.categoria.localeCompare(b.categoria,'es');
+        let v1 = a[ordenTabla.campo];
+        let v2 = b[ordenTabla.campo];
 
-        if (a.finalidad !== b.finalidad)
-            return a.finalidad.localeCompare(b.finalidad,'es');
+        // Nulos
+        if(v1 == null) v1 = "";
+        if(v2 == null) v2 = "";
 
-        if ((a.regla || "") !== (b.regla || ""))
-            return (a.regla || "").localeCompare(b.regla || "","es");
+        // Importe
+        if(ordenTabla.campo === "importe"){
+            return ordenTabla.asc
+                ? v1 - v2
+                : v2 - v1;
+        }
 
-        if (a.origen !== b.origen)
-            return a.origen.localeCompare(b.origen,'es');
+        // Fecha
+        if(ordenTabla.campo === "fecha"){
+            return ordenTabla.asc
+                ? v1.localeCompare(v2)
+                : v2.localeCompare(v1);
+        }
 
-        if (a.importe !== b.importe)
-            return b.importe - a.importe;
+        // Texto
+        const cmp = String(v1).localeCompare(String(v2),"es");
 
-        if (a.fecha !== b.fecha)
-            return b.fecha.localeCompare(a.fecha);
-
-        return a.descripcion.localeCompare(b.descripcion,'es');
+        return ordenTabla.asc ? cmp : -cmp;
 
     });
 
 }
+
+
 function renderTable(rows){
   const sorted = sortRows(rows);
   const body = document.getElementById('tableBody');
@@ -1440,6 +1488,20 @@ document.addEventListener('click', (e)=>{
     renderKPIs(getFiltered());
   }
 });
+
+
+document.querySelectorAll("thead th[data-key]").forEach(function(th){
+
+    th.style.cursor = "pointer";
+
+    th.addEventListener("click", function(){
+
+        ordenarTabla(this.dataset.key);
+
+    });
+
+});
+
 </script>
 
 </div>
