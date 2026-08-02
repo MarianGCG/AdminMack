@@ -1560,3 +1560,20 @@ def graficos22(request):
         "anios_seleccionados": anios_seleccionados
 
     })
+
+
+from .services.excel_service import exportar_configuracion_excel
+
+
+def exportar_configuracion(request):
+
+    print("METODO =", request.method)
+
+    if request.method == "POST":
+        print("ENTRE AL POST")
+        return exportar_configuracion_excel()
+
+    return render(
+        request,
+        "importaciones/exportar_configuracion.html"
+    )

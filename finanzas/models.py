@@ -106,20 +106,6 @@ TIPOS_MEDIO_PAGO = [
 
 ]
 
-# MedioPago
-
-class MedioPago(models.Model):
-    codigo = models.CharField(max_length=20, unique=True)
-    nombre = models.CharField(max_length=100)
-    activo = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = "fin_medios_pago"
-        ordering = ["nombre"]
-
-    def __str__(self):
-        return self.nombre
-
 
 # REGLA
 
@@ -281,3 +267,19 @@ class Movimiento(models.Model):
     def __str__(self):
         return f"{self.fecha} - {self.descripcion}"
         
+
+
+
+# MedioPago
+
+class MedioPago(models.Model):
+    codigo = models.CharField(max_length=20, unique=True)
+    nombre = models.CharField(max_length=100)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "fin_medios_pago"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre

@@ -553,7 +553,11 @@
                 <a href="{% url 'parametros' %}">Parámetros</a>
             </div>
         </div>
-
+        <li>
+            <a href="{% url 'exportar_configuracion' %}">
+                📤 Exportar Configuración
+            </a>
+        </li>
         {% if user.is_authenticated %}
         <li style="margin-left:auto;">
             <span style="color:white; margin-right:15px;">

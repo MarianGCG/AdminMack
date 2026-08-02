@@ -42,6 +42,10 @@ urlpatterns = [
     path("aseguradoras/iva/<int:id>/", views.actualizar_iva_aseguradora, name="actualizar_iva_aseguradora"),
     path("liquidacion-eliminar/<int:id>/", views_importaciones.liquidacion_eliminar),
     path("liquidacion-obtener/<int:id>/", views_importaciones.liquidacion_eliminar),
-    
+    path(
+        "exportar-configuracion/",
+        views.exportar_configuracion,
+        name="exportar_configuracion",
+    ),    
 ]
 

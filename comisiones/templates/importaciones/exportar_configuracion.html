@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>EXPORTAR CONFIGURACIÓN</h2>
+
+<p>
+Se generará un único archivo Excel con:
+</p>
+
+<ul>
+    <li>Categorías</li>
+    <li>Personas</li>
+    <li>Finalidades</li>
+    <li>Reglas</li>
+</ul>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <button type="submit">
+        📤 Exportar Configuración
+    </button>
+
+</form>
+
+{% endblock %}
