@@ -248,8 +248,20 @@ def reporte_comisiones_view(request):
                 # AÑO DE LA REGLA SEGÚN ENDOSO
                 # ============================
 
-                anio_regla = 13 if (d.endoso or 0) > 12 else 1
+                endoso = str(d.endoso or "").strip()
 
+                try:
+                    endoso_numero = int(endoso.replace(".", ""))
+                except (ValueError, TypeError):
+                    endoso_numero = 0
+
+                if 13 <= endoso_numero <= 40:
+                    anio_regla = 13
+                else:
+                    anio_regla = 1
+                                    
+                    
+                                        
                 # 1️⃣ intento: match específico por ramo
                 if ramo:
 
@@ -265,7 +277,32 @@ def reporte_comisiones_view(request):
                         regla = r
                         break
 
-                        
+
+                print("====================================")
+                print("BUSQUEDA REGLA")
+                print("ASEGURADORA:", d.aseguradora_id)
+                print("RAMO:", repr(ramo))
+                print("MONEDA:", repr(moneda))
+                print("NIVEL:", pa.nivel)
+                print("ENDOSO:", repr(d.endoso))
+                print("AÑO REGLA:", anio_regla)
+                print("====================================")
+
+
+
+                if regla:
+                    print(
+                        "REGLA ENCONTRADA:",
+                        regla.id,
+                        repr(regla.producto),
+                        regla.nivel,
+                        regla.anio_poliza,
+                        repr(regla.moneda),
+                        regla.porcentaje
+                    )
+                else:
+                    print("¡¡¡ NO ENCONTRO REGLA !!!")
+                    
 
 
                 # 2️⃣ fallback: producto vacío (regla general)
