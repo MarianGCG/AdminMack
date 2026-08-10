@@ -239,12 +239,16 @@ def reporte_comisiones_view(request):
 
                 from comisiones.models import ReglaComision
 
-   
                 moneda = normalizar_texto(d.moneda)
                 ramo = normalizar_texto(d.ramo)
 
-
                 regla = None
+
+                # ============================
+                # AÑO DE LA REGLA SEGÚN ENDOSO
+                # ============================
+
+                anio_regla = 13 if (d.endoso or 0) > 12 else 1
 
                 # 1️⃣ intento: match específico por ramo
                 if ramo:
@@ -252,15 +256,14 @@ def reporte_comisiones_view(request):
                     reglas = ReglaComision.objects.filter(
                         aseguradora_id=d.aseguradora_id,
                         moneda__iexact=moneda,
-                        nivel=pa.nivel
+                        nivel=pa.nivel,
+                        anio_poliza=anio_regla
                     )
 
-                    regla = None
-
-                    for r in reglas:
-                        if normalizar_texto(r.producto) == ramo:
-                            regla = r
-                            break
+                for r in reglas:
+                    if normalizar_texto(r.producto) == ramo:
+                        regla = r
+                        break
 
                         
 
@@ -270,7 +273,8 @@ def reporte_comisiones_view(request):
                     regla = ReglaComision.objects.filter(
                         aseguradora_id=d.aseguradora_id,
                         nivel=pa.nivel,
-                        moneda__iexact=moneda
+                        moneda__iexact=moneda,
+                        anio_poliza=anio_regla
                     ).filter(
                         Q(producto__isnull=True) | Q(producto="")
                     ).first()
