@@ -225,9 +225,12 @@ def reporte_comisiones_view(request):
         else:
             pas_usar = pas_para_fila
 
-            
+        pa = None
+        regla = None
+
+        if pas_usar:            
         
-        if pas_usar:
+
 
             pa = PASAseguradora.objects.filter(
                 pas_id=pas_usar,
@@ -477,7 +480,16 @@ def reporte_comisiones_view(request):
             
         # 🔥 DEBUG
 
+        # ============================
+        # COMISION AGENTE PARA REPORTE PAS
+        # ============================
+        if pa and regla and regla.base_comision == "Comision":
 
+            comision_agente_pas = comision_agente
+        else:
+            comision_agente_pas = None
+
+            
         filas.append({
             "fecha": d.fecha_liquidacion,
             "quincena": d.quincena,
@@ -494,12 +506,14 @@ def reporte_comisiones_view(request):
             "prima": prima,
             "porcentaje": porcentaje ,
             "comision_agente": comision_agente,
+            "comision_agente_pas": comision_agente_pas,
             "descuento_adelanto": descuento_adelanto,
             "comision_adelantada": comision_adelantada,
             "porcentaje_pas": (porcentaje_pas or 0) ,
             "comision_pas": comision_pas,
             "comision_pas_sin_iva": comision_pas_sin_iva,
             "pas_nombre": pas_nombre
+            
         })
 
 # ============================
@@ -515,7 +529,8 @@ def reporte_comisiones_view(request):
                 "fecha", "quincena", "aseg",  "cliente", "concepto_claro",
                 "poliza", "endoso", "moneda", "cotizacion",
                 "prima_original",
-                "meses", "prima",                
+                "meses", "prima", 
+                "comision_agente_pas",               
                 "porcentaje_pas", "comision_pas", "comision_pas_sin_iva"
             ]
         else:
@@ -546,6 +561,7 @@ def reporte_comisiones_view(request):
             "prima": "Prima",
             "porcentaje": "Porcentaje",
             "comision_agente": "Comisión Agente",
+            "comision_agente_pas": "Comisión Agente",
             "descuento_adelanto": "Descuento Adelanto",
             "comision_adelantada": "Comisión Adelantada",
             "prima_original": "Prima U$S",

@@ -266,15 +266,21 @@ th {
     <th>Cotizac<br>Dólar</th>
     <th>Prima<br>U$S</th>
     <th>Meses</th>
+
     <th>Prima</th>
+
+    {% if request.GET.solo_pas == "1" %}
+    <th>Comisión<br>Agente</th>
+    {% endif %}
+
     {% if request.GET.solo_pas != "1" %}
     <th>%</th>
     <th>Comisión<br>Agente</th>
-    
+
     <th>Desc.<br>Adelanto</th>
     <th>Comisión<br>Adelantada</th>
     {% endif %}
-
+    
     <th>% PAS</th>
     <th>Comisión<br>PAS</th>
     <th>Comisión<br>PAS s/IVA</th>
@@ -331,15 +337,20 @@ th {
 
     <td class="numero">{{d.prima|default:""|floatformat:2 }}</td>
 
+    {% if request.GET.solo_pas == "1" %}
+        <td class="numero">{{ d.comision_agente_pas|default:""|floatformat:2 }}</td>
+    {% endif %}
+
+
     {% if request.GET.solo_pas != "1" %}
 
-    <td class="numero">
-        {{ d.porcentaje|floatformat:2 }}%
-    </td>
+        <td class="numero">
+            {{ d.porcentaje|floatformat:2 }}%
+        </td>
 
-    <td class="numero">{{d.comision_agente|default:""|floatformat:2 }}</td>
-    <td class="numero">{{d.descuento_adelanto|floatformat:2}}</td>
-    <td>{{d.comision_adelantada|default:""}}</td>
+        <td class="numero">{{d.comision_agente|default:""|floatformat:2 }}</td>
+        <td class="numero">{{d.descuento_adelanto|floatformat:2}}</td>
+        <td>{{d.comision_adelantada|default:""}}</td>
 
     {% endif %}
 
@@ -355,7 +366,7 @@ th {
 
     {% if request.GET.solo_pas == "1" %}
 
-        <td colspan="14">TOTAL</td>
+        <td colspan="15">TOTAL</td>
         <td></td>
         <td class="numero">
             {{ total_comision_pas_sin_iva|floatformat:2|intcomma }}
